@@ -1,0 +1,96 @@
+{
+  "cv_id": "cv_12",
+  "language": "es",
+  "full_name": "Sergi Fontcuberta Mas",
+  "email": "sergi.fontcuberta@example.net",
+  "phone": "+34 654 339 143",
+  "city": "Palma",
+  "country": "España",
+  "birth_date": "10/07/1997",
+  "linkedin": "linkedin.com/in/sergi-fontcuberta",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Analista de Datos | Machine Learning y Visualización de Datos",
+  "summary": "Analista de datos con 6 años de experiencia en el análisis de grandes conjuntos de datos para obtener insights estratégicos. Experto en SQL, Python y Tableau, con habilidades en desarrollo de modelos de Machine Learning. Pasión por la comunicación de datos a través de visualizaciones impactantes y fáciles de comprender.",
+  "experience": [
+    {
+      "company": "Datawise Solutions SL",
+      "position": "Analista de Datos Senior",
+      "period": "2023 - Actualidad",
+      "location": "Barcelona",
+      "bullets": [
+        "Desarrollé un modelo de Machine Learning para predecir la demanda de productos, mejorando la precisión del 15% en las previsiones.",
+        "Implementé automatizaciones con Python para procesar y limpiar datos, reduciendo el tiempo de análisis en un 20%."
+      ]
+    },
+    {
+      "company": "InnoTech Innovations GmbH",
+      "position": "Analista de Datos",
+      "period": "2021 - 2023",
+      "location": "Múnich",
+      "bullets": [
+        "Construí dashboards interactivos con Tableau para visualizar el rendimiento de las campañas de marketing, aumentando la transparencia del 30% en los resultados.",
+        "Identifiqué patrones en los datos de usuarios para optimizar la experiencia de navegación en la plataforma, lo que generó un aumento del 10% en la tasa de retención."
+      ]
+    },
+    {
+      "company": "SoftServe Iberia",
+      "position": "Junior Analista de Datos",
+      "period": "2020 - 2021",
+      "location": "Palma",
+      "bullets": [
+        "Realicé análisis descriptivos de datos comerciales, generando informes mensuales para las áreas de ventas y marketing.",
+        "Participé en el desarrollo de un sistema de análisis de datos con SQL y Python para mejorar la eficiencia de la gestión de inventario."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ingeniería del Software",
+      "institution": "Universitat Ramon Llull - La Salle",
+      "period": "2016 - 2020",
+      "detail": "Especialización en Desarrollo de Software y bases de datos"
+    },
+    {
+      "degree": "Certificado en Machine Learning",
+      "institution": "edX",
+      "period": "2022",
+      "detail": "Con especial énfasis en algoritmos de aprendizaje supervisado y no supervisado"
+    }
+  ],
+  "technical_skills": [
+    "SQL",
+    "Python",
+    "Machine Learning",
+    "Data Visualization",
+    "Tableau",
+    "dbt",
+    "Pandas",
+    "NumPy",
+    "Scikit-learn",
+    "TensorFlow",
+    "Spark",
+    "BigQuery"
+  ],
+  "tools": [
+    "Git",
+    "Jupyter Notebook",
+    "Docker",
+    "Slack",
+    "Jira"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Fluido"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Cloud Practitioner",
+    "Microsoft Certified: Azure Fundamentals"
+  ]
+}

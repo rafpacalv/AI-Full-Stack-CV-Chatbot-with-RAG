@@ -1,0 +1,69 @@
+{
+  "cv_id": "cv_14",
+  "language": "es",
+  "full_name": "Joan Trías Bermúdez",
+  "email": "joan.trias@example.org",
+  "phone": "+34 646 569 993",
+  "city": "Granada",
+  "country": "España",
+  "birth_date": "28/11/2002",
+  "linkedin": "linkedin.com/in/joan-trias",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Ingeniero de Datos | Análisis y Visualización de Datos",
+  "summary": "Ingeniero de Datos con dos años de experiencia en el análisis y la visualización de datos para la toma de decisiones estratégicas. Proyectado a un entorno colaborativo y orientado a resultados, con pasión por la innovación y el uso de tecnologías de vanguardia para resolver problemas complejos. Me mantengo actualizado con las últimas tendencias del sector y busco constantemente nuevas formas de mejorar mis habilidades.",
+  "experience": [
+    {
+      "company": "Aether Analytics",
+      "position": "Ingeniero de Datos (Junior)",
+      "period": "2024 - Actualidad",
+      "location": "Madrid, España",
+      "bullets": [
+        "Desenvolví dashboards interactivos en Power BI para visualizar datos de ventas, lo que permitió un aumento del 15% en la eficiencia del equipo comercial.",
+        "Implementamos un pipeline de datos con Apache Spark y Airflow para procesar y analizar grandes conjuntos de datos, reduciendo el tiempo de procesamiento en un 30%.",
+        "Diseñé y ejecuté modelos predictivos utilizando Python y Scikit-learn para predecir la demanda de productos, mejorando la precisión de las previsiones en un 10%."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ingeniería de Telecomunicaciones",
+      "institution": "Universidad de Granada",
+      "period": "2019 - 2023",
+      "detail": "Especialización en Big Data y Análisis de Datos."
+    }
+  ],
+  "technical_skills": [
+    "Python",
+    "SQL",
+    "Apache Spark",
+    "Apache Airflow",
+    "Pandas",
+    "NumPy",
+    "Scikit-learn",
+    "Data Visualization (Power BI)",
+    "ETL (Extract, Transform, Load)",
+    "Machine Learning",
+    "Deep Learning"
+  ],
+  "tools": [
+    "Git",
+    "Jupyter Notebook",
+    "Docker",
+    "AWS (Amazon Web Services)"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "B2"
+    }
+  ],
+  "certifications": [
+    "Certificación en Big Data con Apache Spark (edX)",
+    "Certificación en Machine Learning con Python (Udemy)"
+  ]
+}

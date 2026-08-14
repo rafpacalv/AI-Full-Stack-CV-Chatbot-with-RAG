@@ -1,0 +1,107 @@
+{
+  "cv_id": "cv_13",
+  "language": "es",
+  "full_name": "Lucía Cañadas Otero",
+  "email": "lucia.canadas@example.com",
+  "phone": "+34 656 851 365",
+  "city": "A Coruña",
+  "country": "España",
+  "birth_date": "07/04/1986",
+  "linkedin": "linkedin.com/in/lucia-canadas",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Ingeniera Backend | Python y Django",
+  "summary": "Profesional con más de 12 años de experiencia en desarrollo backend, especializado en Python, Django y bases de datos PostgreSQL. Apasionada por la creación de arquitecturas sólidas, escalables y eficientes. Mi enfoque se centra en la resolución de problemas complejos y la entrega de soluciones innovadoras. Busco constantemente oportunidades para ampliar mis conocimientos y contribuir al desarrollo de proyectos de alto impacto.",
+  "experience": [
+    {
+      "company": "Nimble Solutions",
+      "position": "Ingeniera Backend (Lead)",
+      "period": "2021 - Actualidad",
+      "location": "Madrid, España",
+      "bullets": [
+        "Lideré el desarrollo de una nueva plataforma de e-commerce utilizando Django y PostgreSQL, lo que resultó en un incremento del 25% en las ventas online durante el primer año.",
+        "Implementé un sistema de monitoreo y logging personalizado, mejorando la eficiencia operativa del equipo en un 15% y reduciendo el tiempo de resolución de problemas.",
+        "Capacité y mentoré a un equipo de 5 ingenieros backend, fomentando el aprendizaje continuo y la colaboración."
+      ]
+    },
+    {
+      "company": "TechNexus",
+      "position": "Ingeniera Backend",
+      "period": "2019 - 2021",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Desarrollé e implementé una API RESTful utilizando Python y Django para conectar una aplicación móvil con una base de datos de 10 millones de registros.",
+        "Optimizé las consultas SQL en PostgreSQL, reduciendo el tiempo de respuesta en un 30% y mejorando la experiencia de usuario.",
+        "Colaboré con el equipo de diseño y UX para implementar funcionalidades innovadoras en la plataforma web."
+      ]
+    },
+    {
+      "company": "Innovate Labs",
+      "position": "Desarrolladora Junior",
+      "period": "2016 - 2019",
+      "location": "A Coruña, España",
+      "bullets": [
+        "Participé en el desarrollo de un sistema de gestión de proyectos utilizando Python y Django, integrando funcionalidades de control de versiones y gestión de tareas.",
+        "Implementé un chatbot basado en reglas para la atención al cliente, lo que redujo el volumen de consultas al equipo de soporte en un 10%.",
+        "Documenté el código fuente y colaboré en la creación de manuales de usuario."
+      ]
+    },
+    {
+      "company": "Coders Hub",
+      "position": "Freelance Desarrolladora Web",
+      "period": "2014 - 2016",
+      "location": "A Coruña, España",
+      "bullets": [
+        "Desenvolví sitios web personalizados para pequeñas empresas utilizando HTML, CSS y JavaScript.",
+        "Implementaciones de sistemas de gestión de contenidos (CMS) utilizando WordPress y Drupal.",
+        "Ofreció soporte técnico y mantenimiento a los clientes."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ciencia de Datos",
+      "institution": "Universidade da Coruña",
+      "period": "2010 - 2014",
+      "detail": "Máster en Ciencia de Datos"
+    }
+  ],
+  "technical_skills": [
+    "Python",
+    "Django",
+    "PostgreSQL",
+    "Docker",
+    "Git",
+    "RESTful API",
+    "SQL",
+    "NoSQL",
+    "AWS",
+    "DevOps",
+    "Agile methodologies"
+  ],
+  "tools": [
+    "Jira",
+    "Slack",
+    "GitHub",
+    "Confluence",
+    "Jenkins"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Avanzado"
+    },
+    {
+      "language": "Francés",
+      "level": "Intermedio"
+    }
+  ],
+  "certifications": [
+    "Certificación AWS Solutions Architect - Associate",
+    "Certificación Django Developer"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "cv_id": "cv_23",
+  "language": "en",
+  "full_name": "Omar Benali",
+  "email": "omar.benali@example.com",
+  "phone": "+31 988 578528",
+  "city": "Stockholm",
+  "country": "Sweden",
+  "birth_date": "03/05/1999",
+  "linkedin": "linkedin.com/in/omar-benali",
+  "template": 1,
+  "photo_file": null,
+  "headline": "QA Automation Engineer | Playwright and TypeScript",
+  "summary": "Highly motivated QA Automation Engineer with 2 years of experience in developing and implementing automated test suites. Proven ability to collaborate with developers and stakeholders to ensure high-quality software releases. Passionate about using cutting-edge technologies to improve testing efficiency and effectiveness.",
+  "experience": [
+    {
+      "company": "Nordic Solutions AB",
+      "position": "QA Automation Engineer (Junior)",
+      "period": "2024 - Present",
+      "location": "Stockholm, Sweden",
+      "bullets": [
+        "Developed and maintained automated test suites using Playwright and TypeScript, resulting in a 20% reduction in manual testing time.",
+        "Implemented CI/CD pipelines for automated testing and deployment, ensuring faster feedback loops and continuous delivery.",
+        "Created comprehensive test documentation and reports, providing insights into test coverage and potential issues.",
+        "Collaborated with developers to identify and resolve bugs, contributing to the release of high-quality software products."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc Data Science",
+      "institution": "KTH Royal Institute of Technology",
+      "period": "2020 - 2024",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Playwright",
+    "TypeScript",
+    "CI/CD",
+    "API Testing",
+    "Selenium",
+    "Jest",
+    "Mocha",
+    "Cucumber",
+    "Git",
+    "Jira"
+  ],
+  "tools": [
+    "GitHub",
+    "Jenkins",
+    "Postman",
+    "TestRail"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Fluent"
+    },
+    {
+      "language": "Swedish",
+      "level": "Conversational"
+    }
+  ],
+  "certifications": [
+    "Certified Scrum Practitioner (CSP)"
+  ]
+}

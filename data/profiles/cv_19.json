@@ -1,0 +1,80 @@
+{
+  "cv_id": "cv_19",
+  "language": "en",
+  "full_name": "Callum Sharpe",
+  "email": "callum.sharpe@example.net",
+  "phone": "+41 591 876386",
+  "city": "Amsterdam",
+  "country": "Netherlands",
+  "birth_date": "28/06/1999",
+  "linkedin": "linkedin.com/in/callum-sharpe",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Site Reliability Engineer | Automation and Monitoring",
+  "summary": "Results-oriented Site Reliability Engineer with a passion for building and maintaining robust, scalable systems. Proven ability to automate infrastructure processes, implement comprehensive monitoring solutions, and ensure high availability for critical applications. Eager to contribute to a dynamic team and drive continuous improvement initiatives.",
+  "experience": [
+    {
+      "company": "SolTech Solutions BV",
+      "position": "Site Reliability Engineer",
+      "period": "2023 - Present",
+      "location": "Amsterdam, Netherlands",
+      "bullets": [
+        "Reduced system downtime by 25% through proactive infrastructure monitoring and automated incident response systems.",
+        "Developed and implemented a comprehensive Kubernetes monitoring strategy using Prometheus and Grafana, resulting in a 15% decrease in incident resolution time.",
+        "Automated routine infrastructure tasks using Go scripts, freeing up 10% of the DevOps team's time for more complex projects."
+      ]
+    },
+    {
+      "company": "Innovate Europe Ltd.",
+      "position": "Junior Site Reliability Engineer",
+      "period": "2021 - 2023",
+      "location": "Amsterdam, Netherlands",
+      "bullets": [
+        "Successfully migrated 5 critical web applications to AWS, improving application performance by 10% and reducing infrastructure costs by 8%.",
+        "Created and maintained comprehensive documentation for AWS infrastructure configurations, ensuring seamless onboarding for new team members.",
+        "Collaborated with developers to implement CI/CD pipelines, reducing application deployment time by 20%."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science in Physics",
+      "institution": "University of Amsterdam",
+      "period": "2017 - 2021",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Go",
+    "Prometheus",
+    "Kubernetes",
+    "AWS",
+    "Terraform",
+    "Docker",
+    "Linux",
+    "Bash Scripting",
+    "Monitoring Tools",
+    "Incident Management",
+    "Cloud Computing"
+  ],
+  "tools": [
+    "Jira",
+    "GitHub",
+    "Slack",
+    "Prometheus",
+    "Grafana"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Dutch",
+      "level": "Fluent"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Solutions Architect - Associate"
+  ]
+}

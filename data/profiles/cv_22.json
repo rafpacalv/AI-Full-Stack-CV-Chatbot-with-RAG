@@ -1,0 +1,107 @@
+{
+  "cv_id": "cv_22",
+  "language": "en",
+  "full_name": "Rasmus Lindqvist",
+  "email": "rasmus.lindqvist@example.com",
+  "phone": "+35 117 877031",
+  "city": "Kraków",
+  "country": "Poland",
+  "birth_date": "13/06/1987",
+  "linkedin": "linkedin.com/in/rasmus-lindqvist",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Product Designer | User-Centered Design and Design Systems",
+  "summary": "Experienced Product Designer with a passion for creating intuitive and accessible user experiences. Proven ability to lead design teams, conduct user research, and implement design systems to enhance product usability. Strong understanding of design principles and best practices, with a focus on data-driven decision making.",
+  "experience": [
+    {
+      "company": "Zenith Technologies",
+      "position": "Product Designer (Lead)",
+      "period": "2023 - Present",
+      "location": "Kraków, Poland",
+      "bullets": [
+        "Led a team of 5 designers in developing the user interface for a new mobile application, resulting in a 20% increase in user engagement.",
+        "Implemented a new design system that improved consistency and efficiency across all Zenith's products, reducing design time by 15%.",
+        "Conducted user research and usability testing to identify pain points and improve the user experience, leading to a 10% decrease in support tickets."
+      ]
+    },
+    {
+      "company": "NovaTech",
+      "position": "Senior Product Designer",
+      "period": "2021 - 2023",
+      "location": "Warsaw, Poland",
+      "bullets": [
+        "Designed and developed the visual identity for a new brand, increasing brand awareness by 15% within the first quarter.",
+        "Collaborated with developers to integrate design elements into web applications, ensuring a seamless user experience.",
+        "Created and maintained a design library that streamlined the design process and improved consistency across projects."
+      ]
+    },
+    {
+      "company": "Solaris Solutions",
+      "position": "Product Designer",
+      "period": "2019 - 2021",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Developed user flows and wireframes for new product features, contributing to a 25% increase in user conversion rates.",
+        "Created high-fidelity prototypes to test and iterate on design concepts, resulting in a 10% reduction in development costs.",
+        "Presented design solutions to stakeholders and received positive feedback, leading to successful product launches."
+      ]
+    },
+    {
+      "company": "Nordic Innovations",
+      "position": "Junior UI Designer",
+      "period": "2012 - 2019",
+      "location": "Göteborg, Sweden",
+      "bullets": [
+        "Designed user interfaces for web applications, adhering to brand guidelines and accessibility standards.",
+        "Collaborated with developers to implement design specifications, ensuring a consistent user experience.",
+        "Gained experience in using design tools such as Adobe Photoshop and Illustrator."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science in Software Engineering",
+      "institution": "AGH University of Science and Technology",
+      "period": "2008 - 2012",
+      "detail": "Kraków, Poland"
+    },
+    {
+      "degree": "High School Diploma",
+      "institution": "Jan Kochanowski High School",
+      "period": "2004 - 2008",
+      "detail": "Kraków, Poland"
+    }
+  ],
+  "technical_skills": [
+    "Figma",
+    "Adobe XD",
+    "Sketch",
+    "User Research",
+    "Accessibility (WCAG)",
+    "Design Systems",
+    "Prototyping",
+    "UI/UX Design",
+    "Information Architecture",
+    "Wireframing",
+    "Visual Design",
+    "User Personas"
+  ],
+  "tools": [
+    "Jira",
+    "Slack",
+    "Trello",
+    "GitHub",
+    "Google Analytics"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Fluent"
+    },
+    {
+      "language": "Polish",
+      "level": "Native"
+    }
+  ],
+  "certifications": []
+}

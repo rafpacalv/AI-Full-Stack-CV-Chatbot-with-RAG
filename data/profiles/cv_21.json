@@ -1,0 +1,100 @@
+{
+  "cv_id": "cv_21",
+  "language": "en",
+  "full_name": "Yuki Matsubara",
+  "email": "yuki.matsubara@example.net",
+  "phone": "+42 919 109709",
+  "city": "Manchester",
+  "country": "United Kingdom",
+  "birth_date": "21/06/1989",
+  "linkedin": "linkedin.com/in/yuki-matsubara",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Growth / Paid Media Manager | Google Ads and TikTok Advertising",
+  "summary": "Data-driven Growth / Paid Media Manager with 9 years of experience driving revenue growth and user acquisition through effective digital marketing strategies. Proven ability to optimize campaigns across multiple platforms, including Google Ads and TikTok Ads, to achieve significant ROI. Skilled in data analysis and A/B testing to continuously improve campaign performance and customer engagement.",
+  "experience": [
+    {
+      "company": "Lumin Technologies (Manchester, UK)",
+      "position": "Growth / Paid Media Manager",
+      "period": "2021 - Present",
+      "location": "Manchester, UK",
+      "bullets": [
+        "Increased Google Ads campaign ROI by 25% within 6 months through strategic keyword targeting and ad copy optimization.",
+        "Developed and executed TikTok Ads campaigns that resulted in a 15% increase in app downloads and a 10% boost in user engagement.",
+        "Successfully implemented A/B testing methodologies to identify high-performing ad creatives and landing pages, leading to a 5% reduction in cost-per-acquisition (CPA).",
+        "Generated monthly reports and presented key performance indicators (KPIs) to stakeholders, providing actionable insights and recommendations for campaign improvement."
+      ]
+    },
+    {
+      "company": "Aether Solutions (London, UK)",
+      "position": "Digital Marketing Specialist",
+      "period": "2019 - 2021",
+      "location": "London, UK",
+      "bullets": [
+        "Managed and optimized Google Ads campaigns across multiple product lines, achieving a 10% increase in monthly website traffic and a 7% growth in sales conversions.",
+        "Collaborated with the marketing team to develop and implement social media marketing strategies, resulting in a 20% increase in brand awareness and follower engagement.",
+        "Utilized SEO best practices to improve website rankings and organic search visibility, leading to a 5% increase in website traffic from organic sources.",
+        "Tracked and analyzed campaign performance data using Google Analytics, identifying areas for improvement and optimization."
+      ]
+    },
+    {
+      "company": "Solara Inc. (Berlin, Germany)",
+      "position": "Marketing Intern",
+      "period": "2017 - 2019",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Assisted with the planning and execution of digital marketing campaigns, including email marketing, social media promotions, and content creation.",
+        "Conducted market research and competitive analysis to identify industry trends and opportunities.",
+        "Supported the marketing team in the development of marketing collateral, including brochures, website content, and presentation materials.",
+        "Gained valuable experience in using marketing automation tools and CRM systems to manage customer interactions."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc Computer Engineering",
+      "institution": "University of Manchester",
+      "period": "2013 - 2017",
+      "detail": ""
+    },
+    {
+      "degree": "MSc Computer Engineering (Optional)",
+      "institution": "University of Manchester",
+      "period": "2017 - 2018",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Google Ads",
+    "TikTok Ads",
+    "SQL",
+    "Amplitude",
+    "Facebook Ads",
+    "Instagram Ads",
+    "A/B Testing",
+    "Conversion Rate Optimization (CRO)",
+    "SEO",
+    "SEM",
+    "Digital Marketing Analytics",
+    "Data Visualization"
+  ],
+  "tools": [
+    "Google Analytics",
+    "Google Ads Editor",
+    "Facebook Ads Manager",
+    "TikTok Ads Manager",
+    "Excel",
+    "PowerPoint"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Japanese",
+      "level": "Fluent"
+    }
+  ],
+  "certifications": []
+}

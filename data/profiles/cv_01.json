@@ -1,0 +1,84 @@
+{
+  "cv_id": "cv_01",
+  "language": "es",
+  "full_name": "Núria Badia Roldán",
+  "email": "nuria.badia@example.net",
+  "phone": "+34 618 386 330",
+  "city": "Barcelona",
+  "country": "España",
+  "birth_date": "22/08/1997",
+  "linkedin": "linkedin.com/in/nuria-badia",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Ingeniera Backend | Python y Django",
+  "summary": "Desarrolladora backend con 4 años de experiencia implementando aplicaciones web escalables y robustas utilizando tecnologías como Python, Django y PostgreSQL. Me apasiona la construcción de sistemas fiables y eficientes que respondan a las necesidades de los usuarios. Busco constantemente nuevas herramientas y técnicas para mejorar mi desarrollo y contribuir al éxito del equipo.",
+  "experience": [
+    {
+      "company": "Nube Solutions SL",
+      "position": "Ingeniera Backend",
+      "period": "2022 - Actualidad",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Desenvolví la arquitectura backend de una plataforma SaaS para gestión de proyectos, incrementando la velocidad de ejecución en un 20% mediante la optimización de consultas SQL.",
+        "Implementamos Docker para la gestión de contenedores, reduciendo el tiempo de despliegue en un 30% y mejorando la escalabilidad del sistema.",
+        "Implementé un sistema de pruebas unitarias y de integración, incrementando la cobertura del código en un 15% y reduciendo los errores en producción."
+      ]
+    },
+    {
+      "company": "TechNova Iberia",
+      "position": "Junior Desarrolladora Backend",
+      "period": "2022 - 2023",
+      "location": "Madrid, España",
+      "bullets": [
+        "Desenvolví APIs RESTful para la integración con aplicaciones externas, mejorando la eficiencia del flujo de datos en un 10%."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ingeniería Informática",
+      "institution": "Universitat Politècnica de Catalunya (UPC)",
+      "period": "2018 - 2022",
+      "detail": "Especialización en desarrollo de software."
+    }
+  ],
+  "technical_skills": [
+    "Python",
+    "Django",
+    "PostgreSQL",
+    "SQL",
+    "Docker",
+    "Git",
+    "REST API",
+    "Agile methodologies",
+    "Testing (Unit Testing, Integration Testing)",
+    "Heroku",
+    "AWS",
+    "API Gateway"
+  ],
+  "tools": [
+    "Jira",
+    "Confluence",
+    "Slack",
+    "Postman",
+    "VS Code"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Avanzado"
+    },
+    {
+      "language": "Francés",
+      "level": "Intermedio"
+    }
+  ],
+  "certifications": [
+    "Certificado en Desarrollo Web con Python (Udacity)",
+    "Certificado en Diseño de APIs RESTful (Coursera)"
+  ]
+}

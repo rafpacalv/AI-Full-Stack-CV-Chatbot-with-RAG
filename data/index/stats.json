@@ -1,0 +1,17 @@
+{
+  "built_at": "2026-08-14 22:14:30",
+  "n_cvs": 28,
+  "n_chunks": 208,
+  "n_pages": 35,
+  "n_chars": 62400,
+  "embedding_model": "bge-m3",
+  "embedding_dim": 1024,
+  "extraction_model": "gemma2:9b",
+  "languages": {
+    "es": 14,
+    "en": 14
+  },
+  "enrich_seconds": 680.0,
+  "embed_seconds": 80.5,
+  "total_seconds": 764.4
+}

@@ -1,0 +1,91 @@
+{
+  "cv_id": "cv_24",
+  "language": "en",
+  "full_name": "Nikhil Chandrasekar",
+  "email": "nikhil.chandrasekar@example.com",
+  "phone": "+44 810 869005",
+  "city": "Toronto",
+  "country": "Canada",
+  "birth_date": "19/11/1992",
+  "linkedin": "linkedin.com/in/nikhil-chandrasekar",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Product Manager | Growth Strategy and User Experience",
+  "summary": "Experienced Product Manager with a proven track record of driving user growth and delivering exceptional product experiences. Adept at conducting market research, defining product roadmaps, and collaborating with cross-functional teams to launch successful products. Passionate about leveraging data-driven insights to optimize product performance and achieve business objectives.",
+  "experience": [
+    {
+      "company": "NovaTech (Berlin)",
+      "position": "Senior Product Manager",
+      "period": "2022 - Present",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Increased user retention by 15% within six months by implementing a new onboarding process and personalized user journey.",
+        "Led the development and launch of a new mobile app, resulting in a 20% increase in app downloads within the first quarter.",
+        "Collaborated with engineering and design teams to ensure seamless product integration and a user-friendly interface."
+      ]
+    },
+    {
+      "company": "Innovatech Solutions (Amsterdam)",
+      "position": "Product Manager",
+      "period": "2019 - 2022",
+      "location": "Amsterdam, Netherlands",
+      "bullets": [
+        "Developed and executed product roadmaps aligned with business objectives, leading to a 10% increase in revenue year-over-year.",
+        "Conducted market research and competitive analysis to identify new product opportunities and market trends.",
+        "Managed a team of product owners and developers, fostering a collaborative and agile development environment."
+      ]
+    },
+    {
+      "company": "TechNova (London)",
+      "position": "Junior Product Manager",
+      "period": "2017 - 2019",
+      "location": "London, UK",
+      "bullets": [
+        "Assisted in the development of product specifications and user stories, contributing to the launch of two successful new products.",
+        "Conducted user testing and gathered feedback to improve product usability and user satisfaction.",
+        "Utilized SQL to analyze user data and identify areas for product optimization."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science in Telecommunications Engineering",
+      "institution": "University of Toronto",
+      "period": "2013 - 2017",
+      "detail": "Graduated with honors, Dean's List all semesters."
+    }
+  ],
+  "technical_skills": [
+    "Roadmapping",
+    "Product Strategy",
+    "User Experience (UX) Design",
+    "Agile Methodologies",
+    "A/B Testing",
+    "SQL",
+    "Data Analysis",
+    "Stakeholder Management",
+    "Product Analytics",
+    "User Research",
+    "Technical Documentation"
+  ],
+  "tools": [
+    "Jira",
+    "Confluence",
+    "Google Analytics",
+    "Figma",
+    "Microsoft Excel"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "German",
+      "level": "Fluent"
+    }
+  ],
+  "certifications": [
+    "Certified Scrum Product Owner (CSPO)"
+  ]
+}

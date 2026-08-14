@@ -1,0 +1,18 @@
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.env
+
+# Generated artefacts are committed on purpose so the project runs without a
+# 40-minute rebuild - see README.
+#
+# data/profiles/ is committed too, though nothing reads it at runtime: it is the
+# generator's own structured output, and the README's claim that ingestion
+# re-derives everything from the PDFs instead is only checkable if the file it
+# declines to use is actually here.
+data/index/facts/
+
+# The assessment brief is LeadTech internal material - kept locally, never published.
+ai-full-stack-developer-business-case.pdf

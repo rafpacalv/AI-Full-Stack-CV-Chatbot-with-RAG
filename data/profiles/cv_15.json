@@ -1,0 +1,67 @@
+{
+  "cv_id": "cv_15",
+  "language": "en",
+  "full_name": "Mateusz Kowalczyk",
+  "email": "mateusz.kowalczyk@example.org",
+  "phone": "+34 617 753 147",
+  "city": "Barcelona",
+  "country": "Spain",
+  "birth_date": "07/12/1996",
+  "linkedin": "linkedin.com/in/mateusz-kowalczyk",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Backend Engineer | Java and Microservices",
+  "summary": "Highly motivated Junior Backend Engineer with a strong foundation in Java and Spring Boot. Proven ability to design, develop, and deploy scalable and reliable backend systems. Passionate about implementing efficient data pipelines and utilizing Kafka for real-time message processing.",
+  "experience": [
+    {
+      "company": "Aragon Tech (Barcelona)",
+      "position": "Backend Engineer (Junior)",
+      "period": "2024 - Present",
+      "location": "Barcelona, Spain",
+      "bullets": [
+        "Developed and maintained RESTful APIs using Spring Boot, resulting in a 20% reduction in API response latency.",
+        "Implemented a Kafka-based messaging system for real-time data processing, improving system throughput by 15%.",
+        "Designed and deployed a scalable database schema using PostgreSQL, supporting a 30% increase in user database records."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc in Mathematics",
+      "institution": "Universitat Politècnica de Catalunya (UPC)",
+      "period": "2020 - 2024",
+      "detail": "Graduated with honors, specializing in data analysis and numerical methods."
+    }
+  ],
+  "technical_skills": [
+    "Java",
+    "Spring Boot",
+    "Kafka",
+    "PostgreSQL",
+    "RESTful APIs",
+    "Microservices",
+    "Git",
+    "Docker",
+    "Agile Development"
+  ],
+  "tools": [
+    "Maven",
+    "Jira",
+    "Confluence",
+    "Jenkins",
+    "Kubernetes"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Spanish",
+      "level": "Fluent"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Developer - Associate"
+  ]
+}

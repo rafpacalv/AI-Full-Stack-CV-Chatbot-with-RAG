@@ -1,0 +1,91 @@
+{
+  "cv_id": "cv_17",
+  "language": "en",
+  "full_name": "Tomás Bekele",
+  "email": "tomas.bekele@example.org",
+  "phone": "+38 880 517025",
+  "city": "Dublin",
+  "country": "Ireland",
+  "birth_date": "28/09/1990",
+  "linkedin": "linkedin.com/in/tomas-bekele",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Frontend Engineer | Vue.js and TypeScript Architectures",
+  "summary": "Highly experienced Frontend Engineer with a passion for building user-centric, performant web applications. Proven ability to lead development projects, implement complex UI functionalities, and deliver high-quality code. Adept at collaborating with cross-functional teams to ensure seamless integration and successful product launches.",
+  "experience": [
+    {
+      "company": "Solara Technologies, Dublin",
+      "position": "Senior Frontend Engineer",
+      "period": "2021 - Present",
+      "location": "Dublin, Ireland",
+      "bullets": [
+        "Led the development of a new user interface for Solara's flagship SaaS platform, resulting in a 25% increase in user engagement.",
+        "Implemented a TypeScript-based architecture for the frontend, improving code maintainability and reducing development time by 15%.",
+        "Successfully integrated third-party APIs to enhance platform functionality and streamline user workflows."
+      ]
+    },
+    {
+      "company": "Aeris Digital, Galway",
+      "position": "Frontend Engineer",
+      "period": "2019 - 2021",
+      "location": "Galway, Ireland",
+      "bullets": [
+        "Developed and maintained responsive web applications using Vue.js, ensuring cross-platform compatibility and optimal user experience.",
+        "Optimized website performance by implementing lazy loading and caching techniques, leading to a 10% reduction in page load times.",
+        "Collaborated with designers and backend engineers to deliver seamless and user-friendly web applications."
+      ]
+    },
+    {
+      "company": "Elixir Systems, Dublin",
+      "position": "Junior Frontend Developer",
+      "period": "2018 - 2019",
+      "location": "Dublin, Ireland",
+      "bullets": [
+        "Assisted senior developers in building and maintaining web applications using HTML, CSS, and JavaScript.",
+        "Gained valuable experience in front-end development methodologies and best practices.",
+        "Contributed to the development of new features and improvements for existing applications."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc in Marketing",
+      "institution": "Trinity College Dublin",
+      "period": "2014 - 2018",
+      "detail": "Graduated with First Class Honours"
+    }
+  ],
+  "technical_skills": [
+    "TypeScript",
+    "Vue.js",
+    "JavaScript",
+    "WebPack",
+    "HTML",
+    "CSS",
+    "Git",
+    "Responsive Design",
+    "UI/UX Design Principles",
+    "Unit Testing"
+  ],
+  "tools": [
+    "Jira",
+    "Confluence",
+    "Figma",
+    "GitHub",
+    "npm"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Spanish",
+      "level": "Conversational"
+    }
+  ],
+  "certifications": [
+    "Google Analytics Individual Qualification",
+    "AWS Certified Cloud Practitioner"
+  ]
+}

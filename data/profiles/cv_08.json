@@ -1,0 +1,99 @@
+{
+  "cv_id": "cv_08",
+  "language": "es",
+  "full_name": "Adrián Quesada Lorenzo",
+  "email": "adrian.quesada@example.org",
+  "phone": "+34 664 993 637",
+  "city": "Zaragoza",
+  "country": "España",
+  "birth_date": "11/09/1993",
+  "linkedin": "linkedin.com/in/adrian-quesada",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Diseñador UX/UI | Investigación de usuario y sistemas de diseño",
+  "summary": "Diseñador UX/UI con 7 años de experiencia creando interfaces intuitivas y atractivas para aplicaciones web y móviles. Apasionado por la investigación de usuario y la aplicación de metodologías ágiles. Capacidad demostrada para colaborar con equipos multidisciplinarios y entregar productos digitales de alta calidad.",
+  "experience": [
+    {
+      "company": "PixelFlow S.L.",
+      "position": "Diseñador UX/UI Senior",
+      "period": "2022 - Actualidad",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Diseño y desarrollo de interfaces para la aplicación móvil de PixelFlow, con un aumento del 25% en la tasa de retención de usuarios en el primer mes de lanzamiento.",
+        "Implementación de un nuevo sistema de diseño basado en componentes, mejorando la eficiencia del proceso de diseño en un 15%.",
+        "Liderazgo de talleres de investigación de usuario con más de 50 participantes, recopilando información valiosa para la iteración de productos."
+      ]
+    },
+    {
+      "company": "Innovatech S.A.",
+      "position": "Diseñador UX/UI",
+      "period": "2020 - 2022",
+      "location": "Madrid, España",
+      "bullets": [
+        "Diseño y prototipado de interfaces para la plataforma web de Innovatech, reduciendo el tiempo de carga en un 30% y mejorando la experiencia de usuario.",
+        "Colaboración con el equipo de desarrollo para la implementación de las interfaces diseñadas, asegurando la coherencia entre el diseño y el desarrollo.",
+        "Realización de pruebas de usabilidad con usuarios reales, identificando áreas de mejora y proponiendo soluciones para optimizar la interfaz."
+      ]
+    },
+    {
+      "company": "TechSpark Solutions",
+      "position": "Junior UX/UI Designer",
+      "period": "2019 - 2020",
+      "location": "Zaragoza, España",
+      "bullets": [
+        "Participación en el diseño y desarrollo de interfaces para aplicaciones móviles para clientes internacionales.",
+        "Colaboración con el equipo de diseño senior en la elaboración de wireframes, mockups y prototipos.",
+        "Implementación de feedback de los usuarios en el proceso de diseño, contribuyendo a la creación de interfaces más intuitivas."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Diseño de Interacción",
+      "institution": "Universidad de Sevilla",
+      "period": "2015 - 2019",
+      "detail": "Especialización en Diseño de Interfaz de Usuario y Experiencia de Usuario (UI/UX)"
+    },
+    {
+      "degree": "Bachillerato",
+      "institution": "IES Cervantes",
+      "period": "2011 - 2015",
+      "detail": "Con especialización en Ciencias Sociales y Humanidades"
+    }
+  ],
+  "technical_skills": [
+    "Figma",
+    "Adobe XD",
+    "Sketch",
+    "UX Research",
+    "Usabilidad",
+    "Wireframing",
+    "Prototyping",
+    "Heurísticas de usabilidad",
+    "Diseño centrado en el usuario",
+    "Sistemas de diseño",
+    "Cartografía de usuarios",
+    "A/B testing"
+  ],
+  "tools": [
+    "Jira",
+    "Trello",
+    "Slack",
+    "Zoom",
+    "Google Analytics"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Fluente"
+    }
+  ],
+  "certifications": [
+    "Certificación en UX Design",
+    "Google UX Design Professional Certificate"
+  ]
+}

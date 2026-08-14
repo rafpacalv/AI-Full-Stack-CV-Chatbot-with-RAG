@@ -1,0 +1,107 @@
+{
+  "cv_id": "cv_06",
+  "language": "es",
+  "full_name": "Clara Bonet Iglesias",
+  "email": "clara.bonet@example.net",
+  "phone": "+34 643 206 298",
+  "city": "Sevilla",
+  "country": "España",
+  "birth_date": "05/08/1994",
+  "linkedin": "linkedin.com/in/clara-bonet",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Especialista SEO | SEO Técnico y Estrategias de Contenido",
+  "summary": "Profesional del SEO con más de 10 años de experiencia impulsando el tráfico orgánico y mejorando el posicionamiento web de empresas de diferentes sectores. Me apasiona la investigación de keywords, el análisis de datos y la optimización de páginas web para obtener resultados tangibles. Mi objetivo es colaborar con equipos creativos para desarrollar estrategias de SEO integrales que aumenten la visibilidad online y generen leads cualificados.",
+  "experience": [
+    {
+      "company": "Innovatech SL",
+      "position": "Especialista SEO Senior",
+      "period": "2021 - Actualidad",
+      "location": "Madrid, España",
+      "bullets": [
+        "Aumento del tráfico orgánico en un 35% en 6 meses mediante la implementación de estrategias de SEO técnico y on-page.",
+        "Mejoré el ranking de palabras clave relevantes en un 20% en un período de 9 meses.",
+        "Desarrollo e implementación de un plan de link building que obtuvo más de 500 backlinks de alta calidad.",
+        "Análisis y seguimiento de datos de Google Analytics para identificar oportunidades de mejora en el rendimiento SEO."
+      ]
+    },
+    {
+      "company": "Websolutions Europe GmbH",
+      "position": "Especialista SEO",
+      "period": "2018 - 2021",
+      "location": "Frankfurt, Alemania",
+      "bullets": [
+        "Aumento del CTR en un 15% en las páginas de destino a través de la optimización del contenido y la estructura de las URL.",
+        "Implementación de estrategias de SEO local que resultaron en un aumento del 25% en las búsquedas de la empresa en Google Maps.",
+        "Creación de informes SEO mensuales para la alta dirección, presentando los resultados y las acciones planeadas para el futuro.",
+        "Colaboración con el equipo de desarrollo para asegurar la implementación de las mejores prácticas SEO en las nuevas páginas web."
+      ]
+    },
+    {
+      "company": "Neosolutions Iberia",
+      "position": "Junior SEO Specialist",
+      "period": "2016 - 2018",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Realización de auditorías SEO de sitios web para identificar oportunidades de mejora en el posicionamiento.",
+        "Investigación y análisis de keywords para el desarrollo de estrategias SEO personalizadas.",
+        "Creación de contenido optimizado para SEO para blogs y páginas web.",
+        "Monitorización y seguimiento de los resultados SEO a través de herramientas como Google Analytics y Google Search Console."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ingeniería Industrial",
+      "institution": "Universidad Politécnica de Madrid (UPM)",
+      "period": "2012 - 2016",
+      "detail": ""
+    },
+    {
+      "degree": "Curso de SEO Avanzado",
+      "institution": "SEMrush Academy",
+      "period": "2020",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "SEO técnico",
+    "Optimización de contenido",
+    "Análisis de keywords",
+    "SEO local",
+    "Link building",
+    "Google Analytics",
+    "Screaming Frog",
+    "SQL",
+    "SEO copywriting",
+    "Herramientas de análisis de SEO",
+    "Investigación de mercado",
+    "A/B testing"
+  ],
+  "tools": [
+    "Google Analytics",
+    "Google Search Console",
+    "SEMrush",
+    "Ahrefs",
+    "Screaming Frog SEO Spider",
+    "WordPress"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Fluido"
+    },
+    {
+      "language": "Francés",
+      "level": "Intermedio"
+    }
+  ],
+  "certifications": [
+    "Certificación Google Analytics Individual Qualification",
+    "Certificación SEMrush SEO Specialist"
+  ]
+}

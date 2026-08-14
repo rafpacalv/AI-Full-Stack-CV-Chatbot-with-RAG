@@ -1,0 +1,79 @@
+{
+  "cv_id": "cv_03",
+  "language": "es",
+  "full_name": "Rubén Ibarrola Nieto",
+  "email": "ruben.ibarrola@example.com",
+  "phone": "+34 623 595 616",
+  "city": "Madrid",
+  "country": "España",
+  "birth_date": "20/03/1998",
+  "linkedin": "linkedin.com/in/ruben-ibarrola",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Desarrollador Frontend | JavaScript y React",
+  "summary": "Desarrollador Frontend con 4 años de experiencia en la creación de interfaces de usuario modernas y responsivas. Experto en React y TypeScript, apasionado por la construcción de experiencias web optimizadas y atractivas para el usuario. Busco constantemente nuevas tecnologías y tendencias para mejorar la calidad y eficiencia del desarrollo.",
+  "experience": [
+    {
+      "company": "Nova Labs",
+      "position": "Desarrollador Frontend",
+      "period": "2022 - Actualidad",
+      "location": "Madrid, España",
+      "bullets": [
+        "Desenvolví la interfaz de usuario principal de la plataforma de colaboración online, reduciendo el tiempo de carga en un 20%.",
+        "Implementé nuevas funcionalidades de personalización en el dashboard del usuario, aumentando la satisfacción del cliente en un 15%.",
+        "Colaboré con el equipo de diseño para asegurar la coherencia visual y la accesibilidad de las interfaces.",
+        "] }, 0 { 0"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ciencia de Datos",
+      "institution": "Universitat de Barcelona (UB)",
+      "period": "2018 - 2022",
+      "detail": ""
+    },
+    {
+      "degree": "Curso Intensivo de Desarrollo Web con React",
+      "institution": "Bootcamp Madrid",
+      "period": "2021",
+      "detail": "Certificación obtenida"
+    }
+  ],
+  "technical_skills": [
+    "JavaScript",
+    "React",
+    "TypeScript",
+    "CSS",
+    "HTML",
+    "Git",
+    "Jest",
+    "Redux",
+    "UI/UX Design Principles",
+    "Responsive Design",
+    "Web Accessibility (WCAG)",
+    "SEO Optimization"
+  ],
+  "tools": [
+    "VS Code",
+    "GitHub",
+    "Jira",
+    "Figma",
+    "Chrome DevTools",
+    "languages"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Fluido"
+    }
+  ],
+  "certifications": [
+    "Certificación React Developer (FreeCodeCamp)",
+    "Certificación JavaScript Fundamentals (Udemy)"
+  ]
+}

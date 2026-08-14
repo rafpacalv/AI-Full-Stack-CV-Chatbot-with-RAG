@@ -1,0 +1,81 @@
+{
+  "cv_id": "cv_27",
+  "language": "en",
+  "full_name": "Priya Raghunathan",
+  "email": "priya.raghunathan@example.net",
+  "phone": "+42 446 321736",
+  "city": "Copenhagen",
+  "country": "Denmark",
+  "birth_date": "13/07/1995",
+  "linkedin": "linkedin.com/in/priya-raghunathan",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Backend Engineer | Java and Microservices",
+  "summary": "Highly motivated backend engineer with 3+ years of experience designing, developing, and deploying robust and scalable applications. Proven ability to work independently and collaboratively in fast-paced environments. Passionate about learning new technologies and implementing best practices.",
+  "experience": [
+    {
+      "company": "Nordiske Tech",
+      "position": "Backend Engineer",
+      "period": "2023 - Present",
+      "location": "Copenhagen, Denmark",
+      "bullets": [
+        "Developed and maintained core backend services using Java Spring Boot, resulting in a 15% reduction in application latency.",
+        "Implemented a new messaging queue system using Kafka to improve asynchronous communication between microservices, leading to a 20% increase in throughput.",
+        "Migrated existing database schema to PostgreSQL, improving data query performance by 10%.",
+        "Collaborated with frontend developers to integrate new features and functionalities, ensuring seamless user experience."
+      ]
+    },
+    {
+      "company": "Nordic Solutions",
+      "position": "Junior Backend Developer",
+      "period": "2023 - 2024",
+      "location": "Copenhagen, Denmark",
+      "bullets": [
+        "Developed REST APIs using Java and Spring Boot to integrate with various third-party services.",
+        "Contributed to the development of a new customer management system, which resulted in a 5% increase in customer satisfaction.",
+        "Assisted senior developers in debugging and resolving complex technical issues.",
+        "Participated in code reviews and provided constructive feedback to improve code quality."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc in Marketing",
+      "institution": "Danmarks Tekniske Universitet (DTU)",
+      "period": "2020 - 2023",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Java",
+    "Spring Boot",
+    "Kafka",
+    "PostgreSQL",
+    "REST APIs",
+    "Microservices",
+    "Git",
+    "Docker",
+    "Agile Development",
+    "TDD"
+  ],
+  "tools": [
+    "Jira",
+    "Confluence",
+    "Jenkins",
+    "AWS",
+    "Linux"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Danish",
+      "level": "Intermediate"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Developer - Associate"
+  ]
+}

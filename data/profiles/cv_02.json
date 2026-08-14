@@ -1,0 +1,105 @@
+{
+  "cv_id": "cv_02",
+  "language": "es",
+  "full_name": "Elena Vidal Company",
+  "email": "elena.vidal@example.org",
+  "phone": "+34 650 117 622",
+  "city": "Badalona",
+  "country": "España",
+  "birth_date": "19/03/1994",
+  "linkedin": "linkedin.com/in/elena-vidal",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Ingeniera de Datos | Machine Learning y Big Data",
+  "summary": "Experiencia comprobada desarrollando soluciones de análisis de datos con Python y Spark. Pasión por la automatización de pipelines de procesamiento y la generación de insights a través del Machine Learning. Habilidad para trabajar en equipos multidisciplinares y comunicar resultados complejos a audiencias no técnicas. Busco un entorno desafiante donde pueda aplicar mi conocimiento para impulsar la toma de decisiones data-driven.",
+  "experience": [
+    {
+      "company": "InnoData Labs",
+      "position": "Ingeniera de Datos Senior",
+      "period": "2021 - Actualidad",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Desarrollé un sistema de recomendación de productos con Machine Learning que aumentó el engagement del 15% en la plataforma.",
+        "Implemente un pipeline de procesamiento de datos con Apache Spark y Airflow que redujo el tiempo de procesamiento en un 30%.",
+        "Diseñé e implementé un dashboard de visualización de datos para monitorizar el rendimiento del sistema, mejorando la transparencia y toma de decisiones.",
+        "]}, {"
+      ]
+    },
+    {
+      "company": "Algoritmo Solutions",
+      "position": "Ingeniera de Datos",
+      "period": "2019 - 2021",
+      "location": "Madrid, España",
+      "bullets": [
+        "Construí modelos predictivos de churn utilizando SQL, Python y Scikit-learn, reduciendo la tasa de cancelación del 8%.",
+        "Optimizé la eficiencia de las consultas SQL en la base de datos, mejorando el tiempo de respuesta en un 10%.",
+        "Documente el proceso de ETL y los modelos de aprendizaje automático para facilitar la comprensión y el mantenimiento.",
+        "]}, {"
+      ]
+    },
+    {
+      "company": "Datawise Technologies",
+      "position": "Analista de Datos",
+      "period": "2018 - 2019",
+      "location": "Hamburgo, Alemania",
+      "bullets": [
+        "Extraje, limpiaste y transformé datos de diversas fuentes para la creación de informes y dashboards.",
+        "Generé análisis estadísticos y visuales para identificar tendencias y patrones en los datos.",
+        "Colaboré con equipos de desarrollo para integrar la analítica en las aplicaciones web.",
+        "]}, {"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ingeniería del Software",
+      "institution": "Universitat Politècnica de Catalunya (UPC)",
+      "period": "2014 - 2018",
+      "detail": "Especialización en desarrollo de aplicaciones web y bases de datos."
+    },
+    {
+      "degree": "Curso de Machine Learning con Python",
+      "institution": "Online Learning Platform",
+      "period": "2020",
+      "detail": "Desarrollo de modelos predictivos y de clasificación utilizando Python y Scikit-learn."
+    },
+    {
+      "degree": "Curso de Big Data con Apache Spark",
+      "institution": "Datacamp",
+      "period": "2019",
+      "detail": "Procesamiento y análisis de grandes volúmenes de datos utilizando Apache Spark."
+    }
+  ],
+  "technical_skills": [
+    "Python (Pandas, NumPy, Scikit-learn)",
+    "Spark (PySpark, SQL)",
+    "Airflow",
+    "SQL",
+    "Machine Learning (regresión, clasificación, clustering)",
+    "Big Data",
+    "Data Visualization (Matplotlib, Seaborn)",
+    "Git",
+    "Docker",
+    "Kubernetes"
+  ],
+  "tools": [
+    "Jupyter Notebook",
+    "AWS",
+    "Google Cloud Platform",
+    "Tableau"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Avanzado"
+    }
+  ],
+  "certifications": [
+    "Certificación Profesional en Big Data con Apache Spark",
+    "Certificación AWS Certified Developer - Associate"
+  ]
+}

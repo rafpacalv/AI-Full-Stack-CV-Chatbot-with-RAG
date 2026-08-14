@@ -1,0 +1,85 @@
+{
+  "cv_id": "cv_26",
+  "language": "en",
+  "full_name": "Katarzyna Wilczyńska",
+  "email": "katarzyna.wilczynska@example.com",
+  "phone": "+34 677 333 184",
+  "city": "Barcelona",
+  "country": "Spain",
+  "birth_date": "03/03/1994",
+  "linkedin": "linkedin.com/in/katarzyna-wilczynska",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Business Intelligence Analyst | Data Analysis and Visualization",
+  "summary": "Driven Business Intelligence Analyst with 4 years of experience transforming complex data into actionable insights. Proven ability to leverage SQL, Power BI, and Python to uncover trends, optimize business processes, and support data-driven decision making. Passionate about using data to drive impactful results and improve organizational performance.",
+  "experience": [
+    {
+      "company": "NovaTech Solutions, Barcelona",
+      "position": "Business Intelligence Analyst",
+      "period": "2023 - Present",
+      "location": "Barcelona, Spain",
+      "bullets": [
+        "Developed and maintained interactive dashboards in Power BI, resulting in a 15% increase in sales team efficiency by providing real-time market insights.",
+        "Implemented automated data pipelines using Python and dbt, reducing manual data processing time by 30% and ensuring data accuracy.",
+        "Conducted in-depth data analysis to identify customer churn patterns, leading to the implementation of targeted retention strategies that reduced churn rate by 8%.",
+        "Collaborated with cross-functional teams to define key performance indicators (KPIs) and track progress against business objectives."
+      ]
+    },
+    {
+      "company": "Arista Digital, Madrid",
+      "position": "Junior Business Intelligence Analyst",
+      "period": "2022 - 2023",
+      "location": "Madrid, Spain",
+      "bullets": [
+        "Assisted in the design and development of SQL queries to extract data from various sources, contributing to the successful launch of a new marketing campaign.",
+        "Prepared data visualizations and reports using Power BI, providing insights that informed strategic decision-making.",
+        "Collaborated with senior analysts to develop and maintain data models, ensuring data integrity and consistency."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc in Industrial Engineering",
+      "institution": "Universitat Pompeu Fabra (UPF)",
+      "period": "2018 - 2022",
+      "detail": "Graduated with honors, specializing in Operations Research and Data Analytics."
+    }
+  ],
+  "technical_skills": [
+    "SQL",
+    "Power BI",
+    "Python",
+    "dbt",
+    "Tableau",
+    "Data Modeling",
+    "Data Visualization",
+    "Statistical Analysis",
+    "Machine Learning",
+    "Data Warehousing"
+  ],
+  "tools": [
+    "Git",
+    "Jupyter Notebook",
+    "Azure Cloud Platform",
+    "AWS",
+    "Google Analytics"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Spanish",
+      "level": "Fluent"
+    },
+    {
+      "language": "Polish",
+      "level": "Native"
+    }
+  ],
+  "certifications": [
+    "Microsoft Certified: Azure Data Fundamentals",
+    "DataCamp: Python for Data Science"
+  ]
+}

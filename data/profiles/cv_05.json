@@ -1,0 +1,103 @@
+{
+  "cv_id": "cv_05",
+  "language": "es",
+  "full_name": "Aitana Serrano Puig",
+  "email": "aitana.serrano@example.net",
+  "phone": "+34 642 162 432",
+  "city": "Girona",
+  "country": "España",
+  "birth_date": "08/12/1992",
+  "linkedin": "linkedin.com/in/aitana-serrano",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Ingeniera DevOps | Automatización y Gestión de Infraestructuras",
+  "summary": "Experta en DevOps con más de 10 años de experiencia desarrollando y implementando soluciones de automatización y gestión de infraestructuras en entornos cloud. Con pasión por la mejora continua, busco constantemente optimizar procesos y asegurar la escalabilidad y la resiliencia de las aplicaciones. Aporto una visión global y capacidad de trabajo en equipo para alcanzar objetivos comunes.",
+  "experience": [
+    {
+      "company": "NubeNova S.L.",
+      "position": "Ingeniera DevOps Senior",
+      "period": "2022 - Actualidad",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Implementé pipelines CI/CD con Jenkins y GitHub Actions, reduciendo el tiempo de despliegue en un 40%.",
+        "Diseñé y desplegué entornos de prueba automatizados en Kubernetes, mejorando la cobertura de pruebas en un 25%.",
+        "Contribuí al desarrollo de herramientas internas de monitorización y gestión de infraestructuras, optimizando la eficiencia del equipo en un 15%."
+      ]
+    },
+    {
+      "company": "TecnoBit Solutions GmbH",
+      "position": "Ingeniera DevOps",
+      "period": "2019 - 2022",
+      "location": "Berlín, Alemania",
+      "bullets": [
+        "Migré infraestructura on-premise a AWS utilizando Terraform, mejorando la disponibilidad en un 10%.",
+        "Implementamos una estrategia de gestión de contenedores con Docker y Kubernetes, reduciendo el consumo de recursos en un 20%.",
+        "Diseñé y documenté la arquitectura de la infraestructura cloud, asegurando la escalabilidad y la seguridad de los servicios."
+      ]
+    },
+    {
+      "company": "InnovaTech S.A.",
+      "position": "Analista de Sistemas",
+      "period": "2016 - 2019",
+      "location": "Girona, España",
+      "bullets": [
+        "Desarrollé scripts de automatización para tareas repetitivas, liberando tiempo para proyectos estratégicos.",
+        "Participé en la implementación de sistemas de monitorización y alerta, mejorando la eficiencia del soporte técnico en un 10%.",
+        "Documenté y mantuve la infraestructura de la empresa, asegurando la estabilidad y la seguridad de los datos."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Matemáticas",
+      "institution": "Universitat Pompeu Fabra (UPF)",
+      "period": "2012 - 2016",
+      "detail": "Barcelona, España"
+    },
+    {
+      "degree": "Curso de Especialización en DevOps",
+      "institution": "E-learning.academy",
+      "period": "2021",
+      "detail": "Online"
+    }
+  ],
+  "technical_skills": [
+    "Kubernetes",
+    "Terraform",
+    "AWS (EC2, S3, IAM)",
+    "Docker",
+    "Jenkins",
+    "GitHub Actions",
+    "Ansible",
+    "Bash scripting",
+    "CI/CD",
+    "IaC",
+    "Linux",
+    "Git"
+  ],
+  "tools": [
+    "Jira",
+    "Confluence",
+    "Prometheus",
+    "Grafana",
+    "Slack"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Fluido"
+    },
+    {
+      "language": "Francés",
+      "level": "Intermedio"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Solutions Architect - Associate",
+    "Kubernetes Certified Administrator (CKA)"
+  ]
+}

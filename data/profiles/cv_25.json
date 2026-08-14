@@ -1,0 +1,76 @@
+{
+  "cv_id": "cv_25",
+  "language": "en",
+  "full_name": "Amara Nwachukwu",
+  "email": "amara.nwachukwu@example.net",
+  "phone": "+39 183 997473",
+  "city": "Milan",
+  "country": "Italy",
+  "birth_date": "23/09/1996",
+  "linkedin": "linkedin.com/in/amara-nwachukwu",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Full-Stack Engineer | Web Development and Cloud Technologies",
+  "summary": "Results-driven Full-Stack Engineer with a passion for building scalable and user-friendly web applications. Proven ability to leverage modern technologies and methodologies to deliver high-quality solutions within tight deadlines. Eager to contribute to a collaborative and innovative team environment.",
+  "experience": [
+    {
+      "company": "NovaTech Solutions (Milan, Italy)",
+      "position": "Full-Stack Engineer (Junior)",
+      "period": "2024 - Present",
+      "location": "Milan, Italy",
+      "bullets": [
+        "Developed and maintained key features for a popular e-commerce platform, resulting in a 15% increase in user engagement within 3 months.",
+        "Implemented a new authentication system using Node.js and React, reducing login latency by 20%.",
+        "Migrated database infrastructure to AWS, achieving a 30% reduction in data storage costs.",
+        "Collaborated effectively with a team of developers and designers to ensure timely delivery of projects and meet client expectations."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science in Mathematics",
+      "institution": "Politecnico di Milano",
+      "period": "2020 - 2024",
+      "detail": "Graduated with honors. Focus on applied mathematics and data analysis."
+    },
+    {
+      "degree": "",
+      "institution": "",
+      "period": "",
+      "detail": " "
+    }
+  ],
+  "technical_skills": [
+    "Node.js",
+    "React",
+    "Javascript",
+    "Postgresql",
+    "AWS",
+    "API Development",
+    "Git",
+    "HTML",
+    "CSS",
+    "RESTful APIs",
+    "Docker",
+    "MongoDB"
+  ],
+  "tools": [
+    "Visual Studio Code",
+    "Postman",
+    "AWS CLI",
+    "Jira",
+    "GitHub",
+    "Heroku"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Fluent"
+    },
+    {
+      "language": "Italian",
+      "level": "Conversational"
+    }
+  ],
+  "certifications": []
+}

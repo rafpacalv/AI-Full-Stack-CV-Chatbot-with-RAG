@@ -1,0 +1,96 @@
+{
+  "cv_id": "cv_04",
+  "language": "es",
+  "full_name": "Guillem Roca Prats",
+  "email": "guillem.roca@example.net",
+  "phone": "+34 699 647 293",
+  "city": "Valencia",
+  "country": "España",
+  "birth_date": "28/01/1995",
+  "linkedin": "linkedin.com/in/guillem-roca",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Ingeniero de Machine Learning | Aprendizaje Automático y Procesamiento de Lenguaje Natural",
+  "summary": "Senior Machine Learning Engineer con 7 años de experiencia desarrollando e implementando modelos de aprendizaje automático para soluciones innovadoras en el sector tecnológico. Pasión por la investigación y desarrollo de algoritmos avanzados para resolver problemas complejos. Experto en Python, PyTorch, MLflow y Scikit-learn, con un enfoque en la creación de modelos eficientes y escalables.",
+  "experience": [
+    {
+      "company": "NovaTech Solutions S.L.",
+      "position": "Ingeniero de Machine Learning Senior",
+      "period": "2023 - Actualidad",
+      "location": "Valencia, España",
+      "bullets": [
+        "Desenvolví un modelo de clasificación de texto con PyTorch que mejoró en un 15% la precisión del sistema de detección de spam.",
+        "Implementé un pipeline de aprendizaje automático con MLflow para automatizar el entrenamiento y la evaluación de modelos, reduciendo el tiempo de desarrollo en un 20%.",
+        "Contribuí a la construcción de un chatbot conversacional con procesamiento de lenguaje natural (PNL) que logró un 90% de satisfacción por parte de los usuarios."
+      ]
+    },
+    {
+      "company": "AI Solutions Iberia GmbH",
+      "position": "Ingeniero de Machine Learning",
+      "period": "2021 - 2023",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Desarrollé un algoritmo de recomendación de productos basado en aprendizaje colaborativo que aumentó las ventas en un 10%.",
+        "Optimizé modelos de clasificación de imágenes con Scikit-learn para mejorar la precisión del sistema de detección de objetos en imágenes.",
+        "Documenté los procesos de desarrollo de modelos y las mejores prácticas de uso de MLflow."
+      ]
+    },
+    {
+      "company": "DataMind Technologies",
+      "position": "Analista de Datos",
+      "period": "2019 - 2021",
+      "location": "Madrid, España",
+      "bullets": [
+        "Realicé análisis predictivos de ventas utilizando técnicas de regresión lineal y árboles de decisión.",
+        "Desarrollé dashboards interactivos para visualizar datos clave y facilitar la toma de decisiones.",
+        "Colaboré en proyectos de limpieza y transformación de datos para garantizar la calidad de la información."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ingeniería de Telecomunicaciones",
+      "institution": "Universitat Autònoma de Barcelona (UAB)",
+      "period": "2015 - 2019",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Python",
+    "PyTorch",
+    "Scikit-learn",
+    "MLflow",
+    "TensorFlow",
+    "Deep Learning",
+    "Natural Language Processing (PNL)",
+    "Computer Vision",
+    "Time Series Analysis",
+    "Reinforcement Learning",
+    "Data Visualization (Matplotlib, Seaborn)",
+    "Cloud Computing (AWS, GCP)"
+  ],
+  "tools": [
+    "Git",
+    "Jupyter Notebook",
+    "Docker",
+    "Linux",
+    "SQL"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Avanzado"
+    },
+    {
+      "language": "Francés",
+      "level": "Intermedio"
+    }
+  ],
+  "certifications": [
+    "Certificado de Especialización en Machine Learning (Udemy)"
+  ]
+}

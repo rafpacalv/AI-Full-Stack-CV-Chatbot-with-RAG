@@ -1,0 +1,84 @@
+{
+  "cv_id": "cv_20",
+  "language": "en",
+  "full_name": "Hannah Vogelsang",
+  "email": "hannah.vogelsang@example.org",
+  "phone": "+41 591 487330",
+  "city": "Lisbon",
+  "country": "Portugal",
+  "birth_date": "19/12/1999",
+  "linkedin": "linkedin.com/in/hannah-vogelsang",
+  "template": 1,
+  "photo_file": null,
+  "headline": "SEO Specialist | On-Page Optimization and Technical SEO",
+  "summary": "Data-driven SEO specialist with 5 years of experience driving organic traffic and improving website rankings. Proven ability to analyze user behavior, identify SEO opportunities, and implement strategies that deliver measurable results. Passionate about staying current with industry best practices and leveraging technical expertise to enhance SEO performance.",
+  "experience": [
+    {
+      "company": "Nova Tech Solutions, Lisbon",
+      "position": "SEO Specialist",
+      "period": "2022 - Present",
+      "location": "Lisbon, Portugal",
+      "bullets": [
+        "Increased organic traffic by 25% within 6 months by implementing on-page optimization strategies and keyword research.",
+        "Improved website rankings for key target keywords by an average of 15%, resulting in a 10% increase in qualified leads.",
+        "Conducted comprehensive technical SEO audits and implemented fixes to improve website performance and crawl efficiency, reducing page load times by 10%.",
+        "Created and executed content strategies that aligned with SEO best practices, leading to a 20% increase in organic content traffic."
+      ]
+    },
+    {
+      "company": "SolTech Industries, Lisbon",
+      "position": "Junior SEO Specialist",
+      "period": "2021 - 2022",
+      "location": "Lisbon, Portugal",
+      "bullets": [
+        "Assisted in the development and implementation of SEO strategies for multiple websites, contributing to a 15% increase in overall organic traffic.",
+        "Performed keyword research and competitor analysis to identify growth opportunities and inform SEO campaigns.",
+        "Monitored website performance and analyzed SEO metrics using Google Analytics and Search Console to track progress and identify areas for improvement."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc in Business Analytics",
+      "institution": "Instituto Superior Técnico, Lisbon",
+      "period": "2017 - 2021",
+      "detail": "Graduated with honors."
+    }
+  ],
+  "technical_skills": [
+    "SEO",
+    "Technical SEO",
+    "Python",
+    "Google Search Console",
+    "SEMrush",
+    "Ahrefs",
+    "On-Page Optimization",
+    "Off-Page Optimization",
+    "Keyword Research",
+    "Content Marketing",
+    "Link Building",
+    "Website Analytics"
+  ],
+  "tools": [
+    "Google Analytics",
+    "Google Search Console",
+    "SEMrush",
+    "Ahrefs",
+    "Screaming Frog",
+    "Moz Pro"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Portuguese",
+      "level": "Fluent"
+    }
+  ],
+  "certifications": [
+    "Google Analytics Individual Qualification",
+    "HubSpot Content Marketing Certification"
+  ]
+}

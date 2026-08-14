@@ -1,0 +1,26 @@
+# --- API / UI ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+sse-starlette==2.2.1
+streamlit==1.41.1
+plotly==5.24.1
+
+# --- Config / validation ---
+pydantic==2.10.5
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+httpx==0.28.1
+
+# --- CV generation ---
+reportlab==4.2.5
+pillow==11.1.0
+
+# --- Ingestion / RAG ---
+pdfplumber==0.11.5
+numpy==2.2.1
+pandas==2.2.3
+pyarrow==18.1.0
+rank-bm25==0.2.2
+
+# --- Tests ---
+pytest==8.3.4

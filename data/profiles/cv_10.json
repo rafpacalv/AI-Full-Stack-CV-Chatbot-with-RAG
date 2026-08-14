@@ -1,0 +1,108 @@
+{
+  "cv_id": "cv_10",
+  "language": "es",
+  "full_name": "Marta Sanchis Ferrer",
+  "email": "marta.sanchis@example.org",
+  "phone": "+34 648 658 149",
+  "city": "Sabadell",
+  "country": "España",
+  "birth_date": "16/11/1988",
+  "linkedin": "linkedin.com/in/marta-sanchis",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Product Manager | Discovery y Gestión de Producto",
+  "summary": "Lidero equipos de desarrollo con un enfoque en la creación de productos innovadores y centrados en el usuario. Mi experiencia me ha permitido dominar metodologías ágiles y herramientas de análisis para optimizar el ciclo de vida del producto. Estoy apasionado por la colaboración y la innovación constante para alcanzar los objetivos comerciales.",
+  "experience": [
+    {
+      "company": "E-commerce Solutions S.L.",
+      "position": "Product Manager (Lead)",
+      "period": "2021 - Actualidad",
+      "location": "Madrid, España",
+      "bullets": [
+        "Implementé un nuevo proceso de product discovery basado en entrevistas con usuarios y análisis de datos, lo que llevó a una reducción del 15% en el tiempo de lanzamiento de productos.",
+        "Aumenté la tasa de conversión del sitio web en un 10% mediante la implementación de pruebas A/B y la optimización de la experiencia del usuario.",
+        "Supervise un equipo de 5 desarrolladores y diseñadores, asegurando la alineación con la estrategia del producto y la consecución de los objetivos de negocio."
+      ]
+    },
+    {
+      "company": "TechNova B.V.",
+      "position": "Product Manager",
+      "period": "2019 - 2021",
+      "location": "Ámsterdam, Países Bajos",
+      "bullets": [
+        "Desenvolví y lancé un nuevo producto SaaS que aumentó el número de usuarios activos en un 25% durante el primer año.",
+        "Gestioné el roadmap del producto y prioricé las características en base a las necesidades del mercado y los datos de usuario.",
+        "Colaboré con el equipo de marketing para desarrollar campañas de lanzamiento exitosas y aumentar la visibilidad del producto."
+      ]
+    },
+    {
+      "company": "InnovaTech S.A.",
+      "position": "Product Specialist",
+      "period": "2016 - 2019",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Realicé análisis de mercado y competencia para identificar oportunidades de producto y nuevas tendencias tecnológicas.",
+        "Elaboré documentación técnica y especificaciones de producto para asegurar la coherencia y la calidad del desarrollo.",
+        "Proporcioné soporte técnico a los clientes y resolví dudas sobre las características y funcionalidades del producto."
+      ]
+    },
+    {
+      "company": "TecnoServe Consulting",
+      "position": "Assistant Product Manager",
+      "period": "2014 - 2016",
+      "location": "Sabadell, España",
+      "bullets": [
+        "Asistí al Product Manager en la gestión de proyectos y la ejecución del roadmap del producto.",
+        "Realicé seguimiento de las métricas de rendimiento del producto y generé informes para evaluar el impacto de las iniciativas.",
+        "Colaboré con el equipo de ventas para la presentación y comercialización del producto a clientes potenciales."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Administración y Dirección de Empresas",
+      "institution": "Universidad de Zaragoza",
+      "period": "2010 - 2014",
+      "detail": "Especialización en Marketing Digital"
+    }
+  ],
+  "technical_skills": [
+    "Product Discovery",
+    "Jira",
+    "SQL",
+    "A/B Testing",
+    "User Stories",
+    "Agile Methodologies",
+    "Lean Startup",
+    "Data Analysis",
+    "Roadmap Management",
+    "Product Backlog",
+    "Wireframing",
+    "Prototyping"
+  ],
+  "tools": [
+    "Slack",
+    "Trello",
+    "Google Analytics",
+    "Hotjar",
+    "Adobe XD"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Fluido"
+    },
+    {
+      "language": "Francés",
+      "level": "Básico"
+    }
+  ],
+  "certifications": [
+    "Certificación Scrum Master",
+    "Google Analytics Individual Qualification"
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "cv_id": "cv_16",
+  "language": "en",
+  "full_name": "Declan Fitzgerald",
+  "email": "declan.fitzgerald@example.net",
+  "phone": "+42 803 527097",
+  "city": "London",
+  "country": "United Kingdom",
+  "birth_date": "17/03/2000",
+  "linkedin": "linkedin.com/in/declan-fitzgerald",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Data Engineer | Data Pipelines and Cloud Infrastructure",
+  "summary": "Results-driven Data Engineer with 4+ years of experience building and maintaining efficient data pipelines. Proven ability to leverage cloud technologies and automation to optimize data processing and analysis. Passionate about developing scalable solutions that drive data-informed decision making.",
+  "experience": [
+    {
+      "company": "Nordisk Innovations",
+      "position": "Data Engineer",
+      "period": "2023 - Present",
+      "location": "London, UK",
+      "bullets": [
+        "Developed and implemented a new data pipeline using dbt and Snowflake, reducing data processing time by 25% and improving data accuracy by 15%.",
+        "Streamlined data ingestion processes by automating data loading from multiple sources into Snowflake, increasing data refresh frequency by 50%.",
+        "Designed and implemented a monitoring system for data pipelines using Airflow, reducing downtime and ensuring data quality."
+      ]
+    },
+    {
+      "company": "EonTech Solutions",
+      "position": "Junior Data Engineer",
+      "period": "2022 - 2023",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Collaborated with senior engineers to develop and maintain data pipelines for customer analytics, contributing to a 10% increase in customer segmentation accuracy.",
+        "Developed Python scripts for data cleaning and transformation, improving data quality for reporting and analysis.",
+        "Assisted in the migration of existing data infrastructure to the cloud, reducing operational costs by 15%."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc Industrial Engineering",
+      "institution": "Imperial College London",
+      "period": "2018 - 2022",
+      "detail": "Graduated with First-Class Honours"
+    },
+    {
+      "degree": "MSc Industrial Engineering",
+      "institution": "Imperial College London",
+      "period": "2022 - 2023",
+      "detail": "Focused on data analytics and process optimization"
+    }
+  ],
+  "technical_skills": [
+    "Python",
+    "dbt",
+    "Snowflake",
+    "Airflow",
+    "SQL",
+    "Pandas",
+    "NumPy",
+    "Git",
+    "Linux",
+    "AWS",
+    "Docker",
+    "Kubernetes"
+  ],
+  "tools": [
+    "Jupyter Notebook",
+    "Data Studio",
+    "PostgreSQL",
+    "Apache Spark",
+    "Jenkins"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "German",
+      "level": "Conversational"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Data Analytics - Specialty"
+  ]
+}

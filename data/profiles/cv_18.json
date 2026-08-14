@@ -1,0 +1,84 @@
+{
+  "cv_id": "cv_18",
+  "language": "en",
+  "full_name": "Sinéad O'Halloran",
+  "email": "sinead.ohalloran@example.com",
+  "phone": "+32 743 981270",
+  "city": "Berlin",
+  "country": "Germany",
+  "birth_date": "12/07/1996",
+  "linkedin": "linkedin.com/in/sinead-ohalloran",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Machine Learning Engineer | NLP and Deep Learning",
+  "summary": "Driven Machine Learning Engineer with a focus on Natural Language Processing and deep learning models. Proven ability to develop and deploy efficient algorithms that deliver tangible results. Passionate about leveraging AI to solve complex problems and create innovative solutions.",
+  "experience": [
+    {
+      "company": "Innovatech GmbH",
+      "position": "Machine Learning Engineer",
+      "period": "2023 - Present",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Developed a novel NLP model for sentiment analysis, achieving a 92% accuracy rate on a benchmark dataset.",
+        "Implemented a deep learning system for text summarization, reducing article length by 30% while maintaining key information.",
+        "Optimized model training pipelines using Kubernetes, resulting in a 25% reduction in training time."
+      ]
+    },
+    {
+      "company": "SmartSolutions AG",
+      "position": "Junior Machine Learning Engineer",
+      "period": "2023 - 2024",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Contributed to the development of a recommendation system, increasing user engagement by 15%.",
+        "Built and deployed a machine learning model for fraud detection, achieving a 98% accuracy rate in identifying fraudulent transactions."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc in Interaction Design",
+      "institution": "Technische Universität Berlin",
+      "period": "2018 - 2022",
+      "detail": ""
+    },
+    {
+      "degree": "MSc in Interaction Design",
+      "institution": "Technische Universität Berlin",
+      "period": "2022 - 2023",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Python",
+    "TensorFlow",
+    "PyTorch",
+    "Scikit-learn",
+    "NLP",
+    "Deep Learning",
+    "Natural Language Understanding",
+    "Transformers",
+    "Kubernetes",
+    "Cloud Computing (AWS/GCP)"
+  ],
+  "tools": [
+    "Jupyter Notebook",
+    "Git",
+    "Docker",
+    "REST APIs",
+    "TensorBoard"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Fluent"
+    },
+    {
+      "language": "German",
+      "level": "Conversational"
+    }
+  ],
+  "certifications": [
+    "Google Cloud Certified Professional Machine Learning Engineer"
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "cv_id": "cv_11",
+  "language": "es",
+  "full_name": "Álvaro Peñalver Gil",
+  "email": "alvaro.penalver@example.com",
+  "phone": "+34 675 729 198",
+  "city": "Tarragona",
+  "country": "España",
+  "birth_date": "15/07/2000",
+  "linkedin": "linkedin.com/in/alvaro-penalver",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Desarrollador Mobile | Kotlin y Swift",
+  "summary": "Desarrollador móvil junior con un año de experiencia en el desarrollo de aplicaciones para iOS y Android. Me apasiona la creación de interfaces intuitivas y fluidas, con foco en la experiencia del usuario. Adoro la constante evolución del mundo móvil y me mantengo actualizado con las últimas tecnologías y tendencias.",
+  "experience": [
+    {
+      "company": "InnoApp Solutions",
+      "position": "Desarrollador Mobile Junior",
+      "period": "2025 - Actualidad",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Desarrollé una aplicación móvil para Android en Kotlin que incrementó el número de usuarios activos en un 25% en los primeros 3 meses.",
+        "Implementé funciones de notificación push en iOS utilizando Swift, logrando un aumento del 15% en la participación del usuario.",
+        "Colaboré en el desarrollo de una aplicación híbrida para iOS y Android con Flutter, optimizando el rendimiento y la experiencia del usuario en un 10%."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ingeniería Informática",
+      "institution": "Universitat Oberta de Catalunya (UOC)",
+      "period": "2021 - 2025",
+      "detail": "Especialización en Desarrollo de Aplicaciones Móviles"
+    }
+  ],
+  "technical_skills": [
+    "Kotlin",
+    "Swift",
+    "Flutter",
+    "REST APIs",
+    "JSON",
+    "Git",
+    "Agile methodologies",
+    "UI/UX design",
+    "Firebase",
+    "AWS Amplify"
+  ],
+  "tools": [
+    "Android Studio",
+    "Xcode",
+    "VS Code",
+    "Postman"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "B2"
+    }
+  ],
+  "certifications": [
+    "Certificación Google Cloud Associate Cloud Engineer"
+  ]
+}

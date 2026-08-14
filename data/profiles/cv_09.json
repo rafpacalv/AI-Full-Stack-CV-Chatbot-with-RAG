@@ -1,0 +1,70 @@
+{
+  "cv_id": "cv_09",
+  "language": "es",
+  "full_name": "Óscar Delclós Rivas",
+  "email": "oscar.delclos@example.org",
+  "phone": "+34 632 799 902",
+  "city": "Málaga",
+  "country": "España",
+  "birth_date": "11/01/1999",
+  "linkedin": "linkedin.com/in/oscar-delclos",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Ingeniero QA | Pruebas Automatizadas y Ci/Cd",
+  "summary": "Ingeniero QA con un año de experiencia desarrollando y ejecutando pruebas automatizadas para garantizar la calidad del software. Me apasiona la detección temprana de errores y la mejora continua del proceso de desarrollo. Mi enfoque se centra en la eficiencia y la automatización para asegurar una entrega de software robusta y de alta calidad.",
+  "experience": [
+    {
+      "company": "TechNova Solutions S.L.",
+      "position": "Ingeniero QA (Junior)",
+      "period": "Marzo 2025 - Actualidad",
+      "location": "Madrid, España",
+      "bullets": [
+        "Implementé pruebas automatizadas con Selenium y Cypress, aumentando la cobertura del testing en un 25% durante el primer trimestre.",
+        "Desenvolví frameworks de pruebas automatizadas con pytest, reduciendo el tiempo de ejecución de las pruebas en un 15%.",
+        "Contribuí a la implementación de un pipeline CI/CD con Jenkins, acortando el tiempo de entrega de software en un 10%.",
+        "Trabajé en colaboración con el equipo de desarrollo para identificar y solucionar errores críticos, mejorando la estabilidad del producto en un 8%."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Física",
+      "institution": "Universidad de Deusto",
+      "period": "2021 - 2025",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Selenium",
+    "pytest",
+    "Cypress",
+    "JUnit",
+    "TestNG",
+    "BDD (Behaviour Driven Development)",
+    "API Testing",
+    "Exploratory Testing",
+    "CI/CD",
+    "Jira",
+    "Confluence",
+    "Git"
+  ],
+  "tools": [
+    "Jenkins",
+    "Docker",
+    "Kubernetes",
+    "Postman"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "B2"
+    }
+  ],
+  "certifications": [
+    "Certificación ISTQB Foundation Level"
+  ]
+}

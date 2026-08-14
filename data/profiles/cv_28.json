@@ -1,0 +1,83 @@
+{
+  "cv_id": "cv_28",
+  "language": "en",
+  "full_name": "Beatriz Fontoura Lima",
+  "email": "beatriz.fontoura@example.net",
+  "phone": "+39 230 861702",
+  "city": "Vienna",
+  "country": "Austria",
+  "birth_date": "14/11/1994",
+  "linkedin": "linkedin.com/in/beatriz-fontoura",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Data Engineer | Data Pipelines and Cloud Infrastructure",
+  "summary": "Highly motivated Data Engineer with 6 years of experience designing, developing, and maintaining robust data pipelines. Proven ability to work collaboratively in agile environments and deliver high-quality solutions within tight deadlines. Passionate about leveraging cutting-edge technologies to optimize data workflows and drive data-driven decision making.",
+  "experience": [
+    {
+      "company": "InnoTech Solutions GmbH",
+      "position": "Senior Data Engineer",
+      "period": "2021 - Present",
+      "location": "Vienna, Austria",
+      "bullets": [
+        "Designed and implemented a new data pipeline using dbt and Snowflake, resulting in a 20% reduction in data processing time.",
+        "Developed and automated data quality checks using Airflow, ensuring 99.9% data accuracy.",
+        "Collaborated with cross-functional teams to integrate data from multiple sources, streamlining reporting and analysis processes.",
+        "Mentored junior data engineers, fostering a culture of knowledge sharing and continuous improvement."
+      ]
+    },
+    {
+      "company": "DigiFlow Systems AG",
+      "position": "Data Engineer",
+      "period": "2020 - 2021",
+      "location": "Vienna, Austria",
+      "bullets": [
+        "Built and maintained ETL processes using Python and SQL, processing over 500 million data records per day.",
+        "Developed and deployed data visualizations using Tableau, providing actionable insights to stakeholders.",
+        "Streamlined data ingestion processes, reducing latency by 30% and improving data availability."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science in Interaction Design",
+      "institution": "TU Wien",
+      "period": "2016 - 2020",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Python",
+    "dbt",
+    "Snowflake",
+    "Airflow",
+    "SQL",
+    "Spark",
+    "Pandas",
+    "AWS (S3, Redshift)",
+    "Git",
+    "Linux"
+  ],
+  "tools": [
+    "Jira",
+    "Confluence",
+    "Docker",
+    "Kubernetes"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "German",
+      "level": "Fluent"
+    },
+    {
+      "language": "Portuguese",
+      "level": "Conversational"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Solutions Architect - Associate"
+  ]
+}
