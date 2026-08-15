@@ -52,6 +52,9 @@ def inject_css() -> None:
         # citation chips
         f".lt-chip {{ display: inline-block; background: rgba(0,255,198,0.10); border: 1px solid rgba(0,255,198,0.38); color: {MINT}; padding: 3px 11px; border-radius: 999px; font-size: 12px; margin: 3px 5px 3px 0; font-weight: 500; }}",
         f".lt-chip-muted {{ display: inline-block; background: rgba(255,255,255,0.05); border: 1px solid {GREY_LINE}; color: {GREY_TEXT}; padding: 3px 11px; border-radius: 999px; font-size: 12px; margin: 3px 5px 3px 0; }}",
+        # Amber, not mint: this chip reports an absence and must not read as a
+        # normal filter chip.
+        f".lt-chip-warn {{ display: inline-block; background: rgba(247,181,62,0.14); border: 1px solid rgba(247,181,62,0.45); color: {AMBER}; padding: 3px 11px; border-radius: 999px; font-size: 12px; margin: 3px 5px 3px 0; font-weight: 500; }}",
         # routing badge
         ".lt-badge { display: inline-block; padding: 2px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }",
         f".lt-badge-retrieve {{ background: rgba(0,255,198,0.14); color: {MINT}; }}",

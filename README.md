@@ -156,6 +156,49 @@ refusal is worded is not.
 
 ---
 
+## The second bug: semantic search is too forgiving
+
+Asked *"¿Qué candidatos tienen conocimientos en CNN?"* — a term appearing in
+**zero** CVs — the system answered:
+
+> *"Guillem Roca Prats: menciona Computer Vision. Las CNN son una arquitectura
+> comúnmente utilizada en Computer Vision."*
+
+Nothing there is false, but the headline attributes a skill to someone who
+never listed it. And it was inconsistent: the identical question in English was
+refused correctly, so whether the user got warned depended on the language they
+typed in.
+
+This is the flip side of the earlier bug. Dense retrieval is *supposed* to match
+meaning over characters — "CNN" and "computer vision" genuinely are close in
+embedding space, and the retriever did its job. But a recruiter typing a
+specific technology means that technology, and a semantic neighbourhood is not
+a substitute for the CV saying so.
+
+**The fix** ([`rag/keywords.py`](src/cvscreener/rag/keywords.py)) extracts the
+terms a user expects to be matched literally — acronyms, tech tokens like
+`node.js`, and the skill the router identified — and checks them against the
+corpus vocabulary, built with the same tokenizer BM25 uses. Terms found nowhere
+are named in the prompt as absent, and shown in the UI as an amber chip.
+
+The check runs against **all 375 chunks**, not the five retrieved. "Absent from
+what we retrieved" is weak and might just mean poor ranking; "absent from the
+entire corpus" is a fact worth telling the user. Now both languages answer:
+
+> *"CNN no aparece en ninguno de los CVs de la base de datos."* — then offers
+> adjacent profiles, explicitly flagged as a suggestion rather than a finding.
+
+Eleven tests cover it, asserting both directions: `CNN` and `COBOL` are flagged,
+while `SQL`, `UPC`, `Kubernetes`, `Node.js` and `aprendizaje automático` are not.
+The second half matters as much as the first — a check that fires on everything
+is a check nobody reads.
+
+*Known gap:* detection catches acronyms, punctuated tech tokens and the router's
+single `skill` field. A plain Titlecase technology in a multi-term question
+("COBOL **and Fortran**") may slip through, since `QueryPlan` carries one skill.
+
+---
+
 ## Engineering decisions
 
 | Decision | Why |

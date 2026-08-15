@@ -21,6 +21,7 @@ from ..config import settings
 from ..llm import client
 from ..textutils import fold_accents
 from .aggregate import AggregateResult
+from .keywords import warning_sentence
 from .retrieve import RetrievedChunk
 
 MAX_CONTEXT_CHARS = 7000
@@ -121,7 +122,21 @@ def _table_context(frame: pd.DataFrame, limit: int = 40) -> str:
     return frame[columns].head(limit).to_string(index=False)
 
 
-def stream_retrieval_answer(question: str, chunks: list[RetrievedChunk]) -> Iterator[str]:
+def stream_retrieval_answer(
+    question: str,
+    chunks: list[RetrievedChunk],
+    *,
+    missing_terms: list[str] | None = None,
+) -> Iterator[str]:
+    """Answer from retrieved chunks.
+
+    ``missing_terms`` lists terms from the question that appear in no CV at
+    all. Dense retrieval returns the nearest neighbours regardless, so without
+    this the model sees plausible-looking context and infers the missing skill
+    from an adjacent one - answering a question about "CNN" with a Computer
+    Vision candidate. Telling it which terms are genuinely absent turns a
+    silent overclaim into an explicit "no CV mentions this".
+    """
     lang = detect_question_language(question)
     if not chunks:
         yield (
@@ -135,6 +150,7 @@ def stream_retrieval_answer(question: str, chunks: list[RetrievedChunk]) -> Iter
         f"{'Fragmentos de CV' if lang == 'es' else 'CV excerpts'}:\n\n"
         f"{build_context(chunks)}\n\n"
         f"{'Pregunta' if lang == 'es' else 'Question'}: {question}"
+        f"{warning_sentence(missing_terms or [], lang)}"
     )
     yield from client.chat_stream(
         [

@@ -32,6 +32,7 @@ from ..config import settings
 from ..llm import client
 from ..rag.aggregate import candidates_summary, load_candidates, run_aggregate
 from ..rag.answer import stream_aggregate_answer, stream_retrieval_answer
+from ..rag.keywords import missing_from_corpus
 from ..rag.retrieve import IndexNotBuilt, embed_query, load_index, search
 from ..rag.router import QueryPlan, route
 
@@ -176,10 +177,15 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             pool.shutdown(wait=False)
             raise
 
+        # Which literal terms from the question exist in no CV at all. Checked
+        # against the whole corpus, not the retrieved chunks, so the statement
+        # is definitive rather than an artefact of what happened to rank.
+        missing = missing_from_corpus(req.question, skill=plan.skill)
+
         # First event out: the routing decision. The UI paints its badge from
         # this immediately, so the user sees the system reacting long before
         # any answer text exists.
-        yield _sse("plan", plan.model_dump())
+        yield _sse("plan", {**plan.model_dump(), "missing_terms": missing})
 
         # --- BRANCH A: aggregate / chart ---------------------------------
         # Counting and plotting questions are answered from the candidate
@@ -196,6 +202,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
                 "meta",
                 {
                     "mode": plan.intent,
+                    "missing_terms": missing,
                     "filters": result.filters,
                     "chart": result.chart,
                     "matched_count": int(len(frame)),
@@ -249,7 +256,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
 
         # Stream the answer as the model produces it. At ~18 tok/s this is the
         # difference between a live assistant and a blank screen for 12 s.
-        for token in stream_retrieval_answer(req.question, hits):
+        for token in stream_retrieval_answer(req.question, hits, missing_terms=missing):
             yield _sse("token", {"t": token})
 
         # Collapse chunks into one citation per candidate. Five chunks often
@@ -274,6 +281,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             "meta",
             {
                 "mode": "retrieve",
+                "missing_terms": missing,
                 "filters": {},
                 "chart": None,
                 "matched_count": len(citations),

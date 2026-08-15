@@ -167,6 +167,76 @@ def test_tokenizer_folds_accents_and_keeps_tech_tokens():
     assert "ci/cd" in tokenize("CI/CD pipelines")
 
 
+# --- literal-term verification --------------------------------------------
+@pytest.mark.parametrize(
+    ("question", "skill", "expected"),
+    [
+        ("¿Qué candidatos tienen conocimientos en CNN?", "cnn", ["CNN"]),
+        ("Who has experience with CNN?", "cnn", ["CNN"]),
+        ("Busco alguien que sepa COBOL", "cobol", ["COBOL"]),
+        # Present in the corpus: must NOT be flagged.
+        ("¿Quién sabe SQL y Docker?", "sql", []),
+        ("¿Qué candidatos estudiaron en la UPC?", "", []),
+        ("Who knows Kubernetes?", "kubernetes", []),
+        ("Who has worked with Node.js?", "node.js", []),
+        ("¿Quién sabe aprendizaje automático?", "machine learning", []),
+        # No hard terms at all - a name is not a technology.
+        ("Resume el perfil de Katarzyna Wilczyńska", "", []),
+    ],
+)
+@index_built
+def test_terms_absent_from_the_corpus_are_detected(question, skill, expected):
+    """Regression: a question about "CNN" was answered with a Computer Vision CV.
+
+    Dense retrieval returns nearest neighbours whether or not the exact term
+    exists, so the model saw plausible context and inferred the skill from an
+    adjacent one - claiming a candidate knew CNNs when no CV says so. Worse, it
+    was inconsistent: the same question in English was refused correctly.
+
+    Both halves matter here. Missing terms must be caught, and present terms
+    must not be flagged, or every answer would carry a spurious warning.
+    """
+    from cvscreener.rag.keywords import missing_from_corpus
+
+    assert missing_from_corpus(question, skill=skill) == expected
+
+
+@index_built
+def test_warning_is_injected_only_when_something_is_missing():
+    from cvscreener.rag.keywords import warning_sentence
+
+    for language in ("es", "en"):
+        assert "CNN" in warning_sentence(["CNN"], language)
+        assert warning_sentence([], language) == ""
+
+
+@index_built
+def test_absent_term_answer_states_the_absence():
+    """The end-to-end behaviour, in both languages.
+
+    Weaker than the unit tests above - it matches wording, and wording varies -
+    so it checks only for a negation appearing near the term, in either
+    language, and leaves the precise phrasing to the model.
+    """
+    from cvscreener.llm import client
+    from cvscreener.rag.answer import stream_retrieval_answer
+    from cvscreener.rag.keywords import missing_from_corpus
+    from cvscreener.rag.retrieve import search
+
+    if not client.is_up():
+        pytest.skip("Ollama not reachable")
+
+    negations = ("no aparece", "ningun", "not mentioned", "no cv", "does not", "not appear")
+    for question in ("¿Qué candidatos tienen conocimientos en CNN?", "Who has experience with CNN?"):
+        missing = missing_from_corpus(question, skill="cnn")
+        assert missing == ["CNN"]
+        answer = "".join(
+            stream_retrieval_answer(question, search(question, top_k=5), missing_terms=missing)
+        )
+        folded = fold_accents(answer).casefold()
+        assert any(n in folded for n in negations), f"no absence stated: {answer[:200]}"
+
+
 # --- retrieval (needs the built index) ------------------------------------
 @index_built
 def test_exact_token_query_finds_upc_graduates():

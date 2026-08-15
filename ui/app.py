@@ -106,6 +106,19 @@ def stream_chat(question: str, model: str):
                     continue  # never let one malformed frame kill the stream
 
 
+def clear_conversation() -> None:
+    """Reset the chat.
+
+    Clears the retrieval trace and last chart too, not just the messages: the
+    Pipeline tab reads `last_meta`, so leaving it behind would show a trace for
+    a question no longer on screen.
+    """
+    st.session_state.messages = []
+    st.session_state.last_chart = None
+    st.session_state.pop("last_meta", None)
+    st.session_state.pop("pending", None)
+
+
 def render_citations(citations: list[dict]) -> None:
     if not citations:
         return
@@ -194,7 +207,7 @@ with st.sidebar:
 
     st.divider()
     if st.button("Clear conversation", use_container_width=True):
-        st.session_state.messages = []
+        clear_conversation()
         st.rerun()
 
 
@@ -261,6 +274,14 @@ with tab_chat:
                     for key in ("skill", "seniority", "city", "candidate_name"):
                         if payload.get(key):
                             bits.append(f"<span class='lt-chip-muted'>{key}: {payload[key]}</span>")
+                    # Terms that appear in no CV. Shown as a warning chip so the
+                    # absence is visible at a glance, not buried in the prose -
+                    # a recruiter searching for a specific technology needs to
+                    # know immediately that nobody lists it.
+                    for term in payload.get("missing_terms") or []:
+                        bits.append(
+                            f"<span class='lt-chip-warn'>not in any CV: {term}</span>"
+                        )
                     badge_slot.markdown(" ".join(bits), unsafe_allow_html=True)
                 elif event == "token":
                     # Rewrite the whole bubble each token, with a block cursor
