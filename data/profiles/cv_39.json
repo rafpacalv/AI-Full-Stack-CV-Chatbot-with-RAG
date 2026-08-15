@@ -1,0 +1,92 @@
+{
+  "cv_id": "cv_39",
+  "language": "es",
+  "full_name": "Carla Molina García",
+  "email": "carla.molina@example.com",
+  "phone": "+34 696 701 116",
+  "city": "Tarragona",
+  "country": "España",
+  "birth_date": "10/08/1993",
+  "linkedin": "linkedin.com/in/carla-molina",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Ingeniera Backend | Python y Django",
+  "summary": "Soy una ingeniera backend con 8 años de experiencia desarrollando aplicaciones robustas y escalables utilizando Python y Django. Mi enfoque se centra en la creación de arquitecturas eficientes y seguras, y en la optimización del rendimiento de las aplicaciones. Me apasiona la resolución de problemas complejos y el trabajo en equipo para alcanzar objetivos comunes.",
+  "experience": [
+    {
+      "company": "NovaTech S.L.",
+      "position": "Ingeniera Backend Senior",
+      "period": "2022 - Actualidad",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Desarrollé y mantuve APIs RESTful utilizando Python y Django que aumentaron la velocidad de procesamiento de datos en un 25%.",
+        "Implemente una nueva arquitectura de microservicios que redujo el tiempo de respuesta del sistema en un 15%.",
+        "Participé activamente en la transición del sistema a Docker, mejorando la escalabilidad y la portabilidad de la aplicación.",
+        "Documente las API y el código fuente para asegurar una mejor comprensión y mantenimiento del sistema."
+      ]
+    },
+    {
+      "company": "TecnoData S.A.",
+      "position": "Ingeniera Backend",
+      "period": "2019 - 2022",
+      "location": "Tarragona, España",
+      "bullets": [
+        "Desarrollé módulos backend para una plataforma de e-commerce que gestiona más de 100.000 productos.",
+        "Implementé un sistema de autenticación seguro utilizando JWT que redujo los incidentes de acceso no autorizado en un 8%.",
+        "Optimizé las consultas a la base de datos PostgreSQL, mejorando el tiempo de carga de las páginas en un 10%."
+      ]
+    },
+    {
+      "company": "InnovaSolutions B.V.",
+      "position": "Trainee Backend",
+      "period": "2018 - 2019",
+      "location": "Amsterdam, Países Bajos",
+      "bullets": [
+        "Participé en el desarrollo de una aplicación de gestión de proyectos utilizando Python y Django.",
+        "Aprendí y aplicé buenas prácticas de desarrollo de software en un entorno ágil."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Física",
+      "institution": "Universitat Oberta de Catalunya (UOC)",
+      "period": "2014 - 2018",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Python",
+    "Django",
+    "PostgreSQL",
+    "Docker",
+    "Git",
+    "REST API",
+    "SQL",
+    "Bash",
+    "Heroku",
+    "AWS",
+    "Test Driven Development (TDD)"
+  ],
+  "tools": [
+    "Jira",
+    "Trello",
+    "Slack",
+    "Postman",
+    "VS Code"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Avanzado"
+    }
+  ],
+  "certifications": [
+    "Certificación Django (Django Girls)",
+    "AWS Certified Developer - Associate"
+  ]
+}

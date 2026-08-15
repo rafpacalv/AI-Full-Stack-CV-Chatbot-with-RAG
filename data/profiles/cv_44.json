@@ -1,0 +1,109 @@
+{
+  "cv_id": "cv_44",
+  "language": "en",
+  "full_name": "Chiara Rossi",
+  "email": "chiara.rossi@example.org",
+  "phone": "+45 721 518832",
+  "city": "Amsterdam",
+  "country": "Netherlands",
+  "birth_date": "19/02/1985",
+  "linkedin": "linkedin.com/in/chiara-rossi",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Growth / Paid Media Manager | Performance Marketing and Data Analysis",
+  "summary": "Data-driven Growth / Paid Media Manager with 13+ years of experience driving sustainable business growth through innovative digital marketing strategies. Proven ability to optimize campaigns across multiple platforms, analyze performance data, and deliver measurable results. Passionate about leveraging technology to achieve ambitious marketing objectives.",
+  "experience": [
+    {
+      "company": "Innovatech Solutions BV",
+      "position": "Growth / Paid Media Manager (Lead)",
+      "period": "2021 - Present",
+      "location": "Amsterdam, Netherlands",
+      "bullets": [
+        "Spearheaded paid media campaigns across Google Ads, TikTok Ads, and programmatic channels, resulting in a 25% increase in qualified leads year-over-year.",
+        "Implemented A/B testing strategies to optimize ad creatives and landing pages, achieving a 15% conversion rate improvement.",
+        "Developed and executed data-driven attribution models, identifying high-performing channels and optimizing budget allocation for maximum ROI.",
+        "Led a team of 3 paid media specialists, providing mentorship and guidance to foster professional growth and campaign excellence."
+      ]
+    },
+    {
+      "company": "TechNova Limited",
+      "position": "Paid Media Specialist",
+      "period": "2019 - 2021",
+      "location": "London, United Kingdom",
+      "bullets": [
+        "Managed daily operations of paid media campaigns across Google Ads and Facebook Ads, achieving a consistent 10% cost-per-acquisition (CPA) reduction.",
+        "Utilized SQL queries to analyze campaign performance data, identifying key insights and areas for improvement.",
+        "Collaborated with the content marketing team to develop targeted ad campaigns aligned with overall brand messaging and goals.",
+        "Conducted competitive analysis to identify industry best practices and emerging trends in the paid media landscape."
+      ]
+    },
+    {
+      "company": "DigitalFlux GmbH",
+      "position": "Marketing Analyst",
+      "period": "2017 - 2019",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Analyzed website traffic and user behavior data using Google Analytics, providing actionable insights to optimize marketing campaigns.",
+        "Developed and presented monthly performance reports to key stakeholders, highlighting campaign successes and areas for further development.",
+        "Conducted market research to identify target audiences and understand their online behavior.",
+        "Assisted in the implementation of A/B testing frameworks to measure the effectiveness of marketing initiatives."
+      ]
+    },
+    {
+      "company": "Amsterdam Media Network",
+      "position": "Marketing Intern",
+      "period": "2013 - 2015",
+      "location": "Amsterdam, Netherlands",
+      "bullets": [
+        "Supported the marketing team with various tasks, including content creation, social media management, and event planning.",
+        "Assisted in the development and implementation of marketing campaigns across various online and offline channels.",
+        "Analyzed marketing data and prepared reports to track campaign performance and identify areas for improvement.",
+        "Gained valuable experience in the fast-paced environment of a digital marketing agency."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science in Telecommunications Engineering",
+      "institution": "University of Amsterdam",
+      "period": "2010 - 2013",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Google Ads",
+    "TikTok Ads",
+    "SQL",
+    "Amplitude",
+    "Facebook Ads",
+    "Campaign Management",
+    "Data Analysis",
+    "A/B Testing",
+    "SEO",
+    "SEM",
+    "Analytics Reporting",
+    "Marketing Automation"
+  ],
+  "tools": [
+    "Google Analytics",
+    "Facebook Business Manager",
+    "TikTok Ads Manager",
+    "Hotjar",
+    "Jira",
+    "Slack"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Dutch",
+      "level": "Fluent"
+    }
+  ],
+  "certifications": [
+    "Google Ads Certification",
+    "Facebook Blueprint Certification"
+  ]
+}

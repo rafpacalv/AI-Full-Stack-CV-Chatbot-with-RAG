@@ -1,0 +1,115 @@
+{
+  "cv_id": "cv_38",
+  "language": "es",
+  "full_name": "Valentina Ruiz Sánchez",
+  "email": "valentina.ruiz@example.net",
+  "phone": "+34 699 378 211",
+  "city": "Sabadell",
+  "country": "España",
+  "birth_date": "15/05/1992",
+  "linkedin": "linkedin.com/in/valentina-ruiz",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Analista de Datos | Machine Learning y Visualización de Datos",
+  "summary": "Soy un profesional con más de 12 años de experiencia liderando equipos de análisis de datos y desarrollando soluciones basadas en datos. Mi pasión reside en convertir datos complejos en información accionable, utilizando técnicas de Machine Learning y visualización de datos para ofrecer perspectivas valiosas a la toma de decisiones. Busco constantemente nuevas herramientas y metodologías para optimizar procesos y mejorar la eficacia de las estrategias de negocio.",
+  "experience": [
+    {
+      "company": "Nova Insights SL",
+      "position": "Analista de Datos Lead",
+      "period": "2021 - Actualidad",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Lideré un equipo de 5 analistas de datos para desarrollar modelos de Machine Learning que aumentaron la precisión de las predicciones de ventas en un 15%.",
+        "Implementamos una nueva arquitectura de datos con DBT, mejorando la eficiencia de las consultas SQL en un 30% y reduciendo el tiempo de procesamiento del 20%.",
+        "Desarrolle dashboards interactivos con Tableau para visualizar datos clave a stakeholders, facilitando la toma de decisiones estratégicas.",
+        "Implementé un sistema de alertas automatizado basado en Python para identificar tendencias anómalas en tiempo real, reduciendo los tiempos de respuesta a incidentes en un 10%."
+      ]
+    },
+    {
+      "company": "DataFlow Solutions GmbH",
+      "position": "Analista Senior de Datos",
+      "period": "2019 - 2021",
+      "location": "Berlín, Alemania",
+      "bullets": [
+        "Conseguí una reducción del 10% en el tiempo de procesamiento de datos mediante la optimización de consultas SQL y la implementación de índices eficientes.",
+        "Desenvolví herramientas de análisis predictivo utilizando Python y Machine Learning que permitieron a la empresa identificar oportunidades de venta con un aumento del 8% en conversiones.",
+        "Colaboré con el equipo de desarrollo para integrar los conjuntos de datos en la plataforma web, mejorando la experiencia del usuario y la accesibilidad a la información."
+      ]
+    },
+    {
+      "company": "Mindspark Technologies SA",
+      "position": "Analista de Datos",
+      "period": "2016 - 2019",
+      "location": "Madrid, España",
+      "bullets": [
+        "Participe en la creación de un sistema de análisis de datos para monitorear el rendimiento de campañas publicitarias, obteniendo una mejora del 5% en el retorno de la inversión (ROI).",
+        "Desenvolví dashboards con Tableau para visualizar datos clave del negocio, facilitando la comunicación de información a los stakeholders.",
+        "Implementé scripts de Python para automatizar tareas repetitivas, liberando tiempo para enfocarse en análisis más estratégicos."
+      ]
+    },
+    {
+      "company": "StartUp Labs",
+      "position": "Junior Analista de Datos",
+      "period": "2014 - 2016",
+      "location": "Valencia, España",
+      "bullets": [
+        "Asistí en la recopilación y limpieza de datos para diferentes proyectos, preparando los conjuntos de datos para análisis.",
+        "Realicé análisis descriptivos para identificar tendencias y patrones en los datos, generando informes para la toma de decisiones.",
+        "Aprendí a utilizar herramientas de análisis de datos como SQL, Python y Tableau."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Diseño de Interacción",
+      "institution": "Universidad de Zaragoza",
+      "period": "2010 - 2014",
+      "detail": ""
+    },
+    {
+      "degree": "Curso de Especialización en Big Data",
+      "institution": "Instituto de Tecnología Avanzada (ITA)",
+      "period": "2018",
+      "detail": "Certificación en Analítica de Datos con Python y Machine Learning"
+    }
+  ],
+  "technical_skills": [
+    "SQL",
+    "Python (Pandas, NumPy, Scikit-learn)",
+    "Tableau",
+    "Power BI",
+    "Dbt",
+    "Machine Learning",
+    "Deep Learning",
+    "Data Mining",
+    "Data Visualization",
+    "R (Básico)",
+    "NoSQL Databases (MongoDB)",
+    "Cloud Computing (AWS)"
+  ],
+  "tools": [
+    "Git",
+    "Jupyter Notebook",
+    "Docker",
+    "Jira",
+    "Slack",
+    "AWS"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Fluido"
+    },
+    {
+      "language": "Francés",
+      "level": "Básico"
+    }
+  ],
+  "certifications": [
+    "Microsoft Certified: Azure Data Scientist Associate"
+  ]
+}

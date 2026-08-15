@@ -1,0 +1,104 @@
+{
+  "cv_id": "cv_40",
+  "language": "en",
+  "full_name": "Aisha Patel",
+  "email": "aisha.patel@example.org",
+  "phone": "+34 692 927 835",
+  "city": "Barcelona",
+  "country": "Spain",
+  "birth_date": "06/02/1995",
+  "linkedin": "linkedin.com/in/aisha-patel",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Frontend Engineer | Vue.js and TypeScript Applications",
+  "summary": "Results-driven frontend engineer with 6 years of experience developing and maintaining high-performance, user-centric web applications. Proven ability to architect and implement complex user interfaces while adhering to best practices for code quality and maintainability. Passionate about leveraging cutting-edge technologies to deliver exceptional user experiences.",
+  "experience": [
+    {
+      "company": "AptoLabs (Barcelona)",
+      "position": "Frontend Engineer (Senior)",
+      "period": "2023 - Present",
+      "location": "Barcelona, Spain",
+      "bullets": [
+        "Led the development of a new Vue.js-based customer portal, resulting in a 25% increase in user engagement and a 15% reduction in support tickets.",
+        "Implemented a new UI component library, streamlining development workflows and reducing code redundancy by 30%.",
+        "Collaborated with designers and product managers to ensure a seamless and intuitive user experience, consistently receiving positive feedback from end-users."
+      ]
+    },
+    {
+      "company": "InnoVision Technologies (Berlin)",
+      "position": "Frontend Engineer",
+      "period": "2021 - 2023",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Developed and maintained key features for a dynamic e-commerce platform, achieving a 10% increase in average order value.",
+        "Optimized web application performance, reducing page load times by 20% and improving overall user experience.",
+        "Collaborated with a remote team of developers using agile methodologies to deliver high-quality software within tight deadlines."
+      ]
+    },
+    {
+      "company": "TechSpark Solutions (London)",
+      "position": "Junior Frontend Developer",
+      "period": "2020 - 2021",
+      "location": "London, UK",
+      "bullets": [
+        "Assisted senior developers in building and maintaining responsive web applications using HTML, CSS, and JavaScript.",
+        "Gained valuable experience working with version control systems (Git) and contributing to collaborative development projects.",
+        "Proactively learned new technologies and frameworks to enhance skillset and contribute to team success."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science in Business Analytics",
+      "institution": "Universitat Politècnica de Catalunya (UPC)",
+      "period": "2016 - 2020",
+      "detail": "Graduated with Honors, specializing in data visualization and web analytics."
+    },
+    {
+      "degree": "Diploma in Web Development",
+      "institution": "OpenClassrooms",
+      "period": "2019",
+      "detail": "Completed a comprehensive online program focused on frontend development technologies."
+    }
+  ],
+  "technical_skills": [
+    "TypeScript",
+    "Vue.js",
+    "JavaScript",
+    "Webpack",
+    "HTML5",
+    "CSS3",
+    "SASS",
+    "Git",
+    "Responsive Design",
+    "UI/UX Principles",
+    "Jest",
+    "React"
+  ],
+  "tools": [
+    "GitHub",
+    "Figma",
+    "Webpack",
+    "npm",
+    "Jira",
+    "Slack"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Fluent"
+    },
+    {
+      "language": "Spanish",
+      "level": "Conversational"
+    },
+    {
+      "language": "Catalan",
+      "level": "Basic"
+    }
+  ],
+  "certifications": [
+    "Google Analytics Individual Qualification",
+    "Front-End Developer Certification - Udemy"
+  ]
+}

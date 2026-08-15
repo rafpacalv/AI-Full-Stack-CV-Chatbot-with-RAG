@@ -1,0 +1,102 @@
+{
+  "cv_id": "cv_43",
+  "language": "en",
+  "full_name": "Dmitri Sokolov",
+  "email": "dmitri.sokolov@example.net",
+  "phone": "+48 818 697748",
+  "city": "Berlin",
+  "country": "Germany",
+  "birth_date": "18/11/1989",
+  "linkedin": "linkedin.com/in/dmitri-sokolov",
+  "template": 0,
+  "photo_file": null,
+  "headline": "SEO Specialist | On-Page Optimization and Technical SEO",
+  "summary": "Data-driven SEO Specialist with 9 years of experience driving organic growth for leading European tech companies. Proven ability to optimize websites for search engines, improve user experience, and increase organic traffic. Skilled in keyword research, content optimization, technical SEO audits, and Google Analytics. Passionate about staying ahead of the curve in the ever-evolving SEO landscape.",
+  "experience": [
+    {
+      "company": "AlgoFlow GmbH (Berlin, Germany)",
+      "position": "Senior SEO Specialist",
+      "period": "2022 - Present",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Increased organic traffic by 35% in one year through strategic on-page and technical SEO implementations.",
+        "Improved website ranking for key target keywords by an average of 15 positions.",
+        "Led the development and execution of a comprehensive SEO strategy for new product launches, resulting in a 20% increase in organic leads.",
+        "Conducted regular technical SEO audits and implemented fixes to improve website crawlability and indexing."
+      ]
+    },
+    {
+      "company": "DataStream Solutions (Munich, Germany)",
+      "position": "SEO Specialist",
+      "period": "2019 - 2022",
+      "location": "Munich, Germany",
+      "bullets": [
+        "Developed and implemented a content strategy that resulted in a 10% increase in organic traffic.",
+        "Identified and implemented new keywords to expand search visibility and target a wider audience.",
+        "Tracked and analyzed SEO performance metrics using Google Analytics and Search Console.",
+        "Collaborated with the marketing team to ensure SEO best practices were integrated into all content and campaigns."
+      ]
+    },
+    {
+      "company": "ByteCloud Technologies (Berlin, Germany)",
+      "position": "SEO Junior Specialist",
+      "period": "2017 - 2019",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Assisted in conducting keyword research and competitive analysis.",
+        "Created and optimized website content for search engines.",
+        "Tracked and reported on SEO performance metrics.",
+        "Gained valuable experience in on-page and off-page SEO strategies."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc Data Science",
+      "institution": "Technische Universität Berlin",
+      "period": "2013 - 2017",
+      "detail": "GPA: 3.8/4.0"
+    },
+    {
+      "degree": "MSc Data Science",
+      "institution": "Technische Universität Berlin",
+      "period": "2017 - 2019",
+      "detail": "GPA: 3.9/4.0"
+    }
+  ],
+  "technical_skills": [
+    "SEO",
+    "Technical SEO",
+    "Python",
+    "Google Search Console",
+    "Google Analytics",
+    "Keyword Research",
+    "Content Optimization",
+    "On-Page Optimization",
+    "Off-Page Optimization",
+    "Link Building",
+    "SEO Audit",
+    "Website Analytics"
+  ],
+  "tools": [
+    "Google Search Console",
+    "Google Analytics",
+    "SEMrush",
+    "Ahrefs",
+    "Screaming Frog",
+    "Moz Pro"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Fluent"
+    },
+    {
+      "language": "German",
+      "level": "Native"
+    }
+  ],
+  "certifications": [
+    "Google Analytics Individual Qualification"
+  ]
+}

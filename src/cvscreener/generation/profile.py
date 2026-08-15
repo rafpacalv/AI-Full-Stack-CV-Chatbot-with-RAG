@@ -33,9 +33,16 @@ def _ascii_slug(text: str) -> str:
 
 
 def _contact(persona: Persona) -> tuple[str, str, str]:
+    """Build contact details deterministically, not with the LLM.
+
+    Seeded on the cv_id, so the same persona always gets the same details
+    across runs - regenerating one CV never silently changes its e-mail.
+    """
     rng = random.Random(persona.cv_id)
     handle = _ascii_slug(persona.full_name)
     email = f"{handle}@{rng.choice(EMAIL_DOMAINS)}"
+    # Country-appropriate dialling code, so a Barcelona candidate does not end
+    # up with a Dutch number.
     if persona.country in ("España", "Spain"):
         phone = f"+34 6{rng.randint(10, 99)} {rng.randint(100, 999)} {rng.randint(100, 999)}"
     else:
@@ -45,12 +52,23 @@ def _contact(persona: Persona) -> tuple[str, str, str]:
 
 
 def _birth_date(persona: Persona) -> str:
+    """A date of birth consistent with the persona's birth year.
+
+    Capped at day 28 so no persona is ever born on 30 February. The year comes
+    from the matrix, so the age the RAG later extracts matches by construction.
+    """
     rng = random.Random(persona.cv_id + "dob")
     day, month = rng.randint(1, 28), rng.randint(1, 12)
     return f"{day:02d}/{month:02d}/{persona.birth_year}"
 
 
 def _expected_jobs(years: int) -> int:
+    """How many roles a career of this length should show.
+
+    Left to itself the model gives a junior four jobs and a lead one, which
+    reads wrong immediately. This is also reused after generation to trim any
+    duplicates the model produced.
+    """
     if years <= 2:
         return 1
     if years <= 5:
@@ -166,6 +184,9 @@ def _clean(content: GeneratedContent, persona: Persona) -> GeneratedContent:
     will happily emit the same job twice, or pad a skills list with duplicates
     and stray whitespace. Cheap to fix deterministically, so we do.
     """
+    # Drop repeated jobs, keyed on (company, position). This is a real observed
+    # failure: one generated CV listed the same two roles twice, producing four
+    # entries for a four-year career.
     seen: set[tuple[str, str]] = set()
     jobs: list = []
     for item in content.experience:
@@ -176,6 +197,7 @@ def _clean(content: GeneratedContent, persona: Persona) -> GeneratedContent:
         item.bullets = _dedupe_strings(item.bullets)[:4]
         jobs.append(item)
 
+    # Enforce the caps the prompt asked for. Asking is not the same as getting.
     content.experience = jobs[: _expected_jobs(persona.years_experience)]
     content.technical_skills = _dedupe_strings(content.technical_skills)[:12]
     content.tools = _dedupe_strings(content.tools)[:6]
@@ -205,7 +227,12 @@ def generate_profile(persona: Persona, *, force: bool = False) -> CVProfile:
         GeneratedContent,
         model=settings.gen_model,
         system=system,
-        temperature=0.85,  # high enough that 28 CVs do not read as one voice
+        # Deliberately high. This is the one place in the project that wants
+        # variety rather than determinism: at a low temperature every CV comes
+        # out in the same voice, with the same phrasing and the same invented
+        # company names. The persona matrix supplies the structure; temperature
+        # supplies the prose variation.
+        temperature=0.85,
         num_predict=2600,
     )
     content = _clean(content, persona)

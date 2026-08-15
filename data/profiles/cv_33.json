@@ -1,0 +1,100 @@
+{
+  "cv_id": "cv_33",
+  "language": "es",
+  "full_name": "Verónica Suárez López",
+  "email": "veronica.suarez@example.com",
+  "phone": "+34 632 547 155",
+  "city": "Girona",
+  "country": "España",
+  "birth_date": "23/01/1988",
+  "linkedin": "linkedin.com/in/veronica-suarez",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Especialista SEM/Paid Media | Google Ads y Meta Ads",
+  "summary": "Profesional con más de 10 años de experiencia liderando campañas de SEM y Paid Media, obteniendo resultados tangibles en crecimiento de tráfico, conversiones y ROI. Apasionado por el análisis de datos y la optimización constante de las estrategias para maximizar el impacto. Experto en plataformas como Google Ads y Meta Ads, con un enfoque en la planificación estratégica, la gestión de presupuestos y la creación de campañas segmentadas y efectivas.",
+  "experience": [
+    {
+      "company": "NeoCode Solutions S.L.",
+      "position": "Especialista SEM/Paid Media Senior",
+      "period": "2021 - Actualidad",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Aumenté el tráfico orgánico de clientes un 35% en un año mediante la implementación de estrategias SEO on-page y off-page.",
+        "Optimización de campañas de Google Ads que generó un aumento del 20% en las conversiones y un 15% en el ROI.",
+        "Desarrollo y gestión de campañas de Meta Ads para diferentes sectores, logrando un incremento del 10% en el alcance y un 5% en la tasa de clics.",
+        "Análisis exhaustivo de datos con Looker Studio para identificar tendencias, oportunidades y áreas de mejora en las campañas."
+      ]
+    },
+    {
+      "company": "ByteLabs GmbH",
+      "position": "Especialista SEM/Paid Media",
+      "period": "2018 - 2021",
+      "location": "Berlin, Alemania",
+      "bullets": [
+        "Lideré la gestión de campañas de Google Ads y Facebook Ads para una cartera de clientes de tecnología, logrando un incremento del 15% en las ventas.",
+        "Diseño e implementación de estrategias de remarketing para aumentar la tasa de conversión y el valor de los clientes.",
+        "Desarrollo de informes y dashboards personalizados con SQL para el seguimiento y análisis del rendimiento de las campañas."
+      ]
+    },
+    {
+      "company": "StartUp Labs",
+      "position": "Analista de Marketing Digital",
+      "period": "2016 - 2018",
+      "location": "Girona, España",
+      "bullets": [
+        "Participación en la planificación y ejecución de campañas de marketing digital, incluyendo SEM, SEO y redes sociales.",
+        "Análisis de datos web con herramientas como Google Analytics para identificar oportunidades de mejora en el contenido y la estrategia de marketing.",
+        "Colaboración con el equipo de desarrollo para la implementación de estrategias de marketing basado en datos."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ciencia de Datos",
+      "institution": "Universitat Pompeu Fabra (UPF)",
+      "period": "2012 - 2016",
+      "detail": ""
+    },
+    {
+      "degree": "Bachillerato",
+      "institution": "IES Lluís Dalmau",
+      "period": "2008 - 2012",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Google Ads",
+    "Meta Ads",
+    "SEO",
+    "SEM",
+    "SQL",
+    "Looker Studio",
+    "A/B Testing",
+    "Google Analytics",
+    "Facebook Pixel",
+    "Campañas de Display",
+    "Campañas de Remarketing"
+  ],
+  "tools": [
+    "Google Ads Editor",
+    "Meta Ads Manager",
+    "SEMrush",
+    "Ahrefs",
+    "Google Analytics",
+    "Looker Studio"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Fluente"
+    }
+  ],
+  "certifications": [
+    "Google Ads Certification",
+    "Meta Ads Certification"
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "cv_id": "cv_42",
+  "language": "en",
+  "full_name": "Megan O'Connor",
+  "email": "megan.oconnor@example.net",
+  "phone": "+31 472 783276",
+  "city": "Dublin",
+  "country": "Ireland",
+  "birth_date": "12/07/1996",
+  "linkedin": "linkedin.com/in/megan-oconnor",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Site Reliability Engineer | DevOps and Cloud Infrastructure",
+  "summary": "Highly motivated Site Reliability Engineer with 5 years of experience ensuring the stability, scalability, and performance of mission-critical applications. Proven ability to automate infrastructure deployments, monitor system health, and implement proactive measures to minimize downtime. Passionate about building robust and resilient systems using cutting-edge technologies.",
+  "experience": [
+    {
+      "company": "Innovatech Solutions (Dublin, Ireland)",
+      "position": "Site Reliability Engineer",
+      "period": "2021 - Present",
+      "location": "Dublin, Ireland",
+      "bullets": [
+        "Reduced system downtime by 25% through the implementation of automated incident response systems and proactive performance monitoring.",
+        "Increased application throughput by 15% by optimizing Kubernetes deployments and leveraging serverless architectures.",
+        "Developed and maintained infrastructure-as-code (IaC) scripts using Terraform to streamline provisioning and configuration of cloud resources.",
+        "Collaborated with development teams to implement continuous integration and continuous delivery (CI/CD) pipelines, resulting in faster release cycles and improved deployment reliability."
+      ]
+    },
+    {
+      "company": "Valo Networks (Dublin, Ireland)",
+      "position": "Junior DevOps Engineer",
+      "period": "2021 - 2022",
+      "location": "Dublin, Ireland",
+      "bullets": [
+        "Assisted in the migration of on-premise infrastructure to AWS, successfully transitioning over 50 servers and applications to the cloud.",
+        "Monitored system performance using Prometheus and Grafana, identifying and resolving performance bottlenecks that were impacting application responsiveness.",
+        "Developed and implemented automation scripts using Go to streamline repetitive tasks and improve efficiency of deployment processes."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc in Software Engineering",
+      "institution": "Trinity College Dublin",
+      "period": "2017 - 2021",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Go",
+    "Prometheus",
+    "Kubernetes",
+    "AWS (EC2, S3, Lambda)",
+    "Terraform",
+    "Docker",
+    "Ansible",
+    "Linux",
+    "Git",
+    "CI/CD",
+    "Monitoring and Alerting"
+  ],
+  "tools": [
+    "Jira",
+    "Slack",
+    "Confluence",
+    "Datadog",
+    "Grafana"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Irish",
+      "level": "Conversational"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Solutions Architect - Associate"
+  ]
+}

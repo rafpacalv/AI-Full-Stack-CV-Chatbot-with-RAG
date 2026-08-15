@@ -58,6 +58,9 @@ def _base_layout(fig: go.Figure, title: str, x_title: str, y_title: str) -> go.F
 
 def histogram(values: list[float], label: str, names: list[str] | None = None) -> go.Figure:
     """Distribution of a continuous field (ages, years of experience)."""
+    # Bin count scaled to the actual spread, then clamped to 4-12. Plotly's
+    # automatic choice can give 30 bins for 11 candidates, which renders as a
+    # row of single-count spikes and reads as noise rather than a distribution.
     span = max(values) - min(values) if values else 0
     nbins = max(4, min(12, int(span) or 4))
     fig = go.Figure(
@@ -77,6 +80,9 @@ def histogram(values: list[float], label: str, names: list[str] | None = None) -
 
 def bar(categories: list[str], values: list[int], label: str) -> go.Figure:
     """Counts per category, sorted so the ranking is readable."""
+    # Sorted by value, not alphabetically: the question behind a bar chart is
+    # almost always "which is biggest?", and sorting answers it without the
+    # reader having to scan and compare.
     pairs = sorted(zip(categories, values), key=lambda p: -p[1])
     cats = [str(c) for c, _ in pairs]
     vals = [v for _, v in pairs]
@@ -93,7 +99,9 @@ def bar(categories: list[str], values: list[int], label: str) -> go.Figure:
         )
     )
     fig = _base_layout(fig, f"Candidates by {label.lower()}", label, "Candidates")
+    # 18% headroom so the outside value labels are not clipped by the plot edge.
     fig.update_yaxes(range=[0, max(vals) * 1.18 if vals else 1])
+    # Angle long category names rather than let Plotly overlap or truncate them.
     if max((len(c) for c in cats), default=0) > 10:
         fig.update_xaxes(tickangle=-30)
     return fig
@@ -130,7 +138,13 @@ def pie(categories: list[str], values: list[int], label: str) -> go.Figure:
 
 
 def from_spec(spec: dict) -> go.Figure | None:
-    """Build the figure described by an aggregate result's chart payload."""
+    """Build the figure described by an aggregate result's chart payload.
+
+    The bridge between backend and UI: the API sends data and a chart type, and
+    this picks the drawing function. Returning None on anything unrecognised
+    means a malformed spec degrades to "no chart" rather than an exception in
+    the middle of a chat response.
+    """
     if not spec:
         return None
     kind = spec.get("type")

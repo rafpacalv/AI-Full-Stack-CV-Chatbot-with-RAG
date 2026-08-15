@@ -1,0 +1,79 @@
+{
+  "cv_id": "cv_47",
+  "language": "en",
+  "full_name": "Marcus Johnson",
+  "email": "marcus.johnson@example.org",
+  "phone": "+49 901 288851",
+  "city": "Kraków",
+  "country": "Poland",
+  "birth_date": "22/05/1999",
+  "linkedin": "linkedin.com/in/marcus-johnson",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Product Manager | Growth & Analytics",
+  "summary": "Data-driven Product Manager with a proven track record of driving user growth and improving product performance. Skilled in roadmapping, A/B testing, and stakeholder management. Passionate about leveraging user insights to create impactful products.",
+  "experience": [
+    {
+      "company": "Solaris Tech",
+      "position": "Product Manager",
+      "period": "2024 - Present",
+      "location": "Kraków, Poland",
+      "bullets": [
+        "Led the development and launch of a new feature that increased user engagement by 25% within the first quarter.",
+        "Implemented A/B testing strategies to optimize key user flows, resulting in a 10% conversion rate improvement.",
+        "Collaborated with cross-functional teams (engineering, design, marketing) to ensure successful product delivery and achieve business objectives."
+      ]
+    },
+    {
+      "company": "Innovia Solutions",
+      "position": "Junior Product Manager",
+      "period": "2022 - 2024",
+      "location": "Kraków, Poland",
+      "bullets": [
+        "Conducted market research and competitive analysis to identify product opportunities and inform roadmap development.",
+        "Utilized SQL to analyze user data and generate insights that informed product decisions.",
+        "Developed and presented product roadmaps to stakeholders, effectively communicating product vision and strategy."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science (BSc) in Marketing",
+      "institution": "AGH University of Science and Technology",
+      "period": "2018 - 2022",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Product Roadmap Development",
+    "A/B Testing",
+    "SQL",
+    "User Story Writing",
+    "Agile Methodologies",
+    "Stakeholder Management",
+    "Data Analysis",
+    "Product Requirements Documentation",
+    "Go-to-Market Strategy",
+    "Market Research"
+  ],
+  "tools": [
+    "Jira",
+    "Confluence",
+    "Google Analytics",
+    "Figma",
+    "Trello"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Polish",
+      "level": "Fluent"
+    }
+  ],
+  "certifications": [
+    "Google Analytics Individual Qualification"
+  ]
+}

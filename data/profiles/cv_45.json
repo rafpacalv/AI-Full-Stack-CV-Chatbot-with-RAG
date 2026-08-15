@@ -1,0 +1,68 @@
+{
+  "cv_id": "cv_45",
+  "language": "en",
+  "full_name": "Jean-Pierre Leclerc",
+  "email": "jean-pierre.leclerc@example.net",
+  "phone": "+38 318 533516",
+  "city": "Lisbon",
+  "country": "Portugal",
+  "birth_date": "22/09/2001",
+  "linkedin": "linkedin.com/in/jean-pierre-leclerc",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Product Designer | User-Centric Design & Figma Expertise",
+  "summary": "Dedicated Product Designer with a strong foundation in mathematics and a passion for creating user-centered experiences. Proven ability to collaborate effectively with cross-functional teams to deliver innovative and impactful product solutions. Skilled in utilizing Figma and design systems to ensure consistency and usability. Eager to contribute to a dynamic and forward-thinking company.",
+  "experience": [
+    {
+      "company": "NovaFlow Technologies (Lisbon, Portugal)",
+      "position": "Junior Product Designer",
+      "period": "2024 - Present",
+      "location": "Lisbon, Portugal",
+      "bullets": [
+        "Collaborated with the UX/UI team to design and develop a new mobile application, resulting in a 25% increase in user engagement within the first three months.",
+        "Conducted user research and usability testing to identify pain points and optimize the user experience, leading to a 15% reduction in customer support tickets.",
+        "Developed and maintained a comprehensive design system, ensuring consistency and scalability across all product touchpoints.",
+        "Presented design concepts and prototypes to stakeholders, effectively communicating design rationale and user insights."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc in Mathematics",
+      "institution": "Instituto Superior Técnico, Lisbon",
+      "period": "2020 - 2024",
+      "detail": "Graduated with honors, demonstrating a strong foundation in analytical and problem-solving skills."
+    }
+  ],
+  "technical_skills": [
+    "Figma",
+    "User Research",
+    "Design Systems",
+    "Accessibility",
+    "Wireframing",
+    "Prototyping",
+    "Visual Design",
+    "Information Architecture",
+    "UI/UX Design",
+    "Interaction Design"
+  ],
+  "tools": [
+    "Jira",
+    "Confluence",
+    "Slack",
+    "Zoom"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Fluent"
+    },
+    {
+      "language": "Portuguese",
+      "level": "Native"
+    }
+  ],
+  "certifications": [
+    "Google UX Design Professional Certificate"
+  ]
+}

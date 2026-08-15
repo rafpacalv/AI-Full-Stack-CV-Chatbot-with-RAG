@@ -1,0 +1,77 @@
+{
+  "cv_id": "cv_48",
+  "language": "en",
+  "full_name": "Sasha Volkov",
+  "email": "sasha.volkov@example.org",
+  "phone": "+47 904 661763",
+  "city": "Stockholm",
+  "country": "Sweden",
+  "birth_date": "02/04/1995",
+  "linkedin": "linkedin.com/in/sasha-volkov",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Full-Stack Engineer | JavaScript & Database Technologies",
+  "summary": "Driven Full-Stack Engineer with 3 years of experience in developing and maintaining high-performance web applications. Passionate about crafting user-centric interfaces and leveraging efficient backend systems. Proven ability to deliver projects on time and within budget, exceeding performance expectations.",
+  "experience": [
+    {
+      "company": "Nordic Flow",
+      "position": "Full-Stack Engineer",
+      "period": "2023 - Present",
+      "location": "Stockholm, Sweden",
+      "bullets": [
+        "Developed and implemented a new user authentication system, reducing login time by 25% and increasing overall system security.",
+        "Optimized database queries, resulting in a 15% improvement in data retrieval speed and a 10% reduction in server load.",
+        "Collaborated with the design team to integrate a responsive design framework, ensuring optimal user experience across all devices."
+      ]
+    },
+    {
+      "company": "FinTech Labs",
+      "position": "Junior Full-Stack Developer",
+      "period": "2023 - 2023",
+      "location": "Stockholm, Sweden",
+      "bullets": [
+        "Developed and maintained key features for a financial management platform, resulting in a 10% increase in user engagement.",
+        "Collaborated with senior developers to implement new APIs, streamlining data integration and improving system efficiency.",
+        "Contributed to the development of unit and integration tests, ensuring code quality and reducing bug occurrences."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science in Interaction Design",
+      "institution": "KTH Royal Institute of Technology",
+      "period": "2019 - 2023",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Node.js",
+    "React",
+    "PostgreSQL",
+    "AWS (EC2, S3, Lambda)",
+    "REST APIs",
+    "GraphQL",
+    "Git",
+    "Agile Methodologies",
+    "HTML, CSS, JavaScript"
+  ],
+  "tools": [
+    "Docker",
+    "Jenkins",
+    "Jira",
+    "MongoDB"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Swedish",
+      "level": "Fluent"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Developer - Associate"
+  ]
+}

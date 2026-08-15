@@ -28,11 +28,11 @@ index_built = pytest.mark.skipif(
 # --- persona matrix -------------------------------------------------------
 def test_persona_matrix_is_balanced_and_unique():
     people = build_personas()
-    assert len(people) == 28
-    assert len({p.full_name for p in people}) == 28
-    assert len({p.cv_id for p in people}) == 28
-    assert sum(p.language == "es" for p in people) == 14
-    assert sum(p.language == "en" for p in people) == 14
+    assert len(people) == 50
+    assert len({p.full_name for p in people}) == 50
+    assert len({p.cv_id for p in people}) == 50
+    assert sum(p.language == "es" for p in people) == 25
+    assert sum(p.language == "en" for p in people) == 25
     # All three layouts must actually be exercised.
     assert {p.template for p in people} == {0, 1, 2}
     # The brief's sample question ("graduated from UPC?") needs an answer.
@@ -288,4 +288,4 @@ def test_aggregate_counts_match_the_source_table():
 
     result = run_aggregate(QueryPlan(intent="aggregate", skill="Python", dimension="skills"))
     assert len(result.matched) == expected
-    assert len(frame) == 28
+    assert len(frame) == 50

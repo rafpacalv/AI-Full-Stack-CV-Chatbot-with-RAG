@@ -1,0 +1,92 @@
+{
+  "cv_id": "cv_37",
+  "language": "es",
+  "full_name": "Xavi Muñoz López",
+  "email": "xavi.munoz@example.net",
+  "phone": "+34 634 973 661",
+  "city": "Málaga",
+  "country": "España",
+  "birth_date": "19/05/1995",
+  "linkedin": "linkedin.com/in/xavi-munoz",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Desarrollador Mobile | Kotlin y Flutter",
+  "summary": "Profesional experimentado en desarrollo móvil con un enfoque en la creación de aplicaciones nativas e híbridas de alta calidad. Con más de 9 años de experiencia, mi pasión reside en la innovación y la entrega de experiencias de usuario excepcionales. Especializado en Kotlin, Swift y Flutter, he desarrollado aplicaciones móviles para iOS y Android que han alcanzado millones de descargas y han obtenido excelentes valoraciones en las tiendas de aplicaciones.",
+  "experience": [
+    {
+      "company": "InnoTech S.L.",
+      "position": "Desarrollador Mobile Senior",
+      "period": "2022 - Actualidad",
+      "location": "Málaga, España",
+      "bullets": [
+        "Desarrollé una aplicación móvil híbrida con Flutter para el cliente X, que logró un aumento del 25% en las conversiones de usuarios.",
+        "Implementé nuevas funciones en la aplicación móvil nativa para iOS, lo que resultó en un 15% de aumento en la tasa de retención de usuarios.",
+        "Gestión del equipo de desarrollo móvil, supervisando el progreso de los proyectos y asegurando la entrega a tiempo y dentro del presupuesto."
+      ]
+    },
+    {
+      "company": "AppForge Solutions GmbH",
+      "position": "Desarrollador Mobile",
+      "period": "2019 - 2022",
+      "location": "Berlin, Alemania",
+      "bullets": [
+        "Desarrollé aplicaciones móviles nativas en Swift para iOS, con más de 500.000 descargas en la App Store.",
+        "Implementación de API REST para integrar la aplicación móvil con los sistemas backend, mejorando la eficiencia del flujo de datos.",
+        "Colaboración con el equipo de diseño y UX para asegurar una experiencia de usuario fluida y atractiva."
+      ]
+    },
+    {
+      "company": "Digital Wave Technologies S.A.",
+      "position": "Junior Desarrollador Mobile",
+      "period": "2017 - 2019",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Desarrollé aplicaciones móviles híbridas en Ionic, alcanzando un volumen de 1 millón de usuarios activos.",
+        "Aprendizaje y desarrollo de habilidades en Kotlin, Swift y REST API, consolidando mi base en desarrollo móvil.",
+        "Participación en el ciclo de vida completo del desarrollo de aplicaciones, desde la planificación hasta la implementación y el mantenimiento."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Marketing y Comunicación Digital",
+      "institution": "Universidad de Deusto",
+      "period": "2013 - 2017",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Kotlin",
+    "Swift",
+    "Flutter",
+    "REST APIs",
+    "Firebase",
+    "Git",
+    "Agile metodologías",
+    "SDK iOS y Android",
+    "Diseño de UI/UX",
+    "Testing de aplicaciones móviles",
+    "Documentación técnica"
+  ],
+  "tools": [
+    "Xcode",
+    "Android Studio",
+    "Jira",
+    "Slack",
+    "Bitbucket"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Avanzado"
+    }
+  ],
+  "certifications": [
+    "Certificación en Desarrollo Mobile con Kotlin (Udacity)",
+    "Certificación en Diseño UI/UX para Móviles (Coursera)"
+  ]
+}

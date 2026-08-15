@@ -1,0 +1,95 @@
+{
+  "cv_id": "cv_34",
+  "language": "es",
+  "full_name": "Felipe Sánchez García",
+  "email": "felipe.sanchez@example.net",
+  "phone": "+34 657 993 839",
+  "city": "Sevilla",
+  "country": "España",
+  "birth_date": "17/08/1996",
+  "linkedin": "linkedin.com/in/felipe-sanchez",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Diseñador UX/UI | Diseño centrado en el usuario y Prototipado",
+  "summary": "Diseñador UX/UI con 5 años de experiencia desarrollando interfaces intuitivas y atractivas para aplicaciones web y móviles. Apasionado por comprender las necesidades de los usuarios y traducirlas en experiencias digitales fluidas y satisfactorias. Experto en Figma, design systems y metodologías de investigación de usuario. Busco constantemente nuevas formas de innovar y mejorar la experiencia del usuario.",
+  "experience": [
+    {
+      "company": "Neosoft Labs",
+      "position": "Diseñador UX/UI",
+      "period": "2021 - Actualidad",
+      "location": "Madrid, España",
+      "bullets": [
+        "Diseñé interfaces de usuario para una aplicación móvil que aumentó el engagement del usuario en un 25% en los primeros 3 meses.",
+        "Implementé un design system que mejoró la consistencia y eficiencia del equipo de diseño en un 15%.",
+        "Realicé estudios de usabilidad para identificar áreas de mejora en la interfaz y optimizar la experiencia del usuario.",
+        "Colaboré con equipos de desarrollo para asegurar la implementación correcta del diseño en las plataformas móviles."
+      ]
+    },
+    {
+      "company": "Tecnobyte Solutions",
+      "position": "Diseñador UX/UI Junior",
+      "period": "2021 - 2022",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Diseñé prototipos de alta fidelidad para aplicaciones web utilizando Figma.",
+        "Participé en talleres de brainstorming con equipos de producto para definir la estrategia de diseño.",
+        "Realicé investigaciones de mercado y análisis de competencia para comprender las necesidades del usuario.",
+        "Asistí a reuniones con clientes para presentar propuestas de diseño y obtener feedback."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ingeniería de Telecomunicaciones",
+      "institution": "Universidad Politécnica de Madrid (UPM)",
+      "period": "2016 - 2021",
+      "detail": ""
+    },
+    {
+      "degree": "Curso online de Diseño UI/UX con Figma",
+      "institution": "Domestika",
+      "period": "2020",
+      "detail": "Curso que me capacitó en herramientas y técnicas de diseño UI/UX con Figma."
+    }
+  ],
+  "technical_skills": [
+    "Figma",
+    "Design systems",
+    "User research",
+    "Prototipado",
+    "Wireframing",
+    "User flows",
+    "Information architecture",
+    "Accessibility",
+    "UI patterns",
+    "A/B testing",
+    "Iterative design"
+  ],
+  "tools": [
+    "Figma",
+    "Miro",
+    "Jira",
+    "Slack",
+    "Google Analytics",
+    "Hotjar"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "B2"
+    },
+    {
+      "language": "Francés",
+      "level": "A2"
+    }
+  ],
+  "certifications": [
+    "Google Analytics Individual Qualification",
+    "Figma Community Certification",
+    "UX Design Essentials - Interaction Design Foundation"
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "cv_id": "cv_41",
+  "language": "en",
+  "full_name": "Léa Dubois",
+  "email": "lea.dubois@example.com",
+  "phone": "+39 594 599793",
+  "city": "London",
+  "country": "United Kingdom",
+  "birth_date": "09/02/1994",
+  "linkedin": "linkedin.com/in/lea-dubois",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Machine Learning Engineer | NLP and Deep Learning",
+  "summary": "Experienced Machine Learning Engineer with a passion for developing and deploying innovative AI solutions. Proven track record of improving model accuracy, efficiency, and scalability. Skilled in leveraging NLP techniques and deep learning architectures to solve complex business challenges. Collaborative and results-oriented individual with a strong understanding of machine learning principles and best practices.",
+  "experience": [
+    {
+      "company": "Aethertech, London",
+      "position": "Senior Machine Learning Engineer",
+      "period": "2023 - Present",
+      "location": "London, UK",
+      "bullets": [
+        "Developed a novel NLP model for sentiment analysis that increased customer satisfaction ratings by 15% within 3 months.",
+        "Optimized deep learning pipelines using Kubernetes, reducing training time by 20% and improving model inference latency by 10%.",
+        "Collaborated with cross-functional teams to integrate machine learning models into existing applications, resulting in a 5% increase in user engagement."
+      ]
+    },
+    {
+      "company": "Eurodata Solutions, Paris",
+      "position": "Machine Learning Engineer",
+      "period": "2021 - 2023",
+      "location": "Paris, France",
+      "bullets": [
+        "Built a recommendation system using collaborative filtering that increased product sales by 8% within the first quarter.",
+        "Implemented a fraud detection system based on machine learning algorithms, reducing fraudulent transactions by 12%.",
+        "Contributed to the development of a natural language processing pipeline for document summarization, achieving an accuracy rate of 85%."
+      ]
+    },
+    {
+      "company": "Innovatech Labs, Berlin",
+      "position": "Junior Machine Learning Engineer",
+      "period": "2020 - 2021",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Assisted senior engineers in developing and deploying machine learning models for various applications.",
+        "Participated in data collection and preprocessing tasks, ensuring data quality and consistency.",
+        "Conducted research on different machine learning algorithms and techniques."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc Computer Engineering",
+      "institution": "Imperial College London",
+      "period": "2016 - 2020",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Python",
+    "TensorFlow",
+    "PyTorch",
+    "Scikit-learn",
+    "NLP",
+    "Deep Learning",
+    "Kubernetes",
+    "Cloud Computing (AWS/GCP)",
+    "Data Visualization (Matplotlib, Seaborn)",
+    "Version Control (Git)"
+  ],
+  "tools": [
+    "Jupyter Notebook",
+    "Docker",
+    "REST APIs",
+    "BigQuery",
+    "Apache Spark"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "French",
+      "level": "Fluent"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Machine Learning – Specialty"
+  ]
+}

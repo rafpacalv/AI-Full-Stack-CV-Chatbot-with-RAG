@@ -1,0 +1,87 @@
+{
+  "cv_id": "cv_30",
+  "language": "es",
+  "full_name": "Rosa García López",
+  "email": "rosa.garcia@example.org",
+  "phone": "+34 683 308 180",
+  "city": "Badalona",
+  "country": "España",
+  "birth_date": "07/01/1995",
+  "linkedin": "linkedin.com/in/rosa-garcia",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Ingeniera de Machine Learning | Procesamiento de Lenguaje Natural y Visión por Computador",
+  "summary": "Soy una Ingeniera de Machine Learning con experiencia en el desarrollo e implementación de modelos de aprendizaje automático para diversas aplicaciones. Me apasiona la investigación y desarrollo de algoritmos innovadores que impulsen soluciones de vanguardia. Busco constantemente ampliar mis conocimientos y colaborar en proyectos desafiantes que impacten positivamente en la industria.",
+  "experience": [
+    {
+      "company": "Nectar Labs S.L.",
+      "position": "Ingeniera de Machine Learning",
+      "period": "2022 - Actualidad",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Desarrollé un modelo de procesamiento de lenguaje natural (PNL) para clasificar correos electrónicos spam con un 95% de precisión, reduciendo el volumen de spam recibido en un 30%.",
+        "Implementé algoritmos de visión por computador para automatizar la detección de defectos en productos, mejorando la eficiencia del proceso de control de calidad en un 15%.",
+        "Colaboré con el equipo de desarrollo para integrar los modelos de Machine Learning en la plataforma web de la empresa, mejorando la experiencia del usuario.",
+        "] }, {"
+      ]
+    },
+    {
+      "company": "DeepMind Iberia",
+      "position": "Junior Ingeniera de Machine Learning",
+      "period": "2022",
+      "location": "Madrid, España",
+      "bullets": [
+        "Contribuí al desarrollo de un sistema de recomendación de contenido utilizando técnicas de aprendizaje colaborativo, aumentando el tiempo promedio de interacción del usuario en un 10%.",
+        "Realicé análisis exploratorios de datos para identificar patrones y tendencias relevantes en el comportamiento de los usuarios.",
+        "Participe en la implementación de un pipeline de Machine Learning para la detección de fraudes, reduciendo las tasas de fraude en un 5%."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Administración y Dirección de Empresas",
+      "institution": "Universitat Politècnica de Catalunya (UPC)",
+      "period": "2018 - 2022",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Python",
+    "PyTorch",
+    "Scikit-learn",
+    "TensorFlow",
+    "MLflow",
+    "Deep Learning",
+    "Aprendizaje Supervisado",
+    "Aprendizaje No Supervisado",
+    "Procesamiento de Lenguaje Natural (PNL)",
+    "Visión por Computador",
+    "Regresión",
+    "Clasificación"
+  ],
+  "tools": [
+    "Jupyter Notebook",
+    "Git",
+    "Docker",
+    "AWS",
+    "Cloud Computing",
+    "Data Visualization Tools (Matplotlib, Seaborn)"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Avanzado"
+    },
+    {
+      "language": "Francés",
+      "level": "Intermedio"
+    }
+  ],
+  "certifications": [
+    "Microsoft Certified: Azure AI Engineer Associate"
+  ]
+}

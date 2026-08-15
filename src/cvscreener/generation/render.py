@@ -110,6 +110,9 @@ def _circular_photo(path: Path, px: int = 420) -> ImageReader | None:
     if not path.exists():
         return None
     img = Image.open(path).convert("RGBA")
+
+    # Centre-crop to a square first. Cropping rather than squashing keeps the
+    # face in proportion; taking it from the centre keeps the face in frame.
     side = min(img.size)
     img = img.crop(
         (
@@ -120,10 +123,16 @@ def _circular_photo(path: Path, px: int = 420) -> ImageReader | None:
         )
     ).resize((px, px), Image.LANCZOS)
 
+    # The circle is an alpha mask, not a drawn shape: a greyscale image that is
+    # white inside the ellipse and black outside, applied as the transparency
+    # channel. The corners become transparent, so whatever the template paints
+    # behind the photo shows through.
     mask = Image.new("L", (px, px), 0)
     ImageDraw.Draw(mask).ellipse((0, 0, px, px), fill=255)
     img.putalpha(mask)
 
+    # Handed to ReportLab in memory as PNG - JPEG has no alpha channel, so
+    # saving as JPEG here would fill the corners with black.
     buf = BytesIO()
     img.save(buf, "PNG")
     buf.seek(0)
@@ -232,23 +241,35 @@ def _build_doc(path: Path, p: CVProfile) -> BaseDocTemplate:
 
 
 # --- Template 0: coloured left sidebar ------------------------------------
+# ReportLab splits the work in two. Anything that *flows* (paragraphs, which
+# wrap and can spill onto another page) goes into Frames as a "story".
+# Anything at a fixed position (background blocks, the photo) is painted
+# directly onto the canvas by an onPage callback. Two different mechanisms,
+# used together on every template here.
 def _render_sidebar(path: Path, p: CVProfile, accent: HexColor, lab: dict) -> None:
     font = "CV-Sans"
     s = _styles(font, accent)
-    side_w = 62 * mm
-    main_w = PAGE_W - side_w - 26 * mm
+    side_w = 62 * mm                              # the coloured band
+    main_w = PAGE_W - side_w - 26 * mm            # the rest, minus margins
 
     def decorate(canvas, _doc):
+        """Painted under the flowing text, on every page."""
         canvas.setFillColor(accent)
-        canvas.rect(0, 0, side_w, PAGE_H, fill=1, stroke=0)
+        canvas.rect(0, 0, side_w, PAGE_H, fill=1, stroke=0)  # full-height band
         photo = _circular_photo(settings.photos_dir / f"{p.cv_id}.jpg")
         if photo:
             d = 34 * mm
             canvas.drawImage(
-                photo, (side_w - d) / 2, PAGE_H - d - 14 * mm, d, d,
-                mask="auto", preserveAspectRatio=True,
+                photo,
+                (side_w - d) / 2,        # horizontally centred in the band
+                PAGE_H - d - 14 * mm,    # near the top (y counts up from bottom)
+                d, d,
+                mask="auto",             # honour the PNG's transparent corners
+                preserveAspectRatio=True,
             )
 
+    # Frames are (x, y, width, height) with the origin at the bottom-left.
+    # Padding is zeroed so the measurements above are the real ones.
     sidebar = Frame(
         8 * mm, 10 * mm, side_w - 16 * mm, PAGE_H - 62 * mm, id="side",
         leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
@@ -257,6 +278,7 @@ def _render_sidebar(path: Path, p: CVProfile, accent: HexColor, lab: dict) -> No
         side_w + 10 * mm, 12 * mm, main_w, PAGE_H - 24 * mm, id="main",
         leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
     )
+    # Continuation pages drop the sidebar and use the full text column.
     later = Frame(
         side_w + 10 * mm, 12 * mm, main_w, PAGE_H - 24 * mm, id="later",
         leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0,
@@ -268,8 +290,15 @@ def _render_sidebar(path: Path, p: CVProfile, accent: HexColor, lab: dict) -> No
         PageTemplate(id="rest", frames=[later], onPage=decorate),
     ])
 
+    # The story is one flat list of flowables. It fills the first frame
+    # (sidebar) until FrameBreak() sends the rest to the second (main column).
+    # NextPageTemplate says which layout any page after the first should use.
+    #
+    # `escape()` on every value is not optional: ReportLab parses Paragraph
+    # text as XML, so an "&" or "<" in a company name would raise at build time.
     story: list = [NextPageTemplate("rest")]
-    # -- sidebar column
+
+    # -- sidebar column: contact, skills, tools, languages, certifications
     story += [
         Paragraph(lab["contact"], s["section_side"]),
         Paragraph(escape(p.city + ", " + p.country), s["side"]),
@@ -291,7 +320,7 @@ def _render_sidebar(path: Path, p: CVProfile, accent: HexColor, lab: dict) -> No
         story.append(Paragraph(lab["certs"], s["section_side"]))
         story += [Paragraph("• " + escape(c), s["side"]) for c in p.certifications]
 
-    # -- main column
+    # -- main column: everything from here lands in the second frame
     story.append(FrameBreak())
     story += [
         Spacer(1, 6 * mm),
@@ -309,6 +338,10 @@ def _render_sidebar(path: Path, p: CVProfile, accent: HexColor, lab: dict) -> No
 
 
 # --- Template 1: full-width header band -----------------------------------
+# Same Frame + onPage mechanics as template 0 above. Two differences: the name
+# and contact block are drawn straight onto the canvas with drawString instead
+# of flowing as Paragraphs (they are fixed-position, inside the coloured band),
+# and the body is a single full-width column.
 def _render_banner(path: Path, p: CVProfile, accent: HexColor, lab: dict) -> None:
     font = "CV-Grotesk"
     s = _styles(font, accent)
@@ -399,6 +432,9 @@ def _render_banner(path: Path, p: CVProfile, accent: HexColor, lab: dict) -> Non
 
 
 # --- Template 2: classic single column ------------------------------------
+# The conservative one, and the only serif layout. No colour block at all: just
+# a rule under the header and a small photo top-right, so the three templates
+# differ in weight as well as arrangement.
 def _render_classic(path: Path, p: CVProfile, accent: HexColor, lab: dict) -> None:
     font = "CV-Serif"
     s = _styles(font, accent)
@@ -481,15 +517,20 @@ RENDERERS = (_render_sidebar, _render_banner, _render_classic)
 
 def render_cv(profile: CVProfile, *, force: bool = False) -> Path:
     """Render ``profile`` to ``data/cvs/<cv_id>_<slug>.pdf`` and return the path."""
-    _register_fonts()
+    _register_fonts()  # no-op after the first call
     settings.ensure_dirs()
 
+    # Filename is ASCII-only: it becomes part of an API path and a citation id.
     path = settings.cvs_dir / f"{profile.cv_id}_{ascii_slug(profile.full_name)}.pdf"
     if path.exists() and not force:
         return path
 
-    # Stable per-candidate accent, without assuming a particular cv_id format.
+    # Stable per-candidate accent. Hashing the cv_id rather than parsing an
+    # index out of it keeps this working for any id format.
     accent = HexColor(ACCENTS[sum(profile.cv_id.encode()) % len(ACCENTS)])
-    labels = LABELS[profile.language]
+    labels = LABELS[profile.language]  # ES or EN section headings
+
+    # Dispatch to one of the three layout functions. The modulo means a
+    # template number beyond the list simply wraps rather than crashing.
     RENDERERS[profile.template % len(RENDERERS)](path, profile, accent, labels)
     return path

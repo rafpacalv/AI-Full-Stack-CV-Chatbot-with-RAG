@@ -30,6 +30,14 @@ SIZE = 512
 
 
 def _prompt(persona: Persona) -> str:
+    """Build the diffusion prompt for one persona's headshot.
+
+    The first half varies per persona (age, appearance, gender, role) and is
+    what stops 50 portraits looking like the same person - diffusion models
+    regress hard to an average face when the prompt does not push them apart.
+    The second half is fixed photographic direction, so the set still looks
+    like it came from one consistent shoot.
+    """
     gender = "woman" if persona.gender == "female" else "man"
     return (
         f"professional corporate headshot portrait photo of a {persona.age} year old "
@@ -41,7 +49,11 @@ def _prompt(persona: Persona) -> str:
 
 
 def _monogram(persona: Persona, path: Path) -> Path:
-    """Offline fallback: initials on a LeadTech-mint tile."""
+    """Offline fallback: initials on a LeadTech-mint tile.
+
+    Drawn locally with Pillow so a network failure degrades the CV instead of
+    aborting a 30-minute batch. It still looks deliberate rather than broken.
+    """
     img = Image.new("RGB", (SIZE, SIZE), INK)
     draw = ImageDraw.Draw(img)
     draw.ellipse((36, 36, SIZE - 36, SIZE - 36), fill=MINT)
@@ -49,7 +61,9 @@ def _monogram(persona: Persona, path: Path) -> Path:
     try:
         font = ImageFont.truetype("arialbd.ttf", 190)
     except OSError:
-        font = ImageFont.load_default()
+        font = ImageFont.load_default()  # non-Windows: ugly but never crashes
+    # Centre the text using its measured bounding box; the -12 nudge
+    # compensates for the font's internal leading so it sits optically centred.
     box = draw.textbbox((0, 0), initials, font=font)
     draw.text(
         ((SIZE - box[2] + box[0]) / 2, (SIZE - box[3] + box[1]) / 2 - 12),

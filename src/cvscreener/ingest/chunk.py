@@ -73,11 +73,15 @@ def _normalise_heading(line: str) -> str | None:
     if not (2 < len(stripped) < 46):
         return None
 
-    # Headings in these layouts are set in caps; require that plus a known name.
+    # Two independent signals must agree before a line is called a heading,
+    # because a false positive silently truncates the section above it.
+    # Signal 1: it is set in capitals (>=85%, tolerating "y" or accents).
     letters = [c for c in stripped if c.isalpha()]
     if not letters or sum(c.isupper() for c in letters) / len(letters) < 0.85:
         return None
 
+    # Signal 2: it is a heading name we recognise. Accents and punctuation are
+    # stripped first so "FORMACIÓN ACADÉMICA" matches the plain-ASCII key.
     key = re.sub(r"[^a-z ]", "", _fold(stripped).lower()).strip()
     return SECTION_ALIASES.get(key)
 
@@ -91,22 +95,34 @@ def _fold(text: str) -> str:
 
 
 def _split_long(text: str, limit: int = MAX_CHUNK_CHARS) -> list[str]:
-    """Break an over-long section on paragraph, then sentence, boundaries."""
+    """Break an over-long section on paragraph, then sentence, boundaries.
+
+    Only reached when one section (usually a long work history) exceeds the
+    limit on its own. It splits at the least damaging seam available: bullet
+    boundaries first, and only if a single bullet is still too big does it fall
+    back to sentence boundaries. It never cuts mid-sentence.
+    """
     if len(text) <= limit:
         return [text]
 
     parts: list[str] = []
-    buffer = ""
-    # Bullet lines and blank lines are the natural seams inside a section.
+    buffer = ""  # the chunk being accumulated
+
+    # Split at bullet starts and blank lines - the natural seams in a section.
     for piece in re.split(r"\n(?=[•\-•]|\n)", text):
+        # Still room in the current chunk: keep filling it.
         if len(buffer) + len(piece) + 1 <= limit:
             buffer = f"{buffer}\n{piece}".strip()
             continue
+
+        # No room. Bank what we have and start fresh.
         if buffer:
             parts.append(buffer)
+
         if len(piece) <= limit:
             buffer = piece.strip()
         else:
+            # One bullet alone exceeds the limit: drop to sentence level.
             sentences = re.split(r"(?<=[.!?])\s+", piece)
             buffer = ""
             for sentence in sentences:
@@ -116,7 +132,8 @@ def _split_long(text: str, limit: int = MAX_CHUNK_CHARS) -> list[str]:
                     if buffer:
                         parts.append(buffer)
                     buffer = sentence.strip()
-    if buffer:
+
+    if buffer:  # whatever is left over
         parts.append(buffer)
     return [p for p in parts if p]
 
@@ -126,18 +143,24 @@ def chunk_document(
 ) -> list[Chunk]:
     """Split one CV into section-scoped chunks."""
     metadata = metadata or {}
-    sections: list[tuple[str, list[str]]] = [("Encabezado", [])]
 
+    # PASS 1 - walk the lines and cut a new section at every heading.
+    # Everything before the first heading (name, job title, contact details) is
+    # real content too, so it starts in a bucket of its own rather than being
+    # discarded.
+    sections: list[tuple[str, list[str]]] = [("Encabezado", [])]
     for line in text.split("\n"):
         section = _normalise_heading(line)
         if section:
-            sections.append((section, []))
+            sections.append((section, []))  # heading: open a new section
         else:
-            sections[-1][1].append(line)
+            sections[-1][1].append(line)    # body: add to the current one
 
+    # PASS 2 - turn each section into one or more chunks.
     chunks: list[Chunk] = []
     for section, lines in sections:
         body = "\n".join(lines).strip()
+        # Skip near-empty sections: a lone heading embeds to noise.
         if len(body) < MIN_CHUNK_CHARS:
             continue
         for piece in _split_long(body):

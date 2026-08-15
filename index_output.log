@@ -1,0 +1,83 @@
+1/4  Extracting text from PDFs ...
+     50 PDFs, 117,787 characters
+2/4  Extracting structured facts (LLM) ...
+     [ 1/50] cv_01 Núria Badia Roldán       Mid-level   4y  17 skills
+     [ 2/50] cv_02 Elena Vidal Company      Senior      5y  10 skills
+     [ 3/50] cv_03 Rubén Ibarrola Nieto     Mid-level   4y  12 skills
+     [ 4/50] cv_04 Guillem Roca Prats       Senior      7y  21 skills
+     [ 5/50] cv_05 Aitana Serrano Puig      Senior     10y  12 skills
+     [ 6/50] cv_06 Clara Bonet Iglesias     Senior     10y  12 skills
+     [ 7/50] cv_07 Irene Mestre Cabrera     Senior     11y  16 skills
+     [ 8/50] cv_08 Adrián Quesada Lorenzo   Senior      7y  12 skills
+     [ 9/50] cv_09 Óscar Delclós Rivas      Junior      1y  16 skills
+     [10/50] cv_10 Marta Sanchis Ferrer     Senior      9y  17 skills
+     [11/50] cv_11 Álvaro Peñalver Gil      Junior      1y  10 skills
+     [12/50] cv_12 Sergi Fontcuberta Mas    Senior      6y  16 skills
+     [13/50] cv_13 Lucía Cañadas Otero      Senior     12y  21 skills
+     [14/50] cv_14 Joan Trías Bermúdez      Junior      2y  11 skills
+     [15/50] cv_15 Mateusz Kowalczyk        Junior      3y  14 skills
+     [16/50] cv_16 Declan Fitzgerald        Mid-level   4y  17 skills
+     [17/50] cv_17 Tomás Bekele             Senior      5y  10 skills
+     [18/50] cv_18 Sinéad O'Halloran        Mid-level   2y  14 skills
+     [19/50] cv_19 Callum Sharpe            Mid-level   3y  15 skills
+     [20/50] cv_20 Hannah Vogelsang         Mid-level   5y  11 skills
+     [21/50] cv_21 Yuki Matsubara           Mid-level   9y  18 skills
+     [22/50] cv_22 Rasmus Lindqvist         Senior     11y  17 skills
+     [23/50] cv_23 Omar Benali              Junior      2y  10 skills
+     [24/50] cv_24 Nikhil Chandrasekar      Senior      6y  11 skills
+     [25/50] cv_25 Amara Nwachukwu          Junior      1y  12 skills
+     [26/50] cv_26 Katarzyna Wilczyńska     Mid-level   4y  10 skills
+     [27/50] cv_27 Priya Raghunathan        Mid-level   3y  10 skills
+     [28/50] cv_28 Beatriz Fontoura Lima    Senior      6y  15 skills
+     [29/50] cv_29 Raúl Díaz Moreno         Senior      7y  12 skills
+     [30/50] cv_30 Rosa García López        Mid-level   3y  12 skills
+     [31/50] cv_31 Mónica Herrera González  Junior      1y  15 skills
+     [32/50] cv_32 Borja García Martín      Senior      8y  11 skills
+     [33/50] cv_33 Verónica Suárez López    Senior     10y  11 skills
+     [34/50] cv_34 Felipe Sánchez García    Mid-level   5y  16 skills
+     [35/50] cv_35 Marisa Fernández Díaz    Senior      7y  11 skills
+     [36/50] cv_36 Iñigo López Ruiz         Senior     10y  11 skills
+     [37/50] cv_37 Xavi Muñoz López         Senior      9y  18 skills
+     [38/50] cv_38 Valentina Ruiz Sánchez   Senior     12y  18 skills
+     [39/50] cv_39 Carla Molina García      Senior      8y  11 skills
+     [40/50] cv_40 Aisha Patel              Senior      6y  12 skills
+     [41/50] cv_41 Léa Dubois               Senior      4y  15 skills
+     [42/50] cv_42 Megan O'Connor           Mid-level   5y  12 skills
+     [43/50] cv_43 Dmitri Sokolov           Senior      9y  15 skills
+     [44/50] cv_44 Chiara Rossi             Senior     13y  12 skills
+     [45/50] cv_45 Jean-Pierre Leclerc      Junior      3y  14 skills
+     [46/50] cv_46 Emily Richardson         Senior     11y  17 skills
+     [47/50] cv_47 Marcus Johnson           Mid-level   3y   6 skills
+     [48/50] cv_48 Sasha Volkov             Junior      3y  15 skills
+     [49/50] cv_49 Arjun Sharma             Junior      1y   8 skills
+     [50/50] cv_50 Alessandro Ferrari       Mid-level   3y  10 skills
+3/4  Chunking ...
+     375 chunks (avg 7.5 per CV)
+4/4  Embedding + BM25 ...
+     embedded 16/375
+     embedded 32/375
+     embedded 48/375
+     embedded 64/375
+     embedded 80/375
+     embedded 96/375
+     embedded 112/375
+     embedded 128/375
+     embedded 144/375
+     embedded 160/375
+     embedded 176/375
+     embedded 192/375
+     embedded 208/375
+     embedded 224/375
+     embedded 240/375
+     embedded 256/375
+     embedded 272/375
+     embedded 288/375
+     embedded 304/375
+     embedded 320/375
+     embedded 336/375
+     embedded 352/375
+     embedded 368/375
+     embedded 375/375
+
+Index ready in 637.0s -> C:\Users\rafae\LeadTech\data\index
+  50 CVs · 375 chunks · 375x1024 embeddings · languages {'es': 25, 'en': 25}

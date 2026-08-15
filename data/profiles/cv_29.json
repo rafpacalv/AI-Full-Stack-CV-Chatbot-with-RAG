@@ -1,0 +1,92 @@
+{
+  "cv_id": "cv_29",
+  "language": "es",
+  "full_name": "Raúl Díaz Moreno",
+  "email": "raul.diaz@example.net",
+  "phone": "+34 692 479 590",
+  "city": "Barcelona",
+  "country": "España",
+  "birth_date": "24/06/1991",
+  "linkedin": "linkedin.com/in/raul-diaz",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Desarrollador Frontend | React y TypeScript",
+  "summary": "Profesional con 7 años de experiencia en el desarrollo web frontend, especializado en React y TypeScript. Apasionado por la creación de interfaces de usuario intuitivas y responsive. Busco constantemente nuevas tecnologías y me mantengo actualizado con las últimas tendencias del sector.",
+  "experience": [
+    {
+      "company": "Zenit Labs",
+      "position": "Desarrollador Frontend Senior",
+      "period": "2023 - Actualidad",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Desenvolví la nueva interfaz de usuario para la plataforma de gestión de proyectos, logrando un incremento del 20% en la satisfacción del usuario.",
+        "Implementé un sistema de depuración en tiempo real para mejorar la experiencia de desarrollo del equipo, reduciendo el tiempo de resolución de errores en un 15%.",
+        "Contribuí al desarrollo de un sistema de pruebas automatizadas para la aplicación web, aumentando la cobertura del 30%."
+      ]
+    },
+    {
+      "company": "NovaTek Solutions",
+      "position": "Desarrollador Frontend",
+      "period": "2020 - 2023",
+      "location": "Madrid, España",
+      "bullets": [
+        "Desenvolví componentes de interfaz de usuario reusable utilizando React y TypeScript, lo que permitió una mayor eficiencia en el desarrollo.",
+        "Implementé la optimización de la carga de recursos para mejorar el rendimiento de la página web, reduciendo el tiempo de carga en un 10%.",
+        "Contribuí al desarrollo de la API REST para la aplicación web, asegurando una comunicación fluida con el backend."
+      ]
+    },
+    {
+      "company": "PixelStream",
+      "position": "Junior Desarrollador Frontend",
+      "period": "2019 - 2020",
+      "location": "Valencia, España",
+      "bullets": [
+        "Desenvolví páginas web estáticas y dinámicas utilizando HTML, CSS y JavaScript.",
+        "Implementé animaciones y efectos visuales para mejorar la experiencia de usuario.",
+        "Colaboré con el equipo de diseño en la implementación de diseños de interfaz de usuario."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Física",
+      "institution": "Universitat Politècnica de Catalunya (UPC)",
+      "period": "2015 - 2019",
+      "detail": "Especialización en física computacional"
+    }
+  ],
+  "technical_skills": [
+    "JavaScript",
+    "React",
+    "TypeScript",
+    "CSS",
+    "HTML",
+    "Git",
+    "Webpack",
+    "Node.js",
+    "Jest",
+    "Styled Components",
+    "Responsive Design",
+    "SEO"
+  ],
+  "tools": [
+    "Jira",
+    "Trello",
+    "Slack",
+    "Visual Studio Code"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "B2"
+    }
+  ],
+  "certifications": [
+    "Certificación en Desarrollo Web Frontend (React)",
+    "Certificación en Diseño Responsivo"
+  ]
+}

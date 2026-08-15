@@ -104,6 +104,11 @@ class OllamaClient:
         payload: dict[str, Any] = {
             "model": model or settings.chat_model,
             "prompt": prompt,
+            # The whole trick, in one line. Pydantic emits a JSON Schema from
+            # the class, and Ollama constrains decoding to it - at each step
+            # only tokens that keep the output schema-valid can be sampled.
+            # The model cannot produce malformed JSON, so there is no parsing,
+            # no repair and no "extract the JSON from the prose" code anywhere.
             "format": schema.model_json_schema(),
             "stream": False,
             "think": False,
@@ -119,13 +124,15 @@ class OllamaClient:
                     f"{self.host}/api/generate", json=payload, timeout=GENERATE_TIMEOUT
                 )
                 r.raise_for_status()
+                # Parses AND validates: types, required fields, constraints.
                 return schema.model_validate_json(r.json()["response"])
             except Exception as exc:  # noqa: BLE001 - retried below, raised if final
                 last = exc
                 log.warning(
                     "structured() attempt %d/%d failed: %s", attempt + 1, retries + 1, exc
                 )
-                # Nudge toward a different sample on the retry.
+                # Raise the temperature a little each retry. Repeating a failed
+                # call at temperature 0 would deterministically fail again.
                 payload["options"]["temperature"] = min(
                     1.0, payload["options"]["temperature"] + 0.2
                 )
@@ -148,13 +155,17 @@ class OllamaClient:
             "options": {"temperature": temperature, "num_predict": num_predict},
         }
         try:
+            # Ollama streams NDJSON: one JSON object per line, each carrying
+            # the next fragment of text. A generator is used so tokens travel
+            # straight through to the SSE response without being buffered -
+            # nothing here ever holds the full answer.
             with httpx.stream(
                 "POST", f"{self.host}/api/chat", json=payload, timeout=GENERATE_TIMEOUT
             ) as r:
                 r.raise_for_status()
                 for line in r.iter_lines():
                     if not line:
-                        continue
+                        continue  # keep-alive blank line
                     chunk = json.loads(line)
                     if token := chunk.get("message", {}).get("content"):
                         yield token
@@ -165,9 +176,13 @@ class OllamaClient:
 
     # -- embeddings -------------------------------------------------------
     def embed(self, texts: Sequence[str], *, model: str | None = None) -> list[list[float]]:
+        """Embed a batch of texts. Returns one 1024-float vector per input."""
         if not texts:
             return []
         try:
+            # `input` accepts a list, so a whole batch is one round-trip. At
+            # index time that matters: per-text requests would make HTTP
+            # overhead, not inference, the bottleneck.
             r = httpx.post(
                 f"{self.host}/api/embed",
                 json={"model": model or settings.embed_model, "input": list(texts)},

@@ -125,13 +125,17 @@ def _language_balanced_pool(
     it. They still have to earn their final position - nothing is reordered,
     only admitted.
     """
+    # Bucket every chunk index by the language of the CV it came from.
     groups: dict[str, list[int]] = {}
     for i, lang in enumerate(languages):
         groups.setdefault(lang, []).append(i)
 
+    # Monolingual corpus: nothing to balance, behave like a plain top-N.
     if len(groups) < 2:
         return _ranks(dense_scores, pool)
 
+    # Give each language an equal slice of the pool (2 languages, pool 25 -> 12
+    # each) and fill it with that language's own best dense matches.
     share = max(1, pool // len(groups))
     selected: list[int] = []
     for indices in groups.values():
@@ -139,7 +143,8 @@ def _language_balanced_pool(
         ordered = idx[np.argsort(-dense_scores[idx])][:share]
         selected.extend(int(i) for i in ordered)
 
-    # Re-sort the union so ranks still reflect true dense similarity.
+    # Merge the per-language slices back into one list ordered by true
+    # similarity. The quota decided who got in; it does not decide the order.
     selected.sort(key=lambda i: -dense_scores[i])
     return selected
 
@@ -195,15 +200,23 @@ def _reserve_cross_lingual_slots(
     up on its own. Nothing is reordered on a blended score; the comparison stays
     within one metric.
     """
+    # Which languages actually made the cut?
     top = ordered[:top_k]
     present = {languages[i] for i, _ in top}
     missing = {lang for lang in set(languages) if lang not in present and lang != "??"}
+
+    # Every language already represented, or too few results to spare a slot:
+    # leave the fusion's own ordering completely alone.
     if not missing or len(top) < top_k:
         return top
 
+    # The bar: 90% of the best dense similarity anywhere in the index. Compared
+    # cosine-to-cosine, never against a BM25 score.
     threshold = float(dense_scores.max()) * CROSS_LINGUAL_MIN_RATIO
-    reserve = max(1, top_k // 3)
+    reserve = max(1, top_k // 3)  # at most a third of the slots, so 1 of 5
 
+    # Walk down the fused list past the cut-off, looking for the missing
+    # language's best chunks that clear the bar.
     promoted: list[tuple[int, float]] = []
     for idx, score in ordered[top_k:]:
         if len(promoted) >= reserve:
@@ -234,31 +247,48 @@ def search(
     top_k = top_k or settings.top_k
     index = load_index()
 
+    # STEP 1 - optional filter to specific CVs.
+    # Scores are masked to -inf rather than the arrays being sliced, so every
+    # index stays aligned with index.chunks and no bookkeeping is needed to map
+    # positions back afterwards.
     mask: np.ndarray | None = None
     if cv_ids:
         wanted = set(cv_ids)
         mask = np.array([c.cv_id in wanted for c in index.chunks], dtype=bool)
         if not mask.any():
-            mask = None
+            mask = None  # nothing matched: fall back to searching everything
 
-    # -- dense
+    # STEP 2 - dense retrieval (semantic).
+    # Both the stored vectors and the query are L2-normalised, so this single
+    # matmul IS the cosine similarity of the query against all ~370 chunks.
+    # One multiplication, no loop, sub-millisecond.
     query_vec = embed_query(query) if query_vector is None else query_vector
     dense_scores = index.embeddings @ query_vec
 
-    # -- lexical
+    # STEP 3 - lexical retrieval (exact tokens).
+    # Catches what embeddings blur: acronyms, surnames, product names.
     bm25_scores = np.asarray(index.bm25.get_scores(tokenize(query)), dtype=np.float32)
 
     if mask is not None:
         dense_scores = np.where(mask, dense_scores, -np.inf)
         bm25_scores = np.where(mask, bm25_scores, -np.inf)
 
+    # STEP 4 - turn both score lists into RANKED shortlists.
+    # From here on only positions matter, never the raw scores: that is the
+    # whole point of RRF, since cosine and BM25 are not on comparable scales.
     languages = [c.metadata.get("language", "??") for c in index.chunks]
     dense_order = _language_balanced_pool(dense_scores, languages, candidate_pool)
     bm25_order = _ranks(bm25_scores, candidate_pool, positive_only=True)
 
+    # chunk index -> its position in each shortlist (0 = best)
     dense_rank = {idx: r for r, idx in enumerate(dense_order)}
     bm25_rank = {idx: r for r, idx in enumerate(bm25_order)}
 
+    # STEP 5 - Reciprocal Rank Fusion.
+    # Each shortlist a chunk appears in contributes 1/(k + rank + 1). With
+    # k=60 the curve is nearly flat, so *being in both lists* matters far more
+    # than the exact position in either: appearing twice at rank 0 scores
+    # 2/61 = 0.0328, once at rank 0 only 1/61 = 0.0164.
     k = settings.rrf_k
     fused: dict[int, float] = {}
     for idx, rank in dense_rank.items():
@@ -266,10 +296,16 @@ def search(
     for idx, rank in bm25_rank.items():
         fused[idx] = fused.get(idx, 0.0) + 1.0 / (k + rank + 1)
 
+    # STEP 6 - and that doubling is exactly why cross-lingual hits need
+    # protecting: BM25 cannot match the other language at all, so those chunks
+    # can only ever collect from one list. See the function below.
     ordered = sorted(fused.items(), key=lambda kv: -kv[1])
     best = _reserve_cross_lingual_slots(
         ordered, dense_scores, languages, top_k=top_k
     )
+
+    # STEP 7 - return the chunks with every score kept, so the UI's Pipeline
+    # tab can show exactly why each one was picked.
     return [
         RetrievedChunk(
             chunk=index.chunks[idx],

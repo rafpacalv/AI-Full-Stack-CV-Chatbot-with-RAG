@@ -1,0 +1,77 @@
+{
+  "cv_id": "cv_31",
+  "language": "es",
+  "full_name": "Mónica Herrera González",
+  "email": "monica.herrera@example.org",
+  "phone": "+34 621 721 505",
+  "city": "Madrid",
+  "country": "España",
+  "birth_date": "25/11/1998",
+  "linkedin": "linkedin.com/in/monica-herrera",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Ingeniera DevOps | Automatización y Gestión de Infraestructura",
+  "summary": "Ingeniera DevOps con experiencia en la automatización de procesos y gestión de infraestructura en entornos cloud. Apasionada por implementar soluciones escalables y resilientes utilizando las últimas tecnologías. Buscando un reto que me permita contribuir al desarrollo de proyectos innovadores y colaborar con equipos multidisciplinares.",
+  "experience": [
+    {
+      "company": "Almendro Tech",
+      "position": "Ingeniera DevOps Junior",
+      "period": "2024 - Actualidad",
+      "location": "Madrid, España",
+      "bullets": [
+        "Implementé una solución de CI/CD utilizando Jenkins, GitLab y Docker, reduciendo el tiempo de despliegue de aplicaciones en un 30%.",
+        "Automatizó la configuración de servidores utilizando Terraform, optimizando la gestión de recursos y reduciendo el tiempo de provisionamiento en un 15%.",
+        "Diseñé y configuré un sistema de monitorización utilizando Prometheus y Grafana, mejorando la visibilidad del estado de los servicios y detectando errores con mayor rapidez.",
+        "Colaboré con el equipo de desarrollo para la implementación de Kubernetes en un entorno de producción, mejorando la escalabilidad y disponibilidad de las aplicaciones."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ingeniería Informática",
+      "institution": "Universitat de Barcelona (UB)",
+      "period": "2020 - 2024",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Kubernetes",
+    "Terraform",
+    "AWS",
+    "CI/CD",
+    "Jenkins",
+    "Docker",
+    "GitLab",
+    "Bash",
+    "Ansible",
+    "Infrastructure as Code",
+    "DevOps Methodology",
+    "Version Control Systems"
+  ],
+  "tools": [
+    "Jira",
+    "Confluence",
+    "Prometheus",
+    "Grafana",
+    "PostgreSQL",
+    "Redis"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Avanzado"
+    },
+    {
+      "language": "Francés",
+      "level": "Intermedio"
+    }
+  ],
+  "certifications": [
+    "AWS Certified Solutions Architect - Associate",
+    "Certified Kubernetes Administrator (CKA)"
+  ]
+}

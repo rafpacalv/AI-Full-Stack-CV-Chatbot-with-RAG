@@ -163,17 +163,27 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
         # independent, and both models are resident in VRAM at once. Running
         # them concurrently rather than back-to-back roughly halves the time
         # before the first token appears - ~13s down to ~7s on this machine.
+        # Start the embedding in a background thread, then do the routing on
+        # this one. Speculative: the aggregate branch will not need it, but the
+        # wasted work is one embedding call and the saving on the common path
+        # is several seconds.
         pool = ThreadPoolExecutor(max_workers=1)
         embedding_future = pool.submit(embed_query, req.question)
         try:
             plan = route(req.question)
         except Exception:
-            embedding_future.cancel()
+            embedding_future.cancel()  # do not leak the thread on failure
             pool.shutdown(wait=False)
             raise
+
+        # First event out: the routing decision. The UI paints its badge from
+        # this immediately, so the user sees the system reacting long before
+        # any answer text exists.
         yield _sse("plan", plan.model_dump())
 
-        # --- aggregate / chart: exact answers over the whole table -------
+        # --- BRANCH A: aggregate / chart ---------------------------------
+        # Counting and plotting questions are answered from the candidate
+        # table, not from retrieved text, so the figure covers every CV.
         if plan.intent in ("aggregate", "chart"):
             embedding_future.cancel()  # this branch never searches
             pool.shutdown(wait=False)
@@ -189,6 +199,9 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
                     "filters": result.filters,
                     "chart": result.chart,
                     "matched_count": int(len(frame)),
+                    # Here a "citation" is every candidate the filter matched -
+                    # these came from the table, not from retrieved chunks, so
+                    # there is no section to point at.
                     "citations": [
                         {
                             "cv_id": row["cv_id"],
@@ -205,7 +218,11 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             yield _sse("done", {})
             return
 
-        # --- retrieval ---------------------------------------------------
+        # --- BRANCH B: semantic retrieval --------------------------------
+        # If the question names a person ("summarise the profile of X"),
+        # resolve them to a cv_id and search only their CV. Otherwise the other
+        # candidates compete for the five slots and the summary comes out
+        # patchy - a question about one person should read one person's CV.
         cv_ids = None
         if plan.candidate_name:
             frame = load_candidates()
@@ -217,7 +234,11 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             ]
             if not hit.empty:
                 cv_ids = hit["cv_id"].tolist()
+            # No match: fall through and search everything, because the model
+            # may simply have misread a name that is not in the corpus.
 
+        # `.result()` collects the embedding started before routing. By now it
+        # is almost always finished, so this rarely blocks.
         hits = search(
             req.question,
             top_k=req.top_k or settings.top_k,
@@ -225,10 +246,16 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             query_vector=embedding_future.result(),
         )
         pool.shutdown(wait=False)
+
+        # Stream the answer as the model produces it. At ~18 tok/s this is the
+        # difference between a live assistant and a blank screen for 12 s.
         for token in stream_retrieval_answer(req.question, hits):
             yield _sse("token", {"t": token})
 
-        # One citation per candidate, keeping every section that contributed.
+        # Collapse chunks into one citation per candidate. Five chunks often
+        # come from two people, and the user wants to see two sources, not
+        # five - but every section that contributed is kept so they can tell
+        # which parts of the CV were actually read.
         citations: dict[str, dict] = {}
         for hit in hits:
             entry = citations.setdefault(

@@ -1,0 +1,107 @@
+{
+  "cv_id": "cv_46",
+  "language": "en",
+  "full_name": "Emily Richardson",
+  "email": "emily.richardson@example.com",
+  "phone": "+33 893 348476",
+  "city": "Manchester",
+  "country": "United Kingdom",
+  "birth_date": "02/07/1993",
+  "linkedin": "linkedin.com/in/emily-richardson",
+  "template": 0,
+  "photo_file": null,
+  "headline": "QA Automation Engineer | Playwright & TypeScript",
+  "summary": "Highly accomplished QA Automation Engineer with over 11 years of experience leading and delivering robust testing strategies for complex software applications. Proven ability to design, develop, and implement automated test suites using cutting-edge technologies like Playwright and TypeScript. Dedicated to ensuring high software quality and continuous improvement through automation.",
+  "experience": [
+    {
+      "company": "InnoTech Solutions (UK) Ltd.",
+      "position": "QA Automation Engineer (Lead)",
+      "period": "2021 - Present",
+      "location": "Manchester, UK",
+      "bullets": [
+        "Led a team of 5 QA engineers, successfully implementing a new CI/CD pipeline that reduced deployment time by 30% and increased release frequency by 25%.",
+        "Developed and maintained comprehensive automated test suites for web and API applications using Playwright and TypeScript, achieving a 98% test coverage rate.",
+        "Collaborated closely with development teams to integrate automated testing practices into the SDLC, resulting in a 15% reduction in bug reports during the development cycle.",
+        "Implemented performance testing strategies using JMeter, identifying and resolving performance bottlenecks that improved application response time by 10%."
+      ]
+    },
+    {
+      "company": "TechNova Ltd.",
+      "position": "Senior QA Automation Engineer",
+      "period": "2019 - 2021",
+      "location": "Manchester, UK",
+      "bullets": [
+        "Designed and implemented a framework for automated regression testing using Selenium and Java, significantly reducing manual testing efforts by 60%.",
+        "Developed API test automation scripts using REST Assured, achieving a 99% test pass rate and ensuring the stability of API integrations.",
+        "Collaborated with cross-functional teams to analyze and resolve complex software defects, contributing to a 20% improvement in software quality.",
+        "Conducted regular code reviews and provided constructive feedback to developers, promoting best practices in software development and testing."
+      ]
+    },
+    {
+      "company": "DigiCom Solutions GmbH",
+      "position": "QA Automation Engineer",
+      "period": "2017 - 2019",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Developed and executed automated test cases for a mobile application using Appium and Python, achieving a 95% test coverage rate.",
+        "Collaborated with developers to integrate automated testing into the development process, resulting in a 10% reduction in bug reports.",
+        "Participated in Agile sprint cycles, providing timely feedback and ensuring the delivery of high-quality software.",
+        "Conducted thorough testing of new features and releases, ensuring that they met the required functionality and performance standards."
+      ]
+    },
+    {
+      "company": "E-Solutions Co. Ltd.",
+      "position": "Test Analyst",
+      "period": "2015 - 2017",
+      "location": "London, UK",
+      "bullets": [
+        "Performed manual testing of web applications, identifying and documenting software defects.",
+        "Collaborated with developers to resolve identified defects and ensure software quality.",
+        "Developed test cases and executed test plans to ensure that software met the specified requirements.",
+        "Contributed to the improvement of testing processes and documentation."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc Industrial Engineering",
+      "institution": "University of Manchester",
+      "period": "2011 - 2015",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Playwright",
+    "TypeScript",
+    "CI/CD",
+    "API Testing",
+    "Selenium",
+    "Appium",
+    "REST Assured",
+    "JMeter",
+    "Git",
+    "Agile methodologies",
+    "Jira",
+    "Confluence"
+  ],
+  "tools": [
+    "Docker",
+    "Kubernetes",
+    "Jenkins",
+    "Azure DevOps",
+    "Postman"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "German",
+      "level": "Fluent"
+    }
+  ],
+  "certifications": [
+    "ISTQB Certified Tester Foundation Level"
+  ]
+}

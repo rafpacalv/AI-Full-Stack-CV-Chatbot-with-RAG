@@ -55,23 +55,31 @@ def run(
 
     for i, persona in enumerate(personas, 1):
         t0 = time.time()
+        # `marks` records what each stage actually did. Printing cache-vs-new
+        # per CV is what makes it obvious at a glance whether a run is doing
+        # 30 seconds of work or 30 minutes.
         marks: list[str] = []
 
+        # -- photo: network call, cached on disk
         if do_photo:
             cached = (settings.photos_dir / f"{persona.cv_id}.jpg").exists()
             generate_photo(persona, force=force)
             marks.append("photo:cache" if cached and not force else "photo:new")
 
+        # -- text: the expensive stage, ~60 s of local inference per CV
         profile = None
         if do_text:
             cached = (settings.profiles_dir / f"{persona.cv_id}.json").exists()
             profile = generate_profile(persona, force=force)
             marks.append("text:cache" if cached and not force else "text:new")
 
+        # -- render: milliseconds, so always redone. That asymmetry is the
+        # point of the whole design: a bug in the PDF layout costs one cheap
+        # re-render, never a regeneration of text that was already correct.
         if do_render:
             if profile is None:
-                profile = generate_profile(persona)
-            path = render_cv(profile, force=True)  # cheap; always reflect latest text
+                profile = generate_profile(persona)  # --stage render: load cache
+            path = render_cv(profile, force=True)
             marks.append(f"pdf:{path.name}")
 
         print(

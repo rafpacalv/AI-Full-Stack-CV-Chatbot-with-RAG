@@ -61,9 +61,15 @@ DIMENSION_LABELS = {
 
 def apply_filters(frame: pd.DataFrame, plan: QueryPlan) -> tuple[pd.DataFrame, dict[str, str]]:
     """Narrow the table to the rows the question is about."""
+    # Filters are applied in sequence, each narrowing the previous result.
+    # `used` records what actually fired, so the answer can state its criteria
+    # and the UI can show them as chips - the user always sees what was applied.
     out = frame
     used: dict[str, str] = {}
 
+    # Skills live in a list column, so this is a membership test per row, not an
+    # equality test. Both sides go through normalise_skill so a Spanish query
+    # term matches the canonical name stored at ingest time.
     if plan.skill:
         wanted = normalise_skill(plan.skill)
         out = out[out["skills_normalised"].apply(lambda s: wanted in list(s))]
@@ -74,6 +80,7 @@ def apply_filters(frame: pd.DataFrame, plan: QueryPlan) -> tuple[pd.DataFrame, d
         out = out[out["seniority"].str.casefold() == target]
         used["seniority"] = plan.seniority
 
+    # Accents are folded on both sides so "Malaga" finds "Málaga".
     if plan.city:
         target = fold_accents(plan.city).casefold()
         out = out[out["city"].apply(lambda c: fold_accents(str(c)).casefold() == target)]
@@ -83,6 +90,8 @@ def apply_filters(frame: pd.DataFrame, plan: QueryPlan) -> tuple[pd.DataFrame, d
         out = out[out["years_experience"] >= plan.min_years]
         used["min_years"] = f">= {plan.min_years}"
 
+    # Substring match, not equality: people ask for "Wilczynska", not the full
+    # legal name, and often without the diacritics.
     if plan.candidate_name:
         target = fold_accents(plan.candidate_name).casefold()
         out = out[
@@ -101,13 +110,21 @@ def _describe(count: int, total: int, used: dict[str, str]) -> str:
 
 
 def _chart_payload(frame: pd.DataFrame, plan: QueryPlan) -> dict | None:
-    """Shape the plot data. Returns values for a histogram, counts otherwise."""
+    """Shape the plot data.
+
+    Returns plain JSON-serialisable data, never a rendered image. The backend
+    decides *what* the chart says; the UI decides how it looks. That keeps the
+    brand palette and Plotly entirely on the front end, and means the same
+    payload could feed a different renderer without touching this file.
+    """
     dim = plan.dimension
     if dim in ("none", "") or frame.empty:
         return None
 
     label = DIMENSION_LABELS.get(dim, dim)
 
+    # Skills need exploding first: one row per candidate becomes one row per
+    # (candidate, skill) pair, so they can be counted individually.
     if dim == "skills":
         exploded = frame.explode("skills_normalised")["skills_normalised"].dropna()
         counts = exploded.value_counts().head(15)
@@ -126,7 +143,8 @@ def _chart_payload(frame: pd.DataFrame, plan: QueryPlan) -> dict | None:
     if series.empty:
         return None
 
-    # Continuous fields keep their raw values so the UI can bin them properly.
+    # A histogram needs the raw values, not counts: binning is a presentation
+    # decision, so the UI does it. Everything else gets pre-counted below.
     if plan.chart_type == "histogram" and pd.api.types.is_numeric_dtype(series):
         return {
             "type": "histogram",

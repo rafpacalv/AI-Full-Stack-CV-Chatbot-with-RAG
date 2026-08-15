@@ -4,25 +4,25 @@
 
 ```mermaid
 flowchart TB
-    subgraph GEN["1 · Generation — offline, once (~25 min)"]
+    subgraph GEN["1 · Generation — offline, once (~40 min)"]
         direction LR
-        PM["Persona matrix<br/>28 personas, fixed seed<br/>role · seniority · age<br/>city · language · template"]
+        PM["Persona matrix<br/>50 personas, fixed seed<br/>role · seniority · age<br/>city · language · template"]
         LLM1["gemma2:9b<br/>JSON Schema constrained"]
         POLL["pollinations.ai<br/>flux · free, no API key"]
         RL["ReportLab<br/>3 distinct layouts"]
-        PDF[("data/cvs/<br/>28 PDFs<br/>14 ES · 14 EN")]
+        PDF[("data/cvs/<br/>50 PDFs<br/>25 ES · 25 EN")]
         PM --> LLM1 --> RL
         PM --> POLL --> RL
         RL --> PDF
     end
 
-    subgraph ING["2 · Ingestion — offline, re-runnable (~13 min)"]
+    subgraph ING["2 · Ingestion — offline, re-runnable (~20 min)"]
         direction LR
         EX["pdfplumber<br/><b>column-aware</b><br/>gutter detection"]
         EN["gemma2:9b + regex<br/>hybrid fact extraction"]
         CH["Section-aware chunking<br/>bilingual headings"]
         EMB["bge-m3<br/>1024-d multilingual"]
-        IDX[("data/index/<br/>208 chunks<br/>208×1024 vectors<br/>BM25 · parquet")]
+        IDX[("data/index/<br/>375 chunks<br/>375×1024 vectors<br/>BM25 · parquet")]
         EX --> EN --> CH --> EMB --> IDX
     end
 
@@ -36,7 +36,7 @@ flowchart TB
             BM["BM25<br/>lexical"]
         end
         RRF["Reciprocal Rank Fusion<br/>k=60 · rank-based"]
-        AGG["pandas over<br/><b>all 28</b> candidates"]
+        AGG["pandas over<br/><b>all 50</b> candidates"]
         ANS["Grounded answer<br/>+ citations · streamed"]
         CHART["Plotly<br/>validated palette"]
 
@@ -66,7 +66,7 @@ So the router picks the machinery that can actually answer:
 | Intent | Machinery | Example |
 |---|---|---|
 | `retrieve` | hybrid search → grounded generation | *¿Quién sabe aprendizaje automático?* |
-| `aggregate` | pandas over the full candidate table | *How many candidates know Kubernetes?* → **exactly 8 of 28** |
+| `aggregate` | pandas over the full candidate table | *How many candidates know Kubernetes?* → **exactly 13 of 50** |
 | `chart` | same, plus a Plotly figure | *Histograma de las edades de los que sepan Python* |
 
 ## Why RRF, and not a weighted score blend
@@ -107,7 +107,7 @@ real candidate sent in.
 
 | Decision | Reason |
 |---|---|
-| **numpy, not a vector DB** | 208 vectors. Exact cosine is one matmul, sub-millisecond. An ANN index would be slower, approximate, and another dependency. |
+| **numpy, not a vector DB** | 375 vectors (chunks). Exact cosine is one matmul, sub-millisecond. An ANN index would be slower, approximate, and another dependency. |
 | **gemma2:9b over gemma4:12b** | Profiled on this 8 GB RTX 4070: the 12B gets only 4.4 GB onto the GPU and runs the rest on CPU → 7.3 tok/s. The 9B fits → 18.3 tok/s, 2.5× faster at comparable quality. |
 | **bge-m3 embeddings** | Genuinely multilingual, so one index serves both languages. A monolingual model would need either translation or two indexes. |
 | **Constrained decoding** | Ollama enforces the JSON Schema, so no output parsing or JSON repair anywhere in the codebase. |

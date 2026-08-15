@@ -1,0 +1,107 @@
+{
+  "cv_id": "cv_32",
+  "language": "es",
+  "full_name": "Borja García Martín",
+  "email": "borja.garcia@example.org",
+  "phone": "+34 616 876 934",
+  "city": "Valencia",
+  "country": "España",
+  "birth_date": "01/09/1992",
+  "linkedin": "linkedin.com/in/borja-garcia",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Especialista SEO | Optimización de Contenido y Análisis Web",
+  "summary": "SEO Senior con 8 años de experiencia impulsando el tráfico web y mejorando el posicionamiento de sitios web en buscadores. Experto en análisis de datos web y optimización de estrategias SEO para obtener resultados tangibles. Me apasiona la investigación de tendencias y el desarrollo de estrategias innovadoras para alcanzar los objetivos de marketing digital. Busco constantemente nuevas formas de optimizar el rendimiento de los sitios web y generar un impacto positivo en el negocio.",
+  "experience": [
+    {
+      "company": "Webflow Solutions",
+      "position": "Especialista SEO Senior",
+      "period": "2021 - Actualidad",
+      "location": "Barcelona, España",
+      "bullets": [
+        "Implementé estrategias de SEO que aumentaron el tráfico orgánico del sitio web en un 35% en 6 meses.",
+        "Analicé el rendimiento del SEO a través de Google Analytics, identificando áreas de mejora y optimizando las páginas web para un mejor posicionamiento.",
+        "Realicé auditorías SEO exhaustivas utilizando Screaming Frog para detectar y solucionar errores técnicos en el sitio web.",
+        "Colaboré con el equipo de marketing para desarrollar contenido de alta calidad que atrajera a la audiencia objetivo y mejorara el ranking en los motores de búsqueda."
+      ]
+    },
+    {
+      "company": "Code & Co.",
+      "position": "Especialista SEO",
+      "period": "2019 - 2021",
+      "location": "Madrid, España",
+      "bullets": [
+        "Desenvolví estrategias de SEO on-page y off-page para mejorar el ranking de palabras clave clave en los motores de búsqueda.",
+        "Optimizé el contenido web para aumentar la tasa de clics (CTR) y el tráfico a las páginas objetivo.",
+        "Implementé técnicas de link building para obtener enlaces de calidad a la web, mejorando el dominio y la autoridad del sitio.",
+        "Supervisé y gestioné los presupuestos de campañas SEO, asegurando un retorno de inversión (ROI) positivo para los clientes."
+      ]
+    },
+    {
+      "company": "Innovate Technologies",
+      "position": "Analista Web",
+      "period": "2018 - 2019",
+      "location": "Valencia, España",
+      "bullets": [
+        "Realicé análisis web utilizando Google Analytics para comprender el comportamiento de los usuarios y generar informes con insights clave.",
+        "Implementé herramientas de seguimiento de conversiones para medir el éxito de las campañas de marketing digital.",
+        "Asistí en la creación y gestión de contenido web, optimizando para SEO y UX.",
+        "Colaboré con el equipo de desarrollo para solucionar errores técnicos que afectaban al rendimiento del sitio web."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ingeniería del Software",
+      "institution": "Universitat Autònoma de Barcelona (UAB)",
+      "period": "2014 - 2018",
+      "detail": ""
+    },
+    {
+      "degree": "Curso de Especialización en SEO",
+      "institution": "Instituto de Marketing Digital (IMD)",
+      "period": "2020",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "SEO On-Page",
+    "SEO Off-Page",
+    "Link Building",
+    "Optimización de Contenido",
+    "Estrategia SEO",
+    "Google Analytics",
+    "Screaming Frog",
+    "SEO Local",
+    "Análisis Web",
+    "Investigación de Palabras Clave",
+    "SQL",
+    "Herramientas de SEO"
+  ],
+  "tools": [
+    "Google Search Console",
+    "Ahrefs",
+    "SEMrush",
+    "Moz",
+    "Google Analytics",
+    "Screaming Frog"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Avanzado"
+    },
+    {
+      "language": "Francés",
+      "level": "Intermedio"
+    }
+  ],
+  "certifications": [
+    "Google Analytics Individual Qualification",
+    "Certificado en SEO de SEMrush"
+  ]
+}

@@ -1,17 +1,17 @@
 {
-  "built_at": "2026-08-14 22:14:30",
-  "n_cvs": 28,
-  "n_chunks": 208,
-  "n_pages": 35,
-  "n_chars": 62400,
+  "built_at": "2026-08-15 12:02:42",
+  "n_cvs": 50,
+  "n_chunks": 375,
+  "n_pages": 65,
+  "n_chars": 117787,
   "embedding_model": "bge-m3",
   "embedding_dim": 1024,
   "extraction_model": "gemma2:9b",
   "languages": {
-    "es": 14,
-    "en": 14
+    "es": 25,
+    "en": 25
   },
-  "enrich_seconds": 680.0,
-  "embed_seconds": 80.5,
-  "total_seconds": 764.4
+  "enrich_seconds": 550.4,
+  "embed_seconds": 80.0,
+  "total_seconds": 637.0
 }

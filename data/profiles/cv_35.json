@@ -1,0 +1,92 @@
+{
+  "cv_id": "cv_35",
+  "language": "es",
+  "full_name": "Marisa Fernández Díaz",
+  "email": "marisa.fernandez@example.com",
+  "phone": "+34 651 155 618",
+  "city": "Bilbao",
+  "country": "España",
+  "birth_date": "03/05/1992",
+  "linkedin": "linkedin.com/in/marisa-fernandez",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Ingeniera QA | Automatización y Test de Integración",
+  "summary": "Soy una Ingeniera QA con más de 7 años de experiencia en la creación y ejecución de test automatizados para aplicaciones web y móviles. Me apasiona la búsqueda de errores y la mejora de la calidad del software mediante estrategias de testing innovadoras. Mi experiencia abarca diferentes metodologías ágiles y mi dominio de herramientas como Selenium, Cypress y pytest me permite garantizar la entrega de software robusto y fiable.",
+  "experience": [
+    {
+      "company": "Nextify SL",
+      "position": "Ingeniera QA Senior",
+      "period": "2023 - Actualidad",
+      "location": "Bilbao, España",
+      "bullets": [
+        "Desarrollé y ejecuté test automatizados para el nuevo portal web de ecommerce, reduciendo el tiempo de testing en un 40% y mejorando la precisión del proceso.",
+        "Implemente una estrategia de CI/CD para la plataforma de desarrollo, acelerando el ciclo de lanzamiento de nuevas funcionalidades y optimizando la colaboración entre equipos.",
+        "Forjé un sistema de reporting de bugs basado en datos, proporcionando información clara y concisa sobre la calidad del software a la dirección."
+      ]
+    },
+    {
+      "company": "Codex Solutions GmbH",
+      "position": "Ingeniera QA",
+      "period": "2021 - 2023",
+      "location": "Berlín, Alemania",
+      "bullets": [
+        "Participé en la creación de una suite de test automatizados para una plataforma de aprendizaje online, cubriendo un 95% de los casos de uso del sistema.",
+        "Realicé pruebas de usabilidad y accesibilidad en aplicaciones web, asegurando una experiencia de usuario óptima y cumpliendo con las normativas internacionales.",
+        "Documenté los procesos de testing y elaboré guías de estilo para la implementación de test automatizados, promoviendo la estandarización y la calidad del código."
+      ]
+    },
+    {
+      "company": "InnovaTech SA",
+      "position": "Analista de Test",
+      "period": "2019 - 2021",
+      "location": "Madrid, España",
+      "bullets": [
+        "Ejecuté pruebas manuales y automatizadas en aplicaciones móviles, identificando y reportando errores para su posterior corrección.",
+        "Colaboré con el equipo de desarrollo para la resolución de bugs y la mejora de la calidad del software.",
+        "Realicé pruebas de integración y regresión para asegurar la correcta funcionalidad de las nuevas funcionalidades implementadas."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Matemáticas",
+      "institution": "Universitat Politècnica de València (UPV)",
+      "period": "2015 - 2019",
+      "detail": "Especialización en análisis matemático y probabilidad."
+    }
+  ],
+  "technical_skills": [
+    "Selenium",
+    "Pytest",
+    "Cypress",
+    "JUnit",
+    "API Testing",
+    "Test Driven Development (TDD)",
+    "Agile Methodologies",
+    "CI/CD",
+    "BDD (Behaviour Driven Development)",
+    "SQL",
+    "Git"
+  ],
+  "tools": [
+    "Jira",
+    "Trello",
+    "Confluence",
+    "Jenkins",
+    "Postman"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Fluente"
+    }
+  ],
+  "certifications": [
+    "Certified Software Testing Professional (CSTP)",
+    "ISTQB® Foundation Level"
+  ]
+}

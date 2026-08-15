@@ -1,0 +1,78 @@
+{
+  "cv_id": "cv_50",
+  "language": "en",
+  "full_name": "Alessandro Ferrari",
+  "email": "alessandro.ferrari@example.com",
+  "phone": "+31 861 357773",
+  "city": "Milan",
+  "country": "Italy",
+  "birth_date": "03/01/2001",
+  "linkedin": "linkedin.com/in/alessandro-ferrari",
+  "template": 1,
+  "photo_file": null,
+  "headline": "Backend Engineer | Java, Spring Boot and Microservices",
+  "summary": "Highly motivated Backend Engineer with 3 years of experience developing and maintaining robust, scalable web applications. Proven ability to deliver high-performance solutions using Java, Spring Boot, and Kafka. Passionate about writing clean, maintainable code and collaborating effectively within agile teams.",
+  "experience": [
+    {
+      "company": "InnoTech Solutions (Milan, Italy)",
+      "position": "Backend Engineer",
+      "period": "2023 - Present",
+      "location": "Milan, Italy",
+      "bullets": [
+        "Developed and implemented a new microservice architecture using Spring Boot, resulting in a 20% reduction in average response times.",
+        "Migrated existing monolithic application to a containerized environment (Docker, Kubernetes), increasing deployment efficiency by 50%.",
+        "Utilized Kafka for real-time data streaming, improving data processing capabilities by 30%.",
+        "Collaborated with frontend developers to ensure seamless API integration and a smooth user experience."
+      ]
+    },
+    {
+      "company": "VeriTech Solutions (Milan, Italy)",
+      "position": "Junior Backend Engineer",
+      "period": "2023",
+      "location": "Milan, Italy",
+      "bullets": [
+        "Developed and maintained backend functionalities for a SaaS platform using Java and Spring Boot.",
+        "Implemented RESTful APIs to enable seamless data exchange between frontend and backend systems.",
+        "Collaborated with senior developers to design and implement efficient database queries using PostgreSQL.",
+        "Troubleshooted and resolved technical issues to ensure application stability and performance."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc in Business Analytics",
+      "institution": "Politecnico di Milano",
+      "period": "2019 - 2023",
+      "detail": "Graduated with honors. Specialized in data mining and predictive modeling."
+    }
+  ],
+  "technical_skills": [
+    "Java",
+    "Spring Boot",
+    "Kafka",
+    "PostgreSQL",
+    "Microservices",
+    "REST APIs",
+    "Docker",
+    "Kubernetes",
+    "Git",
+    "Agile Methodologies"
+  ],
+  "tools": [
+    "Jira",
+    "Confluence",
+    "Maven",
+    "IntelliJ IDEA"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Fluent"
+    },
+    {
+      "language": "Italian",
+      "level": "Native"
+    }
+  ],
+  "certifications": []
+}

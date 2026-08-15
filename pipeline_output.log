@@ -1,0 +1,54 @@
+Generating 50 CVs  [text=gemma2:9b photos=on]
+
+[ 1/50] cv_01 es Núria Badia Roldán         0.5s  photo:cache  text:cache  pdf:cv_01_nuria-badia-roldan.pdf
+[ 2/50] cv_02 es Elena Vidal Company        0.2s  photo:cache  text:cache  pdf:cv_02_elena-vidal-company.pdf
+[ 3/50] cv_03 es Rubén Ibarrola Nieto       0.2s  photo:cache  text:cache  pdf:cv_03_ruben-ibarrola-nieto.pdf
+[ 4/50] cv_04 es Guillem Roca Prats         0.2s  photo:cache  text:cache  pdf:cv_04_guillem-roca-prats.pdf
+[ 5/50] cv_05 es Aitana Serrano Puig        0.2s  photo:cache  text:cache  pdf:cv_05_aitana-serrano-puig.pdf
+[ 6/50] cv_06 es Clara Bonet Iglesias       0.3s  photo:cache  text:cache  pdf:cv_06_clara-bonet-iglesias.pdf
+[ 7/50] cv_07 es Irene Mestre Cabrera       0.2s  photo:cache  text:cache  pdf:cv_07_irene-mestre-cabrera.pdf
+[ 8/50] cv_08 es Adrián Quesada Lorenzo     0.2s  photo:cache  text:cache  pdf:cv_08_adrian-quesada-lorenzo.pdf
+[ 9/50] cv_09 es Óscar Delclós Rivas        0.4s  photo:cache  text:cache  pdf:cv_09_oscar-delclos-rivas.pdf
+[10/50] cv_10 es Marta Sanchis Ferrer       0.3s  photo:cache  text:cache  pdf:cv_10_marta-sanchis-ferrer.pdf
+[11/50] cv_11 es Álvaro Peñalver Gil        0.2s  photo:cache  text:cache  pdf:cv_11_alvaro-penalver-gil.pdf
+[12/50] cv_12 es Sergi Fontcuberta Mas      0.2s  photo:cache  text:cache  pdf:cv_12_sergi-fontcuberta-mas.pdf
+[13/50] cv_13 es Lucía Cañadas Otero        0.2s  photo:cache  text:cache  pdf:cv_13_lucia-canadas-otero.pdf
+[14/50] cv_14 es Joan Trías Bermúdez        0.2s  photo:cache  text:cache  pdf:cv_14_joan-trias-bermudez.pdf
+[15/50] cv_15 en Mateusz Kowalczyk          0.2s  photo:cache  text:cache  pdf:cv_15_mateusz-kowalczyk.pdf
+[16/50] cv_16 en Declan Fitzgerald          0.2s  photo:cache  text:cache  pdf:cv_16_declan-fitzgerald.pdf
+[17/50] cv_17 en Tomás Bekele               0.3s  photo:cache  text:cache  pdf:cv_17_tomas-bekele.pdf
+[18/50] cv_18 en Sinéad O'Halloran          0.3s  photo:cache  text:cache  pdf:cv_18_sinead-o-halloran.pdf
+[19/50] cv_19 en Callum Sharpe              0.2s  photo:cache  text:cache  pdf:cv_19_callum-sharpe.pdf
+[20/50] cv_20 en Hannah Vogelsang           0.3s  photo:cache  text:cache  pdf:cv_20_hannah-vogelsang.pdf
+[21/50] cv_21 en Yuki Matsubara             0.2s  photo:cache  text:cache  pdf:cv_21_yuki-matsubara.pdf
+[22/50] cv_22 en Rasmus Lindqvist           0.2s  photo:cache  text:cache  pdf:cv_22_rasmus-lindqvist.pdf
+[23/50] cv_23 en Omar Benali                0.2s  photo:cache  text:cache  pdf:cv_23_omar-benali.pdf
+[24/50] cv_24 en Nikhil Chandrasekar        0.2s  photo:cache  text:cache  pdf:cv_24_nikhil-chandrasekar.pdf
+[25/50] cv_25 en Amara Nwachukwu            0.3s  photo:cache  text:cache  pdf:cv_25_amara-nwachukwu.pdf
+[26/50] cv_26 en Katarzyna Wilczyńska       0.3s  photo:cache  text:cache  pdf:cv_26_katarzyna-wilczynska.pdf
+[27/50] cv_27 en Priya Raghunathan          0.2s  photo:cache  text:cache  pdf:cv_27_priya-raghunathan.pdf
+[28/50] cv_28 en Beatriz Fontoura Lima      0.3s  photo:cache  text:cache  pdf:cv_28_beatriz-fontoura-lima.pdf
+[29/50] cv_29 es Raúl Díaz Moreno          68.2s  photo:new  text:new  pdf:cv_29_raul-diaz-moreno.pdf
+[30/50] cv_30 es Rosa García López         57.1s  photo:new  text:new  pdf:cv_30_rosa-garcia-lopez.pdf
+[31/50] cv_31 es Mónica Herrera González   44.0s  photo:new  text:new  pdf:cv_31_monica-herrera-gonzalez.pdf
+[32/50] cv_32 es Borja García Martín       70.4s  photo:new  text:new  pdf:cv_32_borja-garcia-martin.pdf
+[33/50] cv_33 es Verónica Suárez López     70.3s  photo:new  text:new  pdf:cv_33_veronica-suarez-lopez.pdf
+[34/50] cv_34 es Felipe Sánchez García     60.2s  photo:new  text:new  pdf:cv_34_felipe-sanchez-garcia.pdf
+[35/50] cv_35 es Marisa Fernández Díaz     63.7s  photo:new  text:new  pdf:cv_35_marisa-fernandez-diaz.pdf
+[36/50] cv_36 es Iñigo López Ruiz          81.7s  photo:new  text:new  pdf:cv_36_inigo-lopez-ruiz.pdf
+[37/50] cv_37 es Xavi Muñoz López          61.5s  photo:new  text:new  pdf:cv_37_xavi-munoz-lopez.pdf
+[38/50] cv_38 es Valentina Ruiz Sánchez    79.1s  photo:new  text:new  pdf:cv_38_valentina-ruiz-sanchez.pdf
+[39/50] cv_39 es Carla Molina García       54.5s  photo:new  text:new  pdf:cv_39_carla-molina-garcia.pdf
+[40/50] cv_40 en Aisha Patel               51.1s  photo:new  text:new  pdf:cv_40_aisha-patel.pdf
+[41/50] cv_41 en Léa Dubois                51.5s  photo:new  text:new  pdf:cv_41_lea-dubois.pdf
+[42/50] cv_42 en Megan O'Connor            48.2s  photo:new  text:new  pdf:cv_42_megan-o-connor.pdf
+[43/50] cv_43 en Dmitri Sokolov            56.2s  photo:new  text:new  pdf:cv_43_dmitri-sokolov.pdf
+[44/50] cv_44 en Chiara Rossi              66.7s  photo:new  text:new  pdf:cv_44_chiara-rossi.pdf
+[45/50] cv_45 en Jean-Pierre Leclerc       38.2s  photo:new  text:new  pdf:cv_45_jean-pierre-leclerc.pdf
+[46/50] cv_46 en Emily Richardson          77.3s  photo:new  text:new  pdf:cv_46_emily-richardson.pdf
+[47/50] cv_47 en Marcus Johnson            41.1s  photo:new  text:new  pdf:cv_47_marcus-johnson.pdf
+[48/50] cv_48 en Sasha Volkov              46.4s  photo:new  text:new  pdf:cv_48_sasha-volkov.pdf
+[49/50] cv_49 en Arjun Sharma              38.8s  photo:new  text:new  pdf:cv_49_arjun-sharma.pdf
+[50/50] cv_50 en Alessandro Ferrari        52.7s  photo:new  text:new  pdf:cv_50_alessandro-ferrari.pdf
+
+Done in 21m26s - 50 PDFs in C:\Users\rafae\LeadTech\data\cvs

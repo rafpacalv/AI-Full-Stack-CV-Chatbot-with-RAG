@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 SEED = 20260814
-TOTAL = 28
+TOTAL = 50
 
 Language = Literal["es", "en"]
 
@@ -99,21 +99,33 @@ NAMES_ES_F = [
     "Marta Sanchis Ferrer", "Núria Badia Roldán", "Elena Vidal Company",
     "Aitana Serrano Puig", "Clara Bonet Iglesias", "Lucía Cañadas Otero",
     "Irene Mestre Cabrera",
+    # New entries (11 additional Spanish names)
+    "Valentina Ruiz Sánchez", "Carla Molina García", "Marisa Fernández Díaz",
+    "Verónica Suárez López", "Mónica Herrera González", "Rosa García López",
 ]
 NAMES_ES_M = [
     "Guillem Roca Prats", "Álvaro Peñalver Gil", "Sergi Fontcuberta Mas",
     "Rubén Ibarrola Nieto", "Joan Trías Bermúdez", "Óscar Delclós Rivas",
     "Adrián Quesada Lorenzo",
+    # New entries (11 additional Spanish names)
+    "Borja García Martín", "Iñigo López Ruiz", "Xavi Muñoz López",
+    "Felipe Sánchez García", "Raúl Díaz Moreno",
 ]
 NAMES_EN_F = [
     "Priya Raghunathan", "Sinéad O'Halloran", "Amara Nwachukwu",
     "Katarzyna Wilczyńska", "Beatriz Fontoura Lima", "Yuki Matsubara",
     "Hannah Vogelsang",
+    # New entries (11 additional English names)
+    "Emily Richardson", "Sasha Volkov", "Aisha Patel",
+    "Léa Dubois", "Chiara Rossi", "Megan O'Connor",
 ]
 NAMES_EN_M = [
     "Declan Fitzgerald", "Tomás Bekele", "Mateusz Kowalczyk",
     "Rasmus Lindqvist", "Omar Benali", "Nikhil Chandrasekar",
     "Callum Sharpe",
+    # New entries (11 additional English names)
+    "Marcus Johnson", "Dmitri Sokolov", "Arjun Sharma",
+    "Jean-Pierre Leclerc", "Alessandro Ferrari",
 ]
 
 CITIES_ES = [
@@ -211,25 +223,69 @@ def _seniority(years: int) -> str:
 
 
 def build_personas(total: int = TOTAL) -> list[Persona]:
-    """Return a reproducible, well-spread set of personas (half ES, half EN)."""
+    """Return a reproducible, well-spread set of personas (half ES, half EN).
+
+    CRITICAL: The first 28 personas must remain byte-identical to preserve the
+    cached PDFs and photos. This is achieved by:
+    1. Using original rng with original seed for first 28 personas
+    2. Using separate rng (seed+1) for new 22 personas
+    """
+    # RNG for the first 28 personas (original code path)
     rng = random.Random(SEED)
     personas: list[Persona] = []
 
-    half = total // 2
-    plan: list[Language] = ["es"] * half + ["en"] * (total - half)
+    # Separate original and new name pools
+    # Original: 7 F + 7 M per language (14 total)
+    # New: 6 F + 5 M for Spanish, 6 F + 5 M for English (11 total each)
+    es_names_orig = [
+        (n, "female") for n in NAMES_ES_F[:7]
+    ] + [(n, "male") for n in NAMES_ES_M[:7]]
 
-    es_names = [(n, "female") for n in NAMES_ES_F] + [(n, "male") for n in NAMES_ES_M]
-    en_names = [(n, "female") for n in NAMES_EN_F] + [(n, "male") for n in NAMES_EN_M]
-    rng.shuffle(es_names)
-    rng.shuffle(en_names)
+    en_names_orig = [
+        (n, "female") for n in NAMES_EN_F[:7]
+    ] + [(n, "male") for n in NAMES_EN_M[:7]]
 
-    # Spread experience across the whole range instead of clustering: this is
-    # what makes "candidates with 5+ years" and the age histogram interesting.
-    years_pool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 2, 4] * 2
-    rng.shuffle(years_pool)
+    # Shuffle originals with seed: produces exactly the same order as before
+    rng.shuffle(es_names_orig)
+    rng.shuffle(en_names_orig)
 
+    # Shuffle original years pool with same rng (same state as original code)
+    years_pool_orig = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 2, 4] * 2
+    rng.shuffle(years_pool_orig)
+
+    # RNG for the new 22 personas (separate seed to avoid affecting first 28)
+    rng_new = random.Random(SEED + 1)
+
+    # Shuffle new names with separate rng
+    es_names_new = [
+        (n, "female") for n in NAMES_ES_F[7:]
+    ] + [(n, "male") for n in NAMES_ES_M[7:]]
+
+    en_names_new = [
+        (n, "female") for n in NAMES_EN_F[7:]
+    ] + [(n, "male") for n in NAMES_EN_M[7:]]
+
+    rng_new.shuffle(es_names_new)
+    rng_new.shuffle(en_names_new)
+
+    # Shuffle new years pool with separate rng
+    years_pool_new = [1, 3, 5, 6, 7, 8, 9, 11, 13, 2, 4, 10, 12, 3, 5, 7, 9, 11, 2, 4, 6, 8]
+    rng_new.shuffle(years_pool_new)
+
+    # Concatenate: originals first (preserved), then new
+    es_names = es_names_orig + es_names_new
+    en_names = en_names_orig + en_names_new
+    years_pool = years_pool_orig + years_pool_new
+
+    # Build plan: original 14 ES + 14 EN, then new 11 ES + 11 EN
+    plan: list[Language] = ["es"] * 14 + ["en"] * 14 + ["es"] * 11 + ["en"] * 11
+
+    # Process personas in two groups: first 28 (with original rng), last 22 (with new rng)
     es_i = en_i = 0
     for idx, lang in enumerate(plan):
+        # Choose rng based on whether this is an original or new persona
+        rng_active = rng if idx < 28 else rng_new
+
         if lang == "es":
             name, gender = es_names[es_i]
             role, skills = ROLES_ES[es_i % len(ROLES_ES)]
@@ -245,7 +301,7 @@ def build_personas(total: int = TOTAL) -> list[Persona]:
 
         years = years_pool[idx]
         # Graduate around 22-24, so age tracks experience with a little jitter.
-        birth_year = 2026 - (22 + years + rng.randint(0, 6))
+        birth_year = 2026 - (22 + years + rng_active.randint(0, 6))
 
         personas.append(
             Persona(

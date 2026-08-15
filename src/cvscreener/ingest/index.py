@@ -95,7 +95,12 @@ def build(force: bool = False) -> dict:
 
     print("4/4  Embedding + BM25 ...")
     t0 = time.time()
+
+    # Note `embedding_text`, not `text`: each chunk is prefixed with
+    # "<Candidate> - <Section>" so the vector carries who it is about.
     texts = [c.embedding_text for c in chunks]
+
+    # Batched because one HTTP round-trip per chunk would dominate the runtime.
     vectors: list[list[float]] = []
     for i in range(0, len(texts), EMBED_BATCH):
         vectors.extend(client.embed(texts[i : i + EMBED_BATCH]))
@@ -103,13 +108,18 @@ def build(force: bool = False) -> dict:
     embed_secs = time.time() - t0
 
     matrix = np.asarray(vectors, dtype=np.float32)
-    # L2-normalise once at index time so query-time similarity is a plain dot
-    # product instead of a division per row.
+    # L2-normalise once, here, so cosine similarity at query time is a plain dot
+    # product. Normalising every row on every query would repeat this work for
+    # no reason. `.clip` guards against a division by zero on an empty vector.
     matrix /= np.linalg.norm(matrix, axis=1, keepdims=True).clip(min=1e-9)
 
+    # The lexical half of the index, over the same texts and the same tokenizer
+    # the query side uses - they must agree or nothing will ever match.
     bm25 = BM25Okapi([tokenize(t) for t in texts])
 
     # --- persist ---------------------------------------------------------
+    # Four artefacts: the vectors, the chunk texts and metadata, the BM25 model,
+    # and the candidate table that the aggregate path queries with pandas.
     np.save(settings.index_dir / "embeddings.npy", matrix)
     with (settings.index_dir / "chunks.jsonl").open("w", encoding="utf-8") as fh:
         for c in chunks:

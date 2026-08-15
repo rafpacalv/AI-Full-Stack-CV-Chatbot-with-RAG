@@ -1,10 +1,10 @@
 # LeadTech · AI-Powered CV Screener
 
-A bilingual (ES/EN) RAG system over a corpus of 28 synthetic CVs, running
+A bilingual (ES/EN) RAG system over a corpus of 50 synthetic CVs, running
 **entirely on local models via Ollama** — no API keys, no cloud inference.
 
 Ask in Spanish, get answers grounded in English CVs. Ask for a count, get an
-exact figure computed over all 28 candidates rather than a guess from five
+exact figure computed over all 50 candidates rather than a guess from five
 retrieved chunks. Ask for a histogram, get one.
 
 ![Chat](docs/img/ui-chart.png)
@@ -15,7 +15,7 @@ retrieved chunks. Ask for a histogram, get one.
 
 | | |
 |---|---|
-| **Generate** | 28 unique fake CVs as PDFs — LLM-authored text, AI-generated headshots, 3 layouts, 14 Spanish + 14 English |
+| **Generate** | 50 unique fake CVs as PDFs — LLM-authored text, AI-generated headshots, 3 layouts, 25 Spanish + 25 English |
 | **Ingest** | Column-aware PDF extraction → section chunking → structured facts → dense + lexical index |
 | **Ask** | Routed queries: semantic retrieval, exact aggregates, or on-demand charts — all streamed, all cited |
 
@@ -45,8 +45,8 @@ straight to:
 To rebuild everything from scratch:
 
 ```bash
-python -m cvscreener.generation.pipeline   # 28 CVs   (~25 min)
-python -m cvscreener.ingest.index          # search index (~13 min)
+python -m cvscreener.generation.pipeline   # 50 CVs   (~40 min)
+python -m cvscreener.ingest.index          # search index (~20 min)
 pytest                                     # 33 tests
 ```
 
@@ -61,15 +61,15 @@ full generation run.
 Full diagram and rationale: **[docs/architecture.md](docs/architecture.md)**
 
 ```
-Generation   persona matrix → gemma2:9b (JSON Schema) → ReportLab ⟶ 28 PDFs
+Generation   persona matrix → gemma2:9b (JSON Schema) → ReportLab ⟶ 50 PDFs
                             → pollinations.ai (flux)  ↗
 
 Ingestion    PDF → pdfplumber (column-aware) → section chunks
                  → gemma2:9b + regex ⟶ candidates.parquet
-                 → bge-m3            ⟶ 208 × 1024 vectors + BM25
+                 → bge-m3            ⟶ 375 × 1024 vectors + BM25
 
 Query        question → router ┬─ retrieve  → dense ⊕ BM25 → RRF → grounded answer
-                              ├─ aggregate → pandas over all 28 → exact count
+                              ├─ aggregate → pandas over all 50 → exact count
                               └─ chart     → pandas → Plotly
 ```
 
@@ -80,7 +80,7 @@ Query        question → router ┬─ retrieve  → dense ⊕ BM25 → RRF →
 Kubernetes?" is not — with `k=5`, the correct answer is unreachable by
 construction, however good the retriever. So a schema-constrained classifier
 sends counting and charting questions to pandas over the full candidate table
-instead. *8 of 28*, verified against the source data, not estimated.
+instead. Exact counts verified against the source data, not estimated.
 
 **2 · Metadata is re-derived from the PDFs, never reused from the generator.**
 `data/profiles/*.json` holds exactly the structured data the ingestion step
@@ -160,7 +160,7 @@ refusal is worded is not.
 
 | Decision | Why |
 |---|---|
-| **numpy, not a vector DB** | 208 vectors. Exact cosine is one matmul, sub-millisecond. An ANN index would be slower, approximate, and another dependency. |
+| **numpy, not a vector DB** | 375 vectors (chunks). Exact cosine is one matmul, sub-millisecond. An ANN index would be slower, approximate, and another dependency. |
 | **gemma2:9b, not gemma4:12b** | Profiled on this 8 GB RTX 4070 Laptop: the 12B gets only 4.4 GB onto the GPU and runs the rest on CPU → **7.3 tok/s**. The 9B fits entirely → **18.3 tok/s**. 2.5× faster for comparable quality once prompts were tightened. |
 | **bge-m3 embeddings** | Genuinely multilingual — one index serves both languages, no translation step. |
 | **RRF, not weighted scores** | Measured: bge-m3 scores unrelated text at 0.475 and relevant text at 0.580. A high floor and a narrow band, against unbounded corpus-dependent BM25 scores. Rank-based fusion needs no constants that would break on a different corpus. |
@@ -187,7 +187,7 @@ did not generate.
 
 ## The corpus
 
-28 CVs, 3 layouts, 14 Spanish / 14 English, ages 23–40, 1–14 years of
+50 CVs, 3 layouts, 25 Spanish / 25 English, ages 23–40, 1–14 years of
 experience, roles mirroring Leadtech's own departments.
 
 | Sidebar (ES) | Banner (ES) | Classic (EN) |
@@ -195,7 +195,7 @@ experience, roles mirroring Leadtech's own departments.
 | ![](docs/img/cv-sidebar-es.png) | ![](docs/img/cv-banner-es.png) | ![](docs/img/cv-classic-en.png) |
 
 Diversity is engineered in `personas.py` rather than delegated to the model —
-asked for "28 varied CVs" an LLM reliably collapses onto the same few archetypes.
+asked for "50 varied CVs" an LLM reliably collapses onto the same few archetypes.
 A fixed seed makes the whole corpus reproducible.
 
 **All data is synthetic.** Names are invented, e-mail addresses use the
@@ -264,4 +264,4 @@ Interactive docs at `http://127.0.0.1:8000/docs`.
 - **Fact extraction is imperfect.** University names normalise inconsistently
   (`UPC` vs the full name), and "Lead" seniority is sometimes read as "Senior".
 - **The cross-lingual ratio (0.90) is corpus-tuned.** It was measured on these
-  28 CVs and would need re-checking on a materially different corpus.
+  50 CVs and would need re-checking on a materially different corpus.

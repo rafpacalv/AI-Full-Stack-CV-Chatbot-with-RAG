@@ -103,13 +103,23 @@ def route(question: str) -> QueryPlan:
     except Exception:  # noqa: BLE001 - routing must never break the chat
         return QueryPlan(intent="retrieve")
 
-    # A chart is meaningless without something to plot; a plot the user did not
-    # ask for is worse than none. Reconcile the two fields rather than trusting
-    # the model to keep them consistent.
+    # --- Repair the plan before anyone acts on it -------------------------
+    # `intent` and `chart_type` are two fields the model can set independently,
+    # which means it can set them to contradict each other. Rather than trusting
+    # it, make them consistent here.
+
+    # Asked for a chart but did not say which kind: pick from the data type.
+    # Continuous quantities want a histogram, categories want bars.
     if plan.intent == "chart" and plan.chart_type == "none":
         plan.chart_type = "histogram" if plan.dimension in ("age", "years_experience") else "bar"
+
+    # Named a chart type without being asked for a chart: drop it. Showing a
+    # plot nobody requested is worse than showing none.
     if plan.intent != "chart":
         plan.chart_type = "none"
+
+    # Fold the skill onto its canonical name so "Aprendizaje Automático" and
+    # "Machine Learning" hit the same rows in the candidate table.
     if plan.skill:
         plan.skill = normalise_skill(plan.skill)
     return plan

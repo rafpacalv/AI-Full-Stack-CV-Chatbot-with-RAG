@@ -1,0 +1,75 @@
+{
+  "cv_id": "cv_49",
+  "language": "en",
+  "full_name": "Arjun Sharma",
+  "email": "arjun.sharma@example.net",
+  "phone": "+33 205 701458",
+  "city": "Toronto",
+  "country": "Canada",
+  "birth_date": "22/07/2000",
+  "linkedin": "linkedin.com/in/arjun-sharma",
+  "template": 0,
+  "photo_file": null,
+  "headline": "Business Intelligence Analyst | Data Visualization and Analytics",
+  "summary": "Highly motivated Business Intelligence Analyst with a passion for leveraging data to drive strategic decision-making. Proven ability to analyze complex datasets, develop insightful reports, and communicate findings to stakeholders effectively. Strong proficiency in SQL, Power BI, and Python. Eager to contribute to a data-driven organization and further develop analytical skills.",
+  "experience": [
+    {
+      "company": "Aether Technologies (Berlin)",
+      "position": "Junior Business Intelligence Analyst",
+      "period": "June 2025 - Present",
+      "location": "Berlin, Germany",
+      "bullets": [
+        "Developed interactive dashboards in Power BI that increased user engagement by 25% and facilitated data-driven insights for marketing campaigns.",
+        "Utilized SQL to query and analyze customer data, identifying key trends and patterns that led to a 10% improvement in customer retention rate.",
+        "Designed and implemented automated data pipelines using dbt, streamlining data processing and reducing report generation time by 30%.",
+        "Collaborated with cross-functional teams to gather business requirements and translate them into actionable data visualizations."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science in Physics",
+      "institution": "University of Toronto",
+      "period": "2021 - 2025",
+      "detail": " GPA: 3.8"
+    },
+    {
+      "degree": "Master of Science in Physics",
+      "institution": "University of Toronto",
+      "period": "2025 - 2026",
+      "detail": "GPA: 4.0"
+    }
+  ],
+  "technical_skills": [
+    "SQL",
+    "Power BI",
+    "Python",
+    "dbt",
+    "Tableau",
+    "Data Analysis",
+    "Data Visualization",
+    "Statistical Modeling",
+    "Data Storytelling",
+    "ETL Processes",
+    "Business Intelligence Tools",
+    "Data Warehousing"
+  ],
+  "tools": [
+    "Azure SQL Database",
+    "AWS Redshift",
+    "Git",
+    "Jupyter Notebook",
+    "Jira"
+  ],
+  "languages": [
+    {
+      "language": "English",
+      "level": "Native"
+    },
+    {
+      "language": "Hindi",
+      "level": "Fluent"
+    }
+  ],
+  "certifications": []
+}

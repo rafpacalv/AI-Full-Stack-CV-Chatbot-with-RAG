@@ -173,7 +173,13 @@ def normalise_skill(skill: str) -> str:
 
 
 def detect_language(text: str) -> str:
-    """Cheap ES/EN detector using function words - no extra dependency."""
+    """Cheap ES/EN detector using function words - no extra dependency.
+
+    Counts the commonest grammatical words in each language. Crude, but on a
+    document of this length it is decisive, and it avoids pulling in a whole
+    language-detection library for one boolean. Only the first 2500 characters
+    are needed to be sure.
+    """
     sample = fold_accents(text[:2500]).lower()
     es = sum(sample.count(w) for w in (" de ", " la ", " el ", " en ", " para ", " con "))
     en = sum(sample.count(w) for w in (" the ", " and ", " of ", " for ", " with ", " to "))
@@ -181,16 +187,25 @@ def detect_language(text: str) -> str:
 
 
 def _regex_fields(text: str) -> dict:
+    """The half of extraction that needs no intelligence, only precision.
+
+    These four fields have rigid surface forms. Regex gets them exactly right
+    in microseconds; an LLM would be slower and occasionally wrong. Whatever is
+    absent is simply omitted, and the field keeps its default.
+    """
     out: dict = {}
     if m := EMAIL_RE.search(text):
         out["email"] = m.group(0)
     if m := PHONE_RE.search(text):
-        out["phone"] = " ".join(m.group(0).split())
+        out["phone"] = " ".join(m.group(0).split())  # collapse odd PDF spacing
     if m := LINKEDIN_RE.search(text):
         out["linkedin"] = m.group(0)
     if m := DOB_RE.search(text):
         day, month, year = (int(g) for g in m.groups())
         out["birth_date"] = f"{day:02d}/{month:02d}/{year}"
+        # Age computed here, not asked of the model: arithmetic is not what a
+        # 9B model is for. The comparison subtracts a year when the birthday
+        # has not yet occurred this year.
         age = TODAY.year - year - ((TODAY.month, TODAY.day) < (month, day))
         out["age"] = age
     return out
@@ -220,12 +235,18 @@ def enrich_document(
 ) -> CandidateFacts:
     """Extract (or load from cache) the fact row for one CV."""
     settings.ensure_dirs()
+
+    # One cache file per CV. This is what makes re-indexing cheap: adding CVs
+    # only pays the LLM cost for the new ones, at roughly 30 s each.
     cache: Path = settings.index_dir / "facts" / f"{cv_id}.json"
     cache.parent.mkdir(parents=True, exist_ok=True)
 
     if cache.exists() and not force:
         return CandidateFacts.model_validate_json(cache.read_text(encoding="utf-8"))
 
+    # The judgement half. temperature=0 because this is extraction, not
+    # writing: the same CV must always yield the same facts. The schema is
+    # enforced by Ollama, so the result is guaranteed to parse.
     llm_facts = client.structured(
         _prompt(text),
         LLMFacts,
@@ -235,6 +256,8 @@ def enrich_document(
         num_predict=1400,
     )
 
+    # Tidy the skill strings: collapse whitespace, strip stray bullet
+    # characters the model sometimes copies out of the PDF, drop blanks.
     data = llm_facts.model_dump()
     skills = [" ".join(s.split()).strip(" .·•-") for s in data.pop("skills")]
     skills = [s for s in skills if s]
@@ -243,10 +266,13 @@ def enrich_document(
         cv_id=cv_id,
         source_file=source_file,
         cv_language=detect_language(text),
+        # Both forms are kept: the raw strings for display (a Spanish CV should
+        # still read "Aprendizaje Automático" in the UI), and the canonical
+        # ones for counting, so ES and EN CVs aggregate together.
         skills=skills,
         skills_normalised=sorted({normalise_skill(s) for s in skills if s}),
-        **data,
-        **_regex_fields(text),
+        **data,               # the LLM's fields
+        **_regex_fields(text),  # the regex fields, which win on any overlap
     )
 
     cache.write_text(

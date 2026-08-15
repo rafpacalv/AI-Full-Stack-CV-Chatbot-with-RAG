@@ -86,6 +86,12 @@ def stream_chat(question: str, model: str):
         "POST", f"{API}/chat", json=payload, timeout=httpx.Timeout(600.0, connect=10.0)
     ) as response:
         response.raise_for_status()
+
+        # A minimal SSE parser. The wire format is pairs of lines:
+        #     event: token
+        #     data:  {"t": "Los"}
+        # The event name always arrives first and is remembered until its data
+        # line follows, so the two are yielded together as one tuple.
         event = None
         for line in response.iter_lines():
             if line.startswith("event:"):
@@ -97,7 +103,7 @@ def stream_chat(question: str, model: str):
                 try:
                     yield event, json.loads(data)
                 except json.JSONDecodeError:
-                    continue
+                    continue  # never let one malformed frame kill the stream
 
 
 def render_citations(citations: list[dict]) -> None:
@@ -205,6 +211,17 @@ if "last_chart" not in st.session_state:
     st.session_state.last_chart = None
 
 with tab_chat:
+    # Clear sits with the conversation, not only in the sidebar, and appears
+    # only when there is something to clear - an always-visible destructive
+    # action on an empty chat is just noise.
+    if st.session_state.messages:
+        spacer, clear_col = st.columns([6, 1])
+        with clear_col:
+            if st.button("Clear", key="clear-chat", use_container_width=True,
+                         help="Start a new conversation"):
+                clear_conversation()
+                st.rerun()
+
     for msg in st.session_state.messages:
         css = "lt-msg-user" if msg["role"] == "user" else "lt-msg-bot"
         st.markdown(f"<div class='{css}'>{msg['content']}</div>", unsafe_allow_html=True)
@@ -223,6 +240,9 @@ with tab_chat:
         st.session_state.messages.append({"role": "user", "content": question})
         st.markdown(f"<div class='lt-msg-user'>{question}</div>", unsafe_allow_html=True)
 
+        # Two placeholders reserved up front. `st.empty()` returns a handle
+        # that can be rewritten in place, which is how the answer grows
+        # smoothly instead of Streamlit appending a new block per token.
         badge_slot = st.empty()
         answer_slot = st.empty()
         answer, meta = "", {}
@@ -230,26 +250,35 @@ with tab_chat:
         try:
             for event, payload in stream_chat(question, model):
                 if event == "plan":
+                    # Routing decision - arrives first, so the user sees which
+                    # strategy was chosen before any text appears.
                     intent = payload.get("intent", "retrieve")
                     bits = [
                         f"<span class='lt-badge lt-badge-{intent}'>{BADGE_TEXT.get(intent, intent)}</span>"
                     ]
+                    # Show any filter the router extracted, so its reasoning is
+                    # visible rather than hidden behind the answer.
                     for key in ("skill", "seniority", "city", "candidate_name"):
                         if payload.get(key):
                             bits.append(f"<span class='lt-chip-muted'>{key}: {payload[key]}</span>")
                     badge_slot.markdown(" ".join(bits), unsafe_allow_html=True)
                 elif event == "token":
+                    # Rewrite the whole bubble each token, with a block cursor
+                    # on the end to signal that more is coming.
                     answer += payload.get("t", "")
                     answer_slot.markdown(
                         f"<div class='lt-msg-bot'>{answer}▌</div>", unsafe_allow_html=True
                     )
                 elif event == "meta":
+                    # Citations, retrieval trace and any chart. Sent once, after
+                    # the text, because sources are only known after retrieval.
                     meta = payload
                 elif event == "error":
                     st.error(payload.get("message", "Unknown error"))
         except httpx.HTTPError as exc:
             st.error(f"Backend error: {exc}")
 
+        # Final repaint without the cursor.
         answer_slot.markdown(f"<div class='lt-msg-bot'>{answer}</div>", unsafe_allow_html=True)
 
         if elapsed := meta.get("elapsed_s"):

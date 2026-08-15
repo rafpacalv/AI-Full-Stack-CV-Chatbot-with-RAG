@@ -68,12 +68,21 @@ _EN_MARKERS = (
 
 
 def detect_question_language(question: str) -> str:
-    """Pick the reply language from the question itself."""
+    """Pick the reply language from the question itself.
+
+    Detected from the question, never from the sources: retrieval is
+    cross-lingual, so a Spanish question routinely lands on English CVs, and
+    answering in the sources' language would be wrong. Whoever asked gets an
+    answer in the language they asked in.
+
+    Wrapped in spaces so " the " matches the word and not the tail of "clothe".
+    """
     folded = f" {fold_accents(question).lower()} "
     es = sum(folded.count(m) for m in _ES_MARKERS)
     en = sum(folded.count(m) for m in _EN_MARKERS)
     if es == en:
-        # Accented characters are a strong Spanish tell when counts are level.
+        # Tie-break on characters only Spanish uses. Note this reads the
+        # ORIGINAL string, not the accent-folded one.
         return "es" if any(c in question for c in "áéíóúñ¿¡") else "en"
     return "es" if es > en else "en"
 
@@ -83,11 +92,17 @@ def build_context(chunks: list[RetrievedChunk]) -> str:
     parts: list[str] = []
     total = 0
     for i, item in enumerate(chunks, 1):
+        # Every block is labelled with its candidate, file and section. Without
+        # that the model sees a wall of anonymous text and cannot attribute
+        # anything correctly - or cite it.
         block = (
             f"[{i}] Candidate: {item.chunk.candidate} "
             f"(file: {item.chunk.source_file}, section: {item.chunk.section})\n"
             f"{item.chunk.text}"
         )
+        # Stop at the budget rather than truncating mid-block: half a CV
+        # excerpt is worse than one fewer excerpt. gemma2:9b has an 8k window
+        # and this keeps well inside it.
         if total + len(block) > MAX_CONTEXT_CHARS:
             break
         parts.append(block)

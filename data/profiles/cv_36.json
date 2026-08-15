@@ -1,0 +1,117 @@
+{
+  "cv_id": "cv_36",
+  "language": "es",
+  "full_name": "Iñigo López Ruiz",
+  "email": "inigo.lopez@example.org",
+  "phone": "+34 644 987 930",
+  "city": "Zaragoza",
+  "country": "España",
+  "birth_date": "12/09/1988",
+  "linkedin": "linkedin.com/in/inigo-lopez",
+  "template": 2,
+  "photo_file": null,
+  "headline": "Product Manager Lead | Estrategia y Gestión de Producto",
+  "summary": "Lidero equipos de desarrollo y diseño para crear productos innovadores y centrados en el usuario. Con más de 10 años de experiencia, mi enfoque se centra en la investigación de mercado, la definición de roadmap y la ejecución estratégica para el crecimiento del negocio. Aplico metodologías ágiles y datos para optimizar el desarrollo y lanzamiento de productos digitales.",
+  "experience": [
+    {
+      "company": "Innovatech SL",
+      "position": "Product Manager Lead",
+      "period": "2021 - Actualidad",
+      "location": "Barcelona",
+      "bullets": [
+        "Impulsé el desarrollo y lanzamiento de la nueva plataforma de e-learning, logrando un crecimiento del 35% en usuarios activos en el primer trimestre.",
+        "Gestioné un equipo de 8 personas (developers, diseñadores, QA) para la ejecución del backlog de funcionalidades, manteniendo un backlog limpio y actualizado en Jira.",
+        "Implementé pruebas A/B para optimizar la tasa de conversión del checkout, obteniendo un aumento del 10% en ventas.",
+        "Realicé análisis de mercado utilizando SQL para identificar nuevas oportunidades de producto y ajustar la estrategia de producto a las tendencias del sector."
+      ]
+    },
+    {
+      "company": "Technova Corp",
+      "position": "Product Manager",
+      "period": "2019 - 2021",
+      "location": "Madrid",
+      "bullets": [
+        "Definé la visión y estrategia de producto para una app móvil de gestión financiera, alcanzando 100.000 descargas en su primer mes de lanzamiento.",
+        "Conduzco sesiones de product discovery con stakeholders clave para definir las necesidades del mercado y priorizar las funcionalidades del producto.",
+        "Elaboré documentación de producto detallada (User Stories, wireframes, specs) para asegurar la alineación entre el equipo de desarrollo y el equipo de diseño.",
+        "Monitoricé el rendimiento del producto mediante dashboards y métricas clave (engagement, retention, churn), realizando ajustes estratégicos para mejorar el ROI."
+      ]
+    },
+    {
+      "company": "Sistemas Digitales SA",
+      "position": "Analista de Producto",
+      "period": "2016 - 2019",
+      "location": "Valencia",
+      "bullets": [
+        "Colaboré en el desarrollo y lanzamiento de una plataforma SaaS de gestión de proyectos, incrementando la satisfacción del cliente en un 15% según encuestas internas.",
+        "Realicé análisis de datos para identificar patrones de comportamiento del usuario y oportunidades de mejora en la experiencia del producto.",
+        "Facilité talleres de brainstorming con equipos multidisciplinarios para generar ideas innovadoras y propuestas de nuevas funcionalidades.",
+        "Documenté las necesidades del producto y las funcionalidades solicitadas por los usuarios, creando un backlog de trabajo para el equipo de desarrollo."
+      ]
+    },
+    {
+      "company": "ProyectSoft",
+      "position": "Junior Consultor de Producto",
+      "period": "2015 - 2016",
+      "location": "Sevilla",
+      "bullets": [
+        "Asesoré a empresas en la definición de estrategias de producto y la creación de roadmaps para el desarrollo de soluciones digitales.",
+        "Realicé estudios de mercado y análisis de la competencia para identificar tendencias y oportunidades de negocio.",
+        "Colaboré en la realización de presentaciones y documentos técnicos para clientes, comunicando las propuestas de valor del producto.",
+        "Aprendí sobre metodologías ágiles y herramientas de gestión de proyectos."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Grado en Ingeniería Industrial",
+      "institution": "Universidad de Sevilla",
+      "period": "2010 - 2014",
+      "detail": ""
+    },
+    {
+      "degree": "Curso de Product Management",
+      "institution": "Ironhack",
+      "period": "2019",
+      "detail": ""
+    }
+  ],
+  "technical_skills": [
+    "Product Discovery",
+    "Agile Metodologías",
+    "Jira",
+    "SQL",
+    "A/B Testing",
+    "Wireframing",
+    "Análisis de Datos",
+    "Roadmapping",
+    "Gestión de Backlog",
+    "Investigación de Mercado",
+    "Diseño de Experiencias de Usuario (UX)"
+  ],
+  "tools": [
+    "Jira",
+    "Trello",
+    "Google Analytics",
+    "Hotjar",
+    "Figma"
+  ],
+  "languages": [
+    {
+      "language": "Español",
+      "level": "Nativo"
+    },
+    {
+      "language": "Inglés",
+      "level": "Fluente"
+    },
+    {
+      "language": "Francés",
+      "level": "Basico"
+    }
+  ],
+  "certifications": [
+    "Google Analytics Individual Qualification",
+    "Scrum Master Certified"
+  ]
+}
