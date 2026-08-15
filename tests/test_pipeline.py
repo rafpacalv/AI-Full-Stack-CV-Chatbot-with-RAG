@@ -222,17 +222,29 @@ def test_competitive_english_cvs_are_not_suppressed(question):
     [
         "¿Quién ha trabajado en la NASA?",
         "recetas de paella valenciana con conejo",
+        "Who has experience piloting a rescue helicopter?",
+        "best recipes for valencian paella",
     ],
 )
-def test_off_topic_questions_are_refused_not_answered(question):
+def test_off_topic_questions_name_nobody(question):
     """Refusing is the generator's job, not the retriever's.
 
     Retrieval always returns its top-k, and the cross-lingual ratio gate does
     not filter relevance - an off-topic query scores ratios just as high as a
-    good one. So the guarantee that matters lives in the answer prompt, and it
-    is asserted here rather than assumed.
+    good one. So the guarantee that matters lives in the answer prompt.
+
+    The assertion is deliberately *not* a search for refusal phrases. A first
+    version of this test matched on wordings like "no hay" / "no consta" and so
+    only understood Spanish: the model refuses an English question perfectly
+    well with "None of the provided CV excerpts mention...", and the test called
+    that a failure.
+
+    What actually matters is not how the refusal is phrased but that no
+    candidate is attributed something they never claimed. So that is what is
+    checked, and it is language-independent.
     """
     from cvscreener.llm import client
+    from cvscreener.rag.aggregate import load_candidates
     from cvscreener.rag.answer import stream_retrieval_answer
     from cvscreener.rag.retrieve import search
 
@@ -242,9 +254,15 @@ def test_off_topic_questions_are_refused_not_answered(question):
     hits = search(question, top_k=5)
     assert hits, "the retriever should still return its top-k"
 
-    answer = "".join(stream_retrieval_answer(question, hits)).casefold()
-    refusals = ("no hay", "no se", "no consta", "no encuentro", "no puede", "ningún", "ninguno")
-    assert any(r in answer for r in refusals), f"expected a refusal, got: {answer[:200]}"
+    answer = "".join(stream_retrieval_answer(question, hits))
+    folded = fold_accents(answer).casefold()
+
+    named = [
+        name
+        for name in load_candidates()["full_name"]
+        if fold_accents(str(name)).casefold() in folded
+    ]
+    assert not named, f"off-topic answer attributed content to {named}: {answer[:200]}"
 
 
 @index_built

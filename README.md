@@ -140,9 +140,19 @@ languages are equally irrelevant:
 
 The signal that separates them is the *absolute* score (≈0.49+ vs ≈0.40−), not
 the ratio. No absolute floor is applied, because a retriever returning its
-top-*k* is correct behaviour — **declining to answer is the generator's job**,
-handled by the grounding prompt and covered by tests. Asked about paella, the
-system retrieves five CV chunks and replies that the CVs do not contain it.
+top-*k* is correct behaviour — **declining to answer is the generator's job**.
+
+There is, deliberately, no off-topic detector anywhere in the system. An
+irrelevant question takes exactly the same path as any other: the router sends
+it to `retrieve`, five chunks come back, and the grounding prompt is what makes
+the model say the CVs do not contain the answer. Asked about paella, it does.
+
+Four tests cover this, and they assert that **no candidate is named** in the
+answer rather than looking for refusal wording. An earlier version did match on
+phrases — and understood only Spanish, so it scored a perfectly good English
+refusal ("None of the provided CV excerpts mention…") as a failure. Attributing
+something to a candidate who never claimed it is the actual risk; how the
+refusal is worded is not.
 
 ---
 
