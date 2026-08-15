@@ -126,6 +126,24 @@ threshold is relative and stays within a single metric, so it never blends the
 two incomparable score scales that RRF was chosen to avoid. Three regression
 tests pin the behaviour.
 
+**What that threshold does not do.** It is a fairness gate, not a relevance
+filter. Because the ratio is relative within one query, an off-topic question
+produces ratios just as high as a good one — when nothing is relevant, both
+languages are equally irrelevant:
+
+| Query | Best EN / best overall | Top absolute score |
+|---|---|---|
+| *¿Quién sabe posicionamiento en buscadores?* | 0.937 | 0.528 |
+| *¿Quién ha trabajado con almacenes de datos…?* | 0.988 | 0.533 |
+| *recetas de paella valenciana con conejo* | 0.910 | **0.392** |
+| *¿Quién sabe pilotar un helicóptero de rescate?* | 1.000 | **0.402** |
+
+The signal that separates them is the *absolute* score (≈0.49+ vs ≈0.40−), not
+the ratio. No absolute floor is applied, because a retriever returning its
+top-*k* is correct behaviour — **declining to answer is the generator's job**,
+handled by the grounding prompt and covered by tests. Asked about paella, the
+system retrieves five CV chunks and replies that the CVs do not contain it.
+
 ---
 
 ## Engineering decisions

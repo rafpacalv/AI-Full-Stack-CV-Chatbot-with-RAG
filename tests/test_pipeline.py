@@ -217,6 +217,37 @@ def test_competitive_english_cvs_are_not_suppressed(question):
 
 
 @index_built
+@pytest.mark.parametrize(
+    "question",
+    [
+        "¿Quién ha trabajado en la NASA?",
+        "recetas de paella valenciana con conejo",
+    ],
+)
+def test_off_topic_questions_are_refused_not_answered(question):
+    """Refusing is the generator's job, not the retriever's.
+
+    Retrieval always returns its top-k, and the cross-lingual ratio gate does
+    not filter relevance - an off-topic query scores ratios just as high as a
+    good one. So the guarantee that matters lives in the answer prompt, and it
+    is asserted here rather than assumed.
+    """
+    from cvscreener.llm import client
+    from cvscreener.rag.answer import stream_retrieval_answer
+    from cvscreener.rag.retrieve import search
+
+    if not client.is_up():
+        pytest.skip("Ollama not reachable")
+
+    hits = search(question, top_k=5)
+    assert hits, "the retriever should still return its top-k"
+
+    answer = "".join(stream_retrieval_answer(question, hits)).casefold()
+    refusals = ("no hay", "no se", "no consta", "no encuentro", "no puede", "ningún", "ninguno")
+    assert any(r in answer for r in refusals), f"expected a refusal, got: {answer[:200]}"
+
+
+@index_built
 def test_rrf_scores_are_ordered_and_bounded():
     from cvscreener.config import settings as cfg
     from cvscreener.rag.retrieve import search

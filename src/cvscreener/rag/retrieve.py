@@ -155,11 +155,19 @@ def embed_query(query: str) -> np.ndarray:
     return vector / (np.linalg.norm(vector) or 1.0)
 
 
-# A cross-lingual hit must be this close to the best dense match in the corpus
-# before it displaces a fused result. Chosen from measurement, not taste: the
-# English chunks being suppressed on this corpus scored 0.93-1.00 of the top
-# dense similarity, while genuinely off-topic content sits near 0.47/0.53 ~ 0.89
-# once normalised. 0.90 admits the former and excludes the latter.
+# How close to the best dense match in the index an other-language chunk must
+# sit before it displaces a fused result.
+#
+# This is a *fairness* gate, not a relevance filter, and the distinction matters.
+# The ratio is relative within a single query, so it answers "is the other
+# language competitive here?" - not "is this chunk any good?". Measured on this
+# corpus, an off-topic query ("recetas de paella valenciana") yields ratios of
+# 0.91-1.00, indistinguishable from a genuinely relevant one (0.94-1.00), simply
+# because when everything is irrelevant both languages are equally irrelevant.
+#
+# Filtering irrelevance is not attempted here. A retriever always returns its
+# top-k; refusing to answer belongs to the generation prompt, which is built to
+# say "the CVs do not contain this" and is tested for it.
 CROSS_LINGUAL_MIN_RATIO = 0.90
 
 
