@@ -14,5 +14,8 @@ __pycache__/
 # declines to use is actually here.
 data/index/facts/
 
+# Runtime logs: the rotating application log and the question/answer transcript.
+data/logs/
+
 # The assessment brief is LeadTech internal material - kept locally, never published.
 ai-full-stack-developer-business-case.pdf

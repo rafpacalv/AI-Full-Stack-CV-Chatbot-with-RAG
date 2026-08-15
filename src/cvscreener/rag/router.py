@@ -96,6 +96,7 @@ class QueryPlan(BaseModel):
     skill: str = Field(default="", description="Skill to filter on, '' if none")
     seniority: str = Field(default="", description="Junior/Mid-level/Senior/Lead, '' if none")
     city: str = Field(default="", description="City to filter on, '' if none")
+    university: str = Field(default="", description="University to filter on, '' if none")
     candidate_name: str = Field(default="", description="Specific person asked about")
     min_years: int = Field(default=0, description="Minimum years of experience, 0 if none")
     chart_type: ChartType = Field(default="none")
@@ -106,46 +107,52 @@ FEW_SHOT = """\
 Examples:
 
 Q: Who has experience with Python?
-{"intent":"retrieve","skill":"Python","seniority":"","city":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"none"}
+{"intent":"retrieve","skill":"Python","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"none"}
 
 Q: Summarize the profile of Jane Doe.
-{"intent":"retrieve","skill":"","seniority":"","city":"","candidate_name":"Jane Doe","min_years":0,"chart_type":"none","dimension":"none"}
+{"intent":"retrieve","skill":"","seniority":"","city":"","university":"","candidate_name":"Jane Doe","min_years":0,"chart_type":"none","dimension":"none"}
+
+Q: Which candidate graduated from UPC?
+{"intent":"aggregate","skill":"","seniority":"","city":"","university":"UPC","candidate_name":"","min_years":0,"chart_type":"none","dimension":"university"}
 
 Q: ¿Qué candidatos estudiaron en la UPC?
-{"intent":"retrieve","skill":"","seniority":"","city":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"none"}
+{"intent":"aggregate","skill":"","seniority":"","city":"","university":"UPC","candidate_name":"","min_years":0,"chart_type":"none","dimension":"university"}
 
 Q: How many candidates know Kubernetes?
-{"intent":"aggregate","skill":"Kubernetes","seniority":"","city":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"skills"}
+{"intent":"aggregate","skill":"Kubernetes","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"skills"}
 
 Q: ¿Cuántos candidatos hay en Barcelona?
-{"intent":"aggregate","skill":"","seniority":"","city":"Barcelona","candidate_name":"","min_years":0,"chart_type":"none","dimension":"city"}
+{"intent":"aggregate","skill":"","seniority":"","city":"Barcelona","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"city"}
 
 Q: List all senior engineers with more than 5 years of experience.
-{"intent":"aggregate","skill":"","seniority":"Senior","city":"","candidate_name":"","min_years":5,"chart_type":"none","dimension":"seniority"}
+{"intent":"aggregate","skill":"","seniority":"Senior","city":"","university":"","candidate_name":"","min_years":5,"chart_type":"none","dimension":"seniority"}
 
 Q: Genera un histograma de las edades de los candidatos que sepan Python.
-{"intent":"chart","skill":"Python","seniority":"","city":"","candidate_name":"","min_years":0,"chart_type":"histogram","dimension":"age"}
+{"intent":"chart","skill":"Python","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"histogram","dimension":"age"}
 
 Q: Show me a bar chart of candidates by city.
-{"intent":"chart","skill":"","seniority":"","city":"","candidate_name":"","min_years":0,"chart_type":"bar","dimension":"city"}
+{"intent":"chart","skill":"","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"bar","dimension":"city"}
 
 Q: Reparte por seniority en un gráfico circular.
-{"intent":"chart","skill":"","seniority":"","city":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"seniority"}
+{"intent":"chart","skill":"","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"seniority"}
 
 Q: Make me a pie chart of the candidates by gender.
-{"intent":"chart","skill":"","seniority":"","city":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"unsupported"}
+{"intent":"chart","skill":"","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"unsupported"}
 
 Q: Haz un diagrama sectorial de los candidatos por género.
-{"intent":"chart","skill":"","seniority":"","city":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"unsupported"}
+{"intent":"chart","skill":"","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"unsupported"}
 """
 
 SYSTEM = """\
 You route recruiter questions about a CV database into a query plan.
 
-- "retrieve": the answer needs the text of specific CVs (who, what, describe,
-  summarise, which candidate...).
-- "aggregate": the answer is a count, a total or an exhaustive list across ALL
-  candidates ("how many", "cuántos", "list all", "todos los que").
+- "retrieve": the answer needs to read the prose of specific CVs - what someone
+  did, how they describe their experience, a summary of one person.
+- "aggregate": the answer is a count, a total, or the complete set of people
+  matching a recorded field - city, university, seniority, years of experience.
+  "How many", "cuántos", "list all", "todos los que", and also "which
+  candidates studied at X" or "who is based in Y": naming only the handful that
+  happen to surface in a search would be an incomplete answer to those.
 - "chart": the user explicitly asks to see a plot, chart, graph, histogram,
   "gráfico", "histograma", "distribución", "visualiza", "represéntame".
 
@@ -159,13 +166,13 @@ Only fill a filter field when the question actually names it. Leave the rest
 empty. Reply with JSON only."""
 
 
-def route(question: str) -> QueryPlan:
+def route(question: str, *, model: str | None = None) -> QueryPlan:
     """Classify ``question``; degrade to plain retrieval if anything is off."""
     try:
         plan = client.structured(
             f"{FEW_SHOT}\nQ: {question}\n",
             QueryPlan,
-            model=settings.chat_model,
+            model=model or settings.chat_model,
             system=SYSTEM,
             temperature=0.0,
             num_predict=220,

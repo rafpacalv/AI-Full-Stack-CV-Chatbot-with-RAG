@@ -9,6 +9,7 @@ plot, never a rendered image.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from functools import lru_cache
 
@@ -59,6 +60,65 @@ DIMENSION_LABELS = {
 }
 
 
+_WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
+
+
+def _university_keys(value: str) -> set[str]:
+    """Every string this university could reasonably be called.
+
+    Needed because the extractor read each CV independently and normalised
+    inconsistently: most rows came back as an acronym (``UPC``, ``TCD``) but
+    some kept the full name (``Technische Universität Berlin``). A recruiter
+    may type either form, so both sides of the comparison are expanded into a
+    set of keys and matched on overlap.
+
+    The keys are the folded full string, the initials of its significant words
+    (``Universitat Politècnica de Catalunya`` -> ``upc``), and anything in
+    parentheses (``Danmarks Tekniske Universitet (DTU)`` -> ``dtu``).
+    """
+    text = str(value)
+    folded = fold_accents(text).casefold().strip()
+    keys = {folded}
+
+    # Initials of the words longer than two letters, which skips the
+    # "de"/"of"/"the" that acronyms leave out. Case is ignored so a question
+    # typed in lower case still resolves. This is what unifies the rows the
+    # extractor spelled out with the rows it abbreviated: "Universitat de
+    # Barcelona" and "UB" both produce the key "ub".
+    initials = "".join(w[0] for w in _WORD_RE.findall(text) if len(w) > 2)
+    if len(initials) >= 2:
+        keys.add(initials.casefold())
+
+    keys.update(part.strip() for part in re.findall(r"\(([^)]+)\)", folded))
+    return {k for k in keys if k}
+
+
+def _is_spelled_out(folded: str) -> bool:
+    """Long enough to be a name rather than an acronym.
+
+    Six characters, because the longest acronym in this corpus is four (URLL)
+    and the shortest spelled-out name is six (Deusto). Below that, substring
+    matching does real damage: "UB" is inside "TUB", and "US" is inside half
+    the corpus.
+    """
+    return len(folded) >= 6
+
+
+def _university_matches(query: str, stored: str) -> bool:
+    query_keys, stored_keys = _university_keys(query), _university_keys(stored)
+    if query_keys & stored_keys:
+        return True
+
+    # Fall back to substring, but only between two spelled-out names. Letting
+    # acronyms take this path makes "UB" match "TUB", and "US" (Universidad de
+    # Sevilla) a substring of half the corpus - both measured, both wrong.
+    left = fold_accents(str(query)).casefold().strip()
+    right = fold_accents(str(stored)).casefold().strip()
+    if not (_is_spelled_out(left) and _is_spelled_out(right)):
+        return False
+    return left in right or right in left
+
+
 def apply_filters(frame: pd.DataFrame, plan: QueryPlan) -> tuple[pd.DataFrame, dict[str, str]]:
     """Narrow the table to the rows the question is about."""
     # Filters are applied in sequence, each narrowing the previous result.
@@ -85,6 +145,16 @@ def apply_filters(frame: pd.DataFrame, plan: QueryPlan) -> tuple[pd.DataFrame, d
         target = fold_accents(plan.city).casefold()
         out = out[out["city"].apply(lambda c: fold_accents(str(c)).casefold() == target)]
         used["city"] = plan.city
+
+    # The brief's own sample question is "Which candidate graduated from UPC?".
+    # Six of the 50 did, so a top-k=5 search cannot answer it completely - it is
+    # a set-membership question over a recorded field, which is what this path
+    # is for.
+    if plan.university:
+        out = out[
+            out["university"].apply(lambda u: _university_matches(plan.university, u))
+        ]
+        used["university"] = plan.university
 
     if plan.min_years:
         out = out[out["years_experience"] >= plan.min_years]

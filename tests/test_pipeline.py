@@ -8,6 +8,8 @@ project makes about cross-lingual and exact-token search.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from cvscreener.config import settings
@@ -547,3 +549,282 @@ def test_truncated_tables_announce_themselves():
     assert len(frame) > 10
     assert "truncated" in _table_context(frame, limit=10)
     assert "truncated" not in _table_context(frame, limit=len(frame))
+
+
+# --------------------------------------------------------------------------
+# University membership
+# --------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "query,stored",
+    [
+        # The same institution, however either side happens to be written.
+        ("UPC", "UPC"),
+        ("upc", "UPC"),
+        ("Universitat Politècnica de Catalunya", "UPC"),
+        ("universitat politecnica de catalunya", "UPC"),
+        # The extractor read each CV alone and normalised inconsistently, so
+        # these pairs are one university stored two ways.
+        ("TUB", "Technische Universität Berlin"),
+        ("Technische Universität Berlin", "TUB"),
+        ("Deusto", "Universidad de Deusto"),
+        ("Danmarks Tekniske Universitet (DTU)", "DTU"),
+    ],
+)
+def test_university_forms_are_treated_as_one(query, stored):
+    from cvscreener.rag.aggregate import _university_matches
+
+    assert _university_matches(query, stored)
+
+
+@pytest.mark.parametrize(
+    "query,stored",
+    [
+        # Near-miss acronyms that share a prefix must stay apart.
+        ("UPC", "UPF"),
+        ("UPC", "UPM"),
+        ("UPM", "UPV"),
+        ("UB", "UAB"),
+        # Substring traps: "UB" sits inside "TUB", "US" inside many names.
+        ("TUB", "UB"),
+        ("UB", "TUB"),
+        ("US", "Universitat Politecnica de Catalunya"),
+    ],
+)
+def test_different_universities_stay_apart(query, stored):
+    from cvscreener.rag.aggregate import _university_matches
+
+    assert not _university_matches(query, stored)
+
+
+def test_upc_filter_matches_the_source_table():
+    """The brief's own sample question, answered exhaustively.
+
+    Six of the 50 studied at UPC, so top-k=5 retrieval cannot answer it in
+    full - it is set membership over a recorded field. Before this the router
+    was taught (by a few-shot example of mine) to send it to `retrieve`, and
+    the reply was "all candidates listed graduated from UPC", naming nobody.
+    """
+    from cvscreener.rag.aggregate import _university_matches, load_candidates, run_aggregate
+    from cvscreener.rag.router import QueryPlan
+
+    frame = load_candidates()
+    expected = {
+        row["full_name"]
+        for _, row in frame.iterrows()
+        if _university_matches("UPC", row["university"])
+    }
+    assert len(expected) == 6
+
+    result = run_aggregate(QueryPlan(intent="aggregate", university="UPC"))
+    assert set(result.matched["full_name"]) == expected
+    assert result.filters == {"university": "UPC"}
+
+
+def test_every_stored_university_finds_at_least_its_own_rows():
+    """No filter may lose a candidate it should have matched."""
+    from cvscreener.rag.aggregate import load_candidates, run_aggregate
+    from cvscreener.rag.router import QueryPlan
+
+    frame = load_candidates()
+    for university in frame["university"].dropna().unique():
+        own = set(frame.loc[frame["university"] == university, "full_name"])
+        got = set(run_aggregate(QueryPlan(intent="aggregate", university=university)).matched["full_name"])
+        assert own <= got, f"{university!r} lost {own - got}"
+
+
+@pytest.mark.parametrize(
+    "question",
+    ["Which candidate graduated from UPC?", "¿Qué candidatos estudiaron en la UPC?"],
+)
+def test_university_questions_route_to_the_whole_table(question):
+    from cvscreener.llm import client
+    from cvscreener.rag.router import route
+
+    if not client.is_up():
+        pytest.skip("Ollama not reachable")
+
+    plan = route(question)
+    assert plan.intent == "aggregate", f"routed to {plan.intent}"
+    assert plan.university, "no university filter extracted"
+
+
+# --------------------------------------------------------------------------
+# Logging
+# --------------------------------------------------------------------------
+@pytest.fixture
+def transcript(tmp_path, monkeypatch):
+    """Point settings.logs_dir at a temp dir for the duration of a test.
+
+    logs_dir is a property, so it is patched on the class rather than on the
+    singleton instance.
+    """
+    from cvscreener.config import Settings
+
+    monkeypatch.setattr(Settings, "logs_dir", property(lambda self: tmp_path))
+    return tmp_path / "chat.jsonl"
+
+
+def test_a_question_and_its_answer_are_recorded(transcript):
+    import json
+
+    from cvscreener.logs import log_chat
+
+    log_chat(
+        "¿Qué candidatos estudiaron en la UPC?",
+        "Seis candidatos: Núria Badia Roldán y otros.",
+        model="gemma2:9b",
+        intent="aggregate",
+        elapsed_s=4.2,
+        citations=["Núria Badia Roldán"],
+    )
+
+    record = json.loads(transcript.read_text(encoding="utf-8").strip())
+    assert record["question"] == "¿Qué candidatos estudiaron en la UPC?"
+    assert "Núria Badia Roldán" in record["answer"]
+    assert record["intent"] == "aggregate"
+    assert record["error"] is None
+    assert record["ts"].endswith("+00:00")
+
+
+def test_failures_are_recorded_too(transcript):
+    """A question that errored must still be answerable from the transcript."""
+    import json
+
+    from cvscreener.logs import log_chat
+
+    log_chat("boom", "", model="gemma2:9b", error="ConnectError: Ollama unreachable")
+
+    record = json.loads(transcript.read_text(encoding="utf-8").strip())
+    assert record["error"] == "ConnectError: Ollama unreachable"
+    assert record["question"] == "boom"
+
+
+def test_records_are_one_json_object_per_line(transcript):
+    import json
+
+    from cvscreener.logs import log_chat
+
+    for i in range(3):
+        log_chat(f"q{i}", f"a{i}\nwith a newline", model="m")
+
+    lines = transcript.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 3, "an embedded newline must not split a record"
+    assert [json.loads(line)["question"] for line in lines] == ["q0", "q1", "q2"]
+
+
+def test_logging_never_breaks_a_request(tmp_path, monkeypatch):
+    """A log that cannot be written must not take the answer down with it."""
+    from cvscreener.config import Settings
+    from cvscreener.logs import log_chat
+
+    # A file where the directory should be: mkdir and open both fail.
+    blocked = tmp_path / "not-a-directory"
+    blocked.write_text("", encoding="utf-8")
+    monkeypatch.setattr(Settings, "logs_dir", property(lambda self: blocked))
+
+    log_chat("q", "a", model="m")  # must not raise
+
+
+# --------------------------------------------------------------------------
+# API input validation
+# --------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "cv_id",
+    [
+        # The vector that actually worked: a backslash is not a URL path
+        # separator, so %5C survives Starlette's routing, and on Windows it is
+        # still a filesystem separator. GET /cv/..%5Cdecoy served a planted
+        # file from outside the corpus with HTTP 200.
+        r"..\decoy",
+        r"..\..\data\decoy",
+        "../decoy",
+        "../../etc/passwd",
+        # Glob metacharacters would turn one id into a wildcard read.
+        "cv_*",
+        "cv_0?",
+        "cv_[0-9]",
+        # A prefix match would pass these: the check has to be a fullmatch.
+        "cv_01/../../decoy",
+        r"cv_01\..\decoy",
+        "",
+    ],
+)
+def test_cv_endpoint_rejects_anything_but_an_identifier(cv_id):
+    from fastapi import HTTPException
+
+    from cvscreener.api.main import cv_pdf
+
+    with pytest.raises(HTTPException) as raised:
+        cv_pdf(cv_id)
+    # 400, never 404: a rejected identifier is a bad request, and answering 404
+    # would leak whether the traversed path happened to exist.
+    assert raised.value.status_code == 400
+
+
+@index_built
+def test_cv_endpoint_still_serves_a_real_cv():
+    """The lock must not also lock out the legitimate caller."""
+    from cvscreener.api.main import cv_pdf
+    from cvscreener.config import settings
+
+    served = cv_pdf("cv_01")
+    assert Path(served.path).parent.resolve() == settings.cvs_dir.resolve()
+    assert Path(served.path).suffix == ".pdf"
+
+
+def test_chat_request_bounds_its_inputs():
+    """Unbounded input reaches the embedding model and the prompt builder."""
+    from pydantic import ValidationError
+
+    from cvscreener.api.main import MAX_QUESTION_CHARS, MAX_TOP_K, ChatRequest
+
+    ChatRequest(question="fine", top_k=5)  # the ordinary case still works
+
+    with pytest.raises(ValidationError):
+        ChatRequest(question="a" * (MAX_QUESTION_CHARS + 1))
+    with pytest.raises(ValidationError):
+        ChatRequest(question="fine", top_k=MAX_TOP_K + 1)
+    with pytest.raises(ValidationError):
+        ChatRequest(question="fine", top_k=0)
+
+
+def test_a_model_override_does_not_leak_between_requests():
+    """`settings.chat_model = req.model` made one request poison the next.
+
+    Reproduced against a running server: a request naming a model Ollama does
+    not have left /health advertising that model, and the *following* request -
+    which sent no model at all - failed with the same 404. The model is now a
+    per-request argument, so the global is only ever read as a default.
+    """
+    import ast
+    import inspect
+    import textwrap
+
+    from cvscreener.api import main
+    from cvscreener.rag.answer import stream_aggregate_answer, stream_retrieval_answer
+    from cvscreener.rag.router import route
+
+    # Parsed, not grepped: the function's comments quote the offending line, so
+    # a substring check on the source would fail on the explanation of the fix.
+    tree = ast.parse(textwrap.dedent(inspect.getsource(main._chat_events)))
+    assigned = [
+        target.attr
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Assign)
+        for target in node.targets
+        if isinstance(target, ast.Attribute)
+    ]
+    assert "chat_model" not in assigned, "the global is being mutated again"
+
+    # Every consumer must accept the model rather than reach for the global.
+    for function in (route, stream_retrieval_answer, stream_aggregate_answer):
+        assert "model" in inspect.signature(function).parameters, function.__name__
+
+
+def test_the_default_model_still_comes_from_settings():
+    """Removing the mutation must not remove the default."""
+    import inspect
+
+    from cvscreener.api import main
+
+    assert "req.model or settings.chat_model" in inspect.getsource(main._chat_events)

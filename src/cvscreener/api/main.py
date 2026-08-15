@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -30,6 +31,7 @@ from pydantic import BaseModel, Field
 
 from ..config import settings
 from ..llm import client
+from ..logs import configure as configure_logging, log_chat
 from ..rag.aggregate import candidates_summary, load_candidates, run_aggregate
 from ..rag.answer import stream_aggregate_answer, stream_retrieval_answer
 from ..rag.keywords import missing_from_corpus
@@ -47,6 +49,9 @@ async def lifespan(_: FastAPI):
     the first real question as fast as the rest - which matters when the first
     question is the one being demonstrated.
     """
+    # Before the warmup thread starts, so its failures are captured too.
+    configure_logging()
+
     def warm() -> None:
         try:
             load_index()
@@ -76,15 +81,28 @@ app.add_middleware(
 )
 
 
+# Candidate identifiers are generated as cv_01..cv_50, so anything outside this
+# alphabet is either a typo or an attack. Excluding "/", "\\", "." and the glob
+# metacharacters is the point - see cv_pdf below.
+CV_ID_RE = re.compile(r"[A-Za-z0-9_-]{1,64}")
+
+# The corpus is 375 chunks and the chat model has an 8k context, so nothing
+# legitimate comes near these. They exist so a stray or hostile request cannot
+# make the server embed a megabyte of text or assemble the entire index into
+# one prompt.
+MAX_QUESTION_CHARS = 2000
+MAX_TOP_K = 50
+
+
 class ChatRequest(BaseModel):
-    question: str = Field(min_length=1)
+    question: str = Field(min_length=1, max_length=MAX_QUESTION_CHARS)
     model: str | None = Field(default=None, description="Override the chat model")
-    top_k: int | None = None
+    top_k: int | None = Field(default=None, ge=1, le=MAX_TOP_K)
 
 
 class SearchRequest(BaseModel):
-    query: str = Field(min_length=1)
-    top_k: int = 8
+    query: str = Field(min_length=1, max_length=MAX_QUESTION_CHARS)
+    top_k: int = Field(default=8, ge=1, le=MAX_TOP_K)
 
 
 def _sse(event: str, data: dict | str) -> str:
@@ -130,11 +148,30 @@ def candidates() -> list[dict]:
 
 @app.get("/cv/{cv_id}")
 def cv_pdf(cv_id: str) -> FileResponse:
-    """Serve the original PDF, so a citation can open the real document."""
-    matches = sorted(settings.cvs_dir.glob(f"{cv_id}_*.pdf"))
-    if not matches:
-        raise HTTPException(404, f"No PDF for {cv_id}")
-    return FileResponse(matches[0], media_type="application/pdf", filename=matches[0].name)
+    """Serve the original PDF, so a citation can open the real document.
+
+    ``cv_id`` is validated before it is interpolated into a glob. Without that
+    this was a working path traversal, and the vector was not the obvious one:
+    ``/cv/../secret`` and ``/cv/..%2Fsecret`` both 404 in Starlette's router,
+    because the path is decoded and normalised before the route is matched. A
+    **backslash** is not a URL path separator, so ``%5C`` survives routing
+    intact - and on Windows ``Path.glob("..\\\\secret_*.pdf")`` happily walks up
+    a directory. ``GET /cv/..%5Cdecoy`` returned a file from outside the corpus
+    with HTTP 200. Verified, then fixed.
+
+    Two independent checks, because one regex is a single point of failure:
+    the identifier must be alphanumeric (which also excludes the glob
+    metacharacters ``*?[``), and the resolved file must sit directly in the
+    corpus directory.
+    """
+    if not CV_ID_RE.fullmatch(cv_id):
+        raise HTTPException(400, "cv_id must be alphanumeric")
+
+    root = settings.cvs_dir.resolve()
+    for path in sorted(settings.cvs_dir.glob(f"{cv_id}_*.pdf")):
+        if path.resolve().parent == root:
+            return FileResponse(path, media_type="application/pdf", filename=path.name)
+    raise HTTPException(404, f"No PDF for {cv_id}")
 
 
 @app.post("/search")
@@ -151,13 +188,25 @@ def search_endpoint(req: SearchRequest) -> dict:
 
 @app.post("/route")
 def route_endpoint(req: ChatRequest) -> QueryPlan:
-    return route(req.question)
+    return route(req.question, model=req.model)
 
 
 def _chat_events(req: ChatRequest) -> Iterator[str]:
     started = time.time()
-    if req.model:
-        settings.chat_model = req.model
+
+    # The model is a per-request value, passed down explicitly.
+    #
+    # This used to be `settings.chat_model = req.model`, which mutated process
+    # global state: the sidebar's model picker leaked into every other request,
+    # and one request naming a model Ollama does not have left the server
+    # answering 404 to everybody afterwards - including requests that sent no
+    # model at all. Reproduced, then removed.
+    model = req.model or settings.chat_model
+
+    # Collected as the answer streams, so the transcript records what the user
+    # actually saw rather than a second, differently-sampled generation.
+    spoken: list[str] = []
+    plan: QueryPlan | None = None
 
     try:
         # Routing (chat model) and query embedding (embedding model) are
@@ -171,7 +220,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
         pool = ThreadPoolExecutor(max_workers=1)
         embedding_future = pool.submit(embed_query, req.question)
         try:
-            plan = route(req.question)
+            plan = route(req.question, model=model)
         except Exception:
             embedding_future.cancel()  # do not leak the thread on failure
             pool.shutdown(wait=False)
@@ -207,33 +256,38 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             pool.shutdown(wait=False)
             result = run_aggregate(plan)
             for token in stream_aggregate_answer(
-                req.question, result, chart_unavailable=chart_unavailable
+                req.question, result, chart_unavailable=chart_unavailable, model=model
             ):
+                spoken.append(token)
                 yield _sse("token", {"t": token})
 
             frame = result.matched
-            # Here a "citation" is every candidate the filter matched - these
-            # came from the table, not from retrieved chunks, so there is no
-            # section to point at.
+            # Here a "citation" is every candidate the answer is drawn from -
+            # these came from the table, not from retrieved chunks, so there is
+            # no section to point at.
             #
-            # With no filter, though, "matched" is simply everyone, and the
-            # first twelve rows are an arbitrary slice of the corpus. Listing
-            # them under a heading that says SOURCES claims a relevance they do
-            # not have - most visibly beneath an answer explaining that the
-            # requested field does not exist. So citations are only sent when
-            # a filter actually narrowed the set.
+            # Every match is sent, not a slice. This list is what the user
+            # clicks through to check the answer against the real PDFs, so a
+            # cap turns "the six graduates from UPC" into an arbitrary subset
+            # of them, and a chart covering all 50 candidates should offer all
+            # 50. If nothing matched, nothing is offered.
+            #
+            # The exception is a chart of a field the table does not hold:
+            # there is no result to source, and listing the whole corpus
+            # beneath "that field does not exist" claims a relevance it has not
+            # got.
             citations = (
-                [
+                []
+                if chart_unavailable
+                else [
                     {
                         "cv_id": row["cv_id"],
                         "candidate": row["full_name"],
                         "source_file": row["source_file"],
                         "sections": [],
                     }
-                    for _, row in frame.head(12).iterrows()
+                    for _, row in frame.iterrows()
                 ]
-                if result.filters
-                else []
             )
             yield _sse(
                 "meta",
@@ -248,6 +302,18 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
                     "chunks": [],
                     "elapsed_s": round(time.time() - started, 2),
                 },
+            )
+            log_chat(
+                req.question,
+                "".join(spoken),
+                model=model,
+                intent=plan.intent,
+                elapsed_s=round(time.time() - started, 2),
+                citations=[c["candidate"] for c in citations],
+                missing_terms=missing,
+                chart=f"{result.chart['type']}:{result.chart['dimension']}"
+                if result.chart
+                else None,
             )
             yield _sse("done", {})
             return
@@ -283,7 +349,8 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
 
         # Stream the answer as the model produces it. At ~18 tok/s this is the
         # difference between a live assistant and a blank screen for 12 s.
-        for token in stream_retrieval_answer(req.question, hits, missing_terms=missing):
+        for token in stream_retrieval_answer(req.question, hits, missing_terms=missing, model=model):
+            spoken.append(token)
             yield _sse("token", {"t": token})
 
         # Collapse chunks into one citation per candidate. Five chunks often
@@ -317,12 +384,40 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
                 "elapsed_s": round(time.time() - started, 2),
             },
         )
+        log_chat(
+            req.question,
+            "".join(spoken),
+            model=model,
+            intent="retrieve",
+            elapsed_s=round(time.time() - started, 2),
+            citations=[c["candidate"] for c in citations.values()],
+            missing_terms=missing,
+        )
         yield _sse("done", {})
 
+    # Both handlers record the failure to the same transcript as a success, so
+    # "what did the user ask and what came back" is answerable from one file
+    # whichever way the request ended.
     except IndexNotBuilt as exc:
+        log_chat(
+            req.question,
+            "".join(spoken),
+            model=model,
+            intent=plan.intent if plan else "",
+            elapsed_s=round(time.time() - started, 2),
+            error=str(exc),
+        )
         yield _sse("error", {"message": str(exc)})
     except Exception as exc:  # noqa: BLE001 - never leave the UI hanging
         log.exception("chat failed")
+        log_chat(
+            req.question,
+            "".join(spoken),
+            model=model,
+            intent=plan.intent if plan else "",
+            elapsed_s=round(time.time() - started, 2),
+            error=f"{type(exc).__name__}: {exc}",
+        )
         yield _sse("error", {"message": f"{type(exc).__name__}: {exc}"})
 
 

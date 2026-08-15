@@ -268,6 +268,38 @@ to obtain it are to break that boundary or to infer it from names and photos —
 and a screening tool inferring protected attributes is a worse idea than a
 missing chart.
 
+### Routing the brief's own sample question to the wrong strategy
+
+*"Which candidate graduated from UPC?"* answered **"All candidates listed
+graduated from UPC"** — naming nobody. Not false, since the five retrieved
+chunks were all UPC graduates, but useless for a question beginning *which*.
+
+Six of the 50 studied there, so `top_k=5` retrieval **cannot** answer it
+completely: it is set membership over a recorded field, exactly the case the
+router exists to catch. It was being missed because of a few-shot example
+written into this repo by hand:
+
+```json
+Q: ¿Qué candidatos estudiaron en la UPC?
+{"intent":"retrieve", ...}
+```
+
+The brief's sample question was taught to take the one path that cannot answer
+it. Fixed by routing university questions to `aggregate` and adding the
+`university` filter that made that route meaningful.
+
+That filter has to absorb the extractor's inconsistency, since each CV is read
+independently and the same institution comes back as `UPC` from one and
+`Universitat Politècnica de Catalunya` from another. Both sides of the
+comparison expand into a set of keys — the folded name, the initials of its
+significant words, anything in parentheses — and match on overlap. Substring
+matching is allowed only above six characters, because below that it does real
+damage: `UB` sits inside `TUB`, and `US` inside half the corpus. Both measured,
+both now tested.
+
+All four ways of asking return the same six people, and `UPC`/`UPF`/`UPM`/`UPV`
+and `UB`/`UAB` stay apart.
+
 ### Two bugs that only surfaced by reading the extracted text
 
 **Silent glyph corruption.** ReportLab draws bullets in the style's
@@ -375,14 +407,14 @@ trusting the argument.
 
 ```
 src/cvscreener/
-├── config.py · branding.py · llm.py · textutils.py
+├── config.py · branding.py · llm.py · logs.py · textutils.py
 ├── generation/   personas · profile · photo · render · pipeline
 ├── ingest/       extract · chunk · enrich · index
 ├── rag/          router · retrieve · aggregate · answer
 └── api/          main.py            FastAPI + SSE
 ui/               app.py · theme.py · charts.py
-tests/            33 tests
-data/             cvs/ · photos/ · profiles/ · index/
+tests/            test_pipeline.py
+data/             cvs/ · photos/ · profiles/ · index/ · logs/
 ```
 
 ## API
@@ -398,13 +430,92 @@ data/             cvs/ · photos/ · profiles/ · index/
 
 Interactive docs at `http://127.0.0.1:8000/docs`.
 
+## Logging
+
+Two files under `data/logs/`, gitignored, because they answer different
+questions.
+
+`cvscreener.log` is the ordinary rotating application log (1 MB × 3) that every
+module already writes to through `logging.getLogger(__name__)` — warmup
+failures, Ollama timeouts, tracebacks.
+
+`chat.jsonl` is one JSON object per question:
+
+```json
+{"ts": "2026-08-15T17:21:00+00:00", "question": "¿Qué candidatos estudiaron en la UPC?",
+ "model": "gemma2:9b", "intent": "aggregate", "elapsed_s": 4.2,
+ "answer": "Seis candidatos: …", "citations": ["Núria Badia Roldán"],
+ "missing_terms": [], "chart": null, "error": null}
+```
+
+Separate from the text log because it is *data*, not diagnostics: finding every
+question that errored, or the distribution of routing intents, is a pandas
+one-liner over JSONL and miserable over interleaved log lines. Failures are
+written to the same file with `error` populated, so *"what was asked and what
+came back"* is answerable from one place however the request ended.
+
+The answer is accumulated from the tokens as they stream, so the transcript
+holds what the user actually saw rather than a second, differently-sampled
+generation. Nothing here is on the critical path — a full disk degrades the app
+to "not logging", never to "not answering", and there is a test for that.
+
+Questions and answers are recorded in full because this corpus is synthetic.
+Against real CVs that is a retention and consent decision, not a code one:
+recruiter queries plus candidate names on disk is personal data.
+
+## Security
+
+A review of this code is in [`docs/security-review.md`](docs/security-review.md):
+threat model, findings table, and a section per finding.
+
+The first pass was produced by a review agent; every finding was then re-tested
+by hand against a running server, which mattered. Its one High — path traversal
+in `GET /cv/{cv_id}` — was real, but the attack string it gave does not work:
+Starlette normalises the path before routing, so `/cv/../../x` returns the
+router's own 404. The vector that *does* work is a percent-encoded **backslash**,
+which is not a URL path separator and so survives routing, while remaining a
+filesystem separator on Windows. `GET /cv/..%5Cdecoy` returned a planted file
+from outside the corpus with HTTP 200.
+
+Fixed, along with the two unbounded inputs, and covered by tests:
+
+| | |
+|---|---|
+| Path traversal in `/cv/{cv_id}` | Identifier must be alphanumeric, and the resolved file must sit in the corpus directory |
+| Unbounded `question` / `top_k` | 2000 characters, `top_k ≤ 50`, rejected by pydantic before any model runs |
+
+The rest are accepted with reasons given in the report — chiefly that the app
+binds to `127.0.0.1`, the corpus is synthetic, and the pickled BM25 index is
+written by the ingest step rather than supplied by a user.
+
+Testing the error path for the new logging then turned up a third bug that no
+review had flagged. `POST /chat` did `settings.chat_model = req.model`, mutating
+**process-global** state: the sidebar's model picker leaked into every other
+request, and one request naming a model Ollama does not have left the server
+returning 404 to everybody afterwards — including requests that sent no model at
+all. Reproduced end to end:
+
+```
+POST /chat {"model": "no-such-model:1b"}  -> error
+GET  /health                              -> "chat": "no-such-model:1b"
+POST /chat {"question": "..."}            -> same 404, no model requested
+```
+
+The model is now a per-request argument threaded through `route()` and both
+answer functions; the global is only ever read as a default. The regression test
+parses the function's AST rather than grepping its source, because the comment
+explaining the fix quotes the line that caused it.
+
 ## Known limitations
 
 - **Latency.** ~7 s to first token, ~12 s total on this hardware. Everything runs
   locally on a laptop GPU; the architecture is model-agnostic and the sidebar
   switches models live.
-- **Fact extraction is imperfect.** University names normalise inconsistently
-  (`UPC` vs the full name), and "Lead" seniority is sometimes read as "Senior".
+- **Fact extraction is imperfect.** "Lead" seniority is sometimes read as
+  "Senior". University names normalise inconsistently too — each CV is read
+  independently, so the same institution arrives as `TUB` from one and
+  `Technische Universität Berlin` from another — but the university filter now
+  absorbs that rather than the reader having to (see below).
 - **The cross-lingual ratio (0.90) is corpus-tuned.** It was measured on these
   50 CVs and would need re-checking on a materially different corpus.
 - **Only eight fields can be charted.** Anything else is refused rather than

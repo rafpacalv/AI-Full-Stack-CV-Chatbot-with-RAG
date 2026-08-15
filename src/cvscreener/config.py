@@ -56,11 +56,21 @@ class Settings(BaseSettings):
         return self.data_dir / "index"
 
     @property
+    def logs_dir(self) -> Path:
+        return self.data_dir / "logs"
+
+    @property
     def api_url(self) -> str:
         return f"http://{self.api_host}:{self.api_port}"
 
     def ensure_dirs(self) -> None:
-        for d in (self.profiles_dir, self.photos_dir, self.cvs_dir, self.index_dir):
+        for d in (
+            self.profiles_dir,
+            self.photos_dir,
+            self.cvs_dir,
+            self.index_dir,
+            self.logs_dir,
+        ):
             d.mkdir(parents=True, exist_ok=True)
 
 

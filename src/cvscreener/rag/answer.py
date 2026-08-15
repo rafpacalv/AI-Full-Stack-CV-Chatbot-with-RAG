@@ -136,6 +136,7 @@ def stream_retrieval_answer(
     chunks: list[RetrievedChunk],
     *,
     missing_terms: list[str] | None = None,
+    model: str | None = None,
 ) -> Iterator[str]:
     """Answer from retrieved chunks.
 
@@ -166,7 +167,7 @@ def stream_retrieval_answer(
             {"role": "system", "content": SYSTEM_ES if lang == "es" else SYSTEM_EN},
             {"role": "user", "content": prompt},
         ],
-        model=settings.chat_model,
+        model=model or settings.chat_model,
         temperature=0.15,
     )
 
@@ -199,6 +200,7 @@ def stream_aggregate_answer(
     result: AggregateResult,
     *,
     chart_unavailable: bool = False,
+    model: str | None = None,
 ) -> Iterator[str]:
     """Narrate a computed result.
 
@@ -258,7 +260,7 @@ def stream_aggregate_answer(
 
     yield from client.chat_stream(
         [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
-        model=settings.chat_model,
+        model=model or settings.chat_model,
         temperature=0.15,
         num_predict=200 if many else 500,
     )

@@ -49,6 +49,10 @@ SAMPLE_QUESTIONS = [
     "Muestra un gráfico de candidatos por ciudad",
 ]
 
+# How many source names to show as chips before collapsing the rest into a
+# count. The full set is always listed in the expander underneath.
+CHIP_LIMIT = 8
+
 BADGE_TEXT = {
     "retrieve": "Semantic retrieval",
     "aggregate": "Table aggregate",
@@ -133,9 +137,15 @@ def render_citations(citations: list[dict]) -> None:
         "text-transform:uppercase;letter-spacing:.07em'>Sources</div>",
         unsafe_allow_html=True,
     )
-    chips = "".join(
-        f"<span class='lt-chip'>{c['candidate']}</span>" for c in citations
-    )
+    # An aggregate can match all 50 candidates, and 50 mint chips is both
+    # unreadable and several times over the accent budget. The chips are a
+    # glance; the expander below is the complete list.
+    shown = citations[:CHIP_LIMIT]
+    chips = "".join(f"<span class='lt-chip'>{c['candidate']}</span>" for c in shown)
+    if len(citations) > CHIP_LIMIT:
+        chips += (
+            f"<span class='lt-chip-muted'>+{len(citations) - CHIP_LIMIT} more</span>"
+        )
     st.markdown(chips, unsafe_allow_html=True)
 
     with st.expander(f"Open the {len(citations)} source CV(s)"):
@@ -147,17 +157,15 @@ def render_citations(citations: list[dict]) -> None:
                 f"<span style='color:{GREY_TEXT};font-size:13px'>{sections}</span>",
                 unsafe_allow_html=True,
             )
-            try:
-                pdf = httpx.get(f"{API}/cv/{c['cv_id']}", timeout=15).content
-                # The one primary action in this panel - opening the real
-                # document behind a citation - so it takes the mint fill.
-                cols[2].download_button(
-                    "PDF", pdf, file_name=c["source_file"],
-                    mime="application/pdf", key=f"dl-{c['cv_id']}-{id(c)}",
-                    type="primary",
-                )
-            except httpx.HTTPError:
-                cols[2].caption("n/a")
+            # A link, not a download button. `st.download_button` needs the
+            # bytes up front, so building this list used to fetch every PDF
+            # eagerly on each rerun - fine for five retrieved chunks, ~10 MB of
+            # blocking requests once an aggregate can match all 50 candidates.
+            # The API already serves the file with a Content-Disposition
+            # header, so the browser downloads it on click.
+            cols[2].link_button(
+                "PDF", f"{API}/cv/{c['cv_id']}", type="primary", help=c["source_file"]
+            )
 
 
 # --------------------------------------------------------------------------
@@ -293,7 +301,7 @@ with tab_chat:
                     ]
                     # Show any filter the router extracted, so its reasoning is
                     # visible rather than hidden behind the answer.
-                    for key in ("skill", "seniority", "city", "candidate_name"):
+                    for key in ("skill", "seniority", "city", "university", "candidate_name"):
                         if payload.get(key):
                             bits.append(f"<span class='lt-chip-muted'>{key}: {payload[key]}</span>")
                     # Terms that appear in no CV. Shown as a warning chip so the
