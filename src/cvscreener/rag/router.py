@@ -24,13 +24,71 @@ from pydantic import BaseModel, Field
 from ..config import settings
 from ..ingest.enrich import normalise_skill
 from ..llm import client
+from ..textutils import fold_accents
 
 Intent = Literal["retrieve", "aggregate", "chart"]
 ChartType = Literal["histogram", "bar", "pie", "none"]
 Dimension = Literal[
     "age", "years_experience", "seniority", "city", "current_role",
-    "cv_language", "skills", "university", "none",
+    "cv_language", "skills", "university", "unsupported", "none",
 ]
+
+# Words that must appear in the question for a dimension to be believable.
+#
+# These exist because of how constrained decoding fails. `Dimension` is an enum
+# in the JSON Schema, so Ollama will only ever emit one of its members - which
+# is exactly why "make me a pie chart of candidates by gender" is dangerous.
+# The model cannot answer "gender": it is not a legal token. Instead the decoder
+# renormalises over the values that ARE legal and returns the nearest one, with
+# no exception and no low-confidence signal. Measured on this corpus, that
+# question yielded `cv_language` in English and `seniority` in Spanish - a
+# confident, well-formed, completely wrong plot beside a correct text answer.
+#
+# The schema guarantee that removes all JSON-repair code is the same mechanism
+# that manufactures this, so the plan has to be checked against the question
+# rather than trusted. Accents are folded before matching, hence "anos".
+DIMENSION_CUES: dict[str, tuple[str, ...]] = {
+    "age": ("age", "ages", "edad", "edades", "old", "nacim", "born"),
+    "years_experience": (
+        "experience", "experiencia", "years", "anos", "antiguedad", "trayectoria",
+    ),
+    "seniority": ("seniority", "senior", "junior", "mid-level", "lead", "nivel", "categoria"),
+    "city": ("city", "cities", "ciudad", "ciudades", "location", "ubicacion", "donde", "where"),
+    "current_role": (
+        "role", "roles", "rol", "position", "puesto", "cargo", "perfil",
+        "disciplina", "job title", "area",
+    ),
+    "cv_language": (
+        "language", "languages", "idioma", "idiomas", "lengua",
+        "english", "spanish", "ingles", "espanol",
+    ),
+    "skills": (
+        "skill", "technolog", "tecnolog", "habilidad", "conocimiento",
+        "stack", "herramienta", "tool",
+    ),
+    "university": (
+        "universit", "universidad", "college", "school", "alma mater",
+        "estudios", "titulacion", "degree", "carrera",
+    ),
+}
+
+# What the UI can offer instead, in the order a person would expect to read it.
+CHARTABLE_DIMENSIONS = tuple(DIMENSION_CUES)
+
+
+def dimension_supported_by(question: str, dimension: str) -> bool:
+    """Is ``dimension`` actually mentioned in ``question``?
+
+    A deliberately dumb lexical check. It cannot be fooled the way the model
+    can, because it only ever confirms what the user literally wrote - and the
+    failure it guards against is precisely the model inventing a field the user
+    never named.
+    """
+    cues = DIMENSION_CUES.get(dimension)
+    if not cues:
+        return False
+    folded = fold_accents(question).casefold()
+    return any(cue in folded for cue in cues)
 
 
 class QueryPlan(BaseModel):
@@ -73,6 +131,12 @@ Q: Show me a bar chart of candidates by city.
 
 Q: Reparte por seniority en un gráfico circular.
 {"intent":"chart","skill":"","seniority":"","city":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"seniority"}
+
+Q: Make me a pie chart of the candidates by gender.
+{"intent":"chart","skill":"","seniority":"","city":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"unsupported"}
+
+Q: Haz un diagrama sectorial de los candidatos por género.
+{"intent":"chart","skill":"","seniority":"","city":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"unsupported"}
 """
 
 SYSTEM = """\
@@ -84,6 +148,12 @@ You route recruiter questions about a CV database into a query plan.
   candidates ("how many", "cuántos", "list all", "todos los que").
 - "chart": the user explicitly asks to see a plot, chart, graph, histogram,
   "gráfico", "histograma", "distribución", "visualiza", "represéntame".
+
+"dimension" is the field to plot, and it must be the one the user actually
+named. The database only holds: age, years_experience, seniority, city,
+current_role, cv_language, skills, university. If the user asks to break the
+candidates down by anything else - gender, salary, nationality, availability -
+answer "unsupported". Never substitute a different field for the one requested.
 
 Only fill a filter field when the question actually names it. Leave the rest
 empty. Reply with JSON only."""
@@ -117,6 +187,17 @@ def route(question: str) -> QueryPlan:
     # plot nobody requested is worse than showing none.
     if plan.intent != "chart":
         plan.chart_type = "none"
+
+    # Verify the chosen dimension against the question's own words. The prompt
+    # and the few-shot examples above ask the model to answer "unsupported",
+    # but a constrained decoder can always pick a legal-and-wrong value, so the
+    # instruction is a hint and this is the guarantee. Plotting the wrong field
+    # is worse than plotting nothing: the figure looks authoritative, sits next
+    # to a correct text answer, and nothing about it says "this is not what you
+    # asked for".
+    if plan.intent == "chart" and plan.dimension not in ("none", "unsupported"):
+        if not dimension_supported_by(question, plan.dimension):
+            plan.dimension = "unsupported"
 
     # Fold the skill onto its canonical name so "Aprendizaje Automático" and
     # "Machine Learning" hit the same rows in the candidate table.

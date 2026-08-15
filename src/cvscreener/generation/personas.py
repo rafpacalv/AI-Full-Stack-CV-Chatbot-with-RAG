@@ -1,6 +1,6 @@
 """Deterministic persona matrix for the synthetic candidate pool.
 
-Diversity is engineered here rather than delegated to the LLM. Asked for "28
+Diversity is engineered here rather than delegated to the LLM. Asked for "50
 varied CVs" a model reliably collapses toward the same few archetypes - the same
 names, the same three cities, everyone a senior engineer. So the axes that must
 vary (language, role, seniority, age, city, university, gender presentation,
@@ -199,7 +199,7 @@ DEGREE_FIELDS_ES = {
     "Business Analytics": "Administración y Dirección de Empresas",
 }
 
-# Photo-prompt fragments. Varied deliberately so 28 headshots do not read as
+# Photo-prompt fragments. Varied deliberately so 50 headshots do not read as
 # the same person; the diffusion model otherwise regresses hard to a mean face.
 APPEARANCE_POOL = [
     "South Asian", "White European", "Black African", "East Asian",
@@ -225,18 +225,28 @@ def _seniority(years: int) -> str:
 def build_personas(total: int = TOTAL) -> list[Persona]:
     """Return a reproducible, well-spread set of personas (half ES, half EN).
 
-    CRITICAL: The first 28 personas must remain byte-identical to preserve the
-    cached PDFs and photos. This is achieved by:
-    1. Using original rng with original seed for first 28 personas
-    2. Using separate rng (seed+1) for new 22 personas
+    The corpus grew from 28 CVs to 50 after the first batch had already been
+    generated, and that history is visible in the shape of this function.
+
+    Generating one CV costs ~65 s of local GPU time, so the 28 existing PDFs,
+    photos and profile JSONs are worth keeping - regenerating them would be
+    half an hour of GPU for an identical result. The pipeline caches per
+    ``cv_id``, so a cached artefact is only reused if persona ``cv_01``..
+    ``cv_28`` still describe the same 28 people as before.
+
+    A single ``random.Random(SEED)`` would break that. Every shuffle and every
+    ``randint`` advances one shared stream, so appending 22 names to the pools
+    would reshuffle the first 28 as well: ``cv_07`` would silently become a
+    different person with a stale cached PDF attached. Hence two independent
+    streams. ``rng`` sees exactly the sequence of calls it saw when there were
+    28 personas, and ``rng_new`` - seeded ``SEED + 1`` - handles everything
+    added afterwards. The first 28 personas therefore come out byte-identical.
     """
-    # RNG for the first 28 personas (original code path)
+    # Stream 1: drives the original 28. Its call sequence must not change.
     rng = random.Random(SEED)
     personas: list[Persona] = []
 
-    # Separate original and new name pools
-    # Original: 7 F + 7 M per language (14 total)
-    # New: 6 F + 5 M for Spanish, 6 F + 5 M for English (11 total each)
+    # The original name pools: 7 women + 7 men per language.
     es_names_orig = [
         (n, "female") for n in NAMES_ES_F[:7]
     ] + [(n, "male") for n in NAMES_ES_M[:7]]
@@ -245,18 +255,19 @@ def build_personas(total: int = TOTAL) -> list[Persona]:
         (n, "female") for n in NAMES_EN_F[:7]
     ] + [(n, "male") for n in NAMES_EN_M[:7]]
 
-    # Shuffle originals with seed: produces exactly the same order as before
+    # Shuffled so the ES/EN alternation does not also alternate gender.
     rng.shuffle(es_names_orig)
     rng.shuffle(en_names_orig)
 
-    # Shuffle original years pool with same rng (same state as original code)
+    # Experience is drawn from a fixed pool rather than a range, which
+    # guarantees the spread instead of hoping for it: 28 uniform draws would
+    # leave holes and clusters.
     years_pool_orig = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 2, 4] * 2
     rng.shuffle(years_pool_orig)
 
-    # RNG for the new 22 personas (separate seed to avoid affecting first 28)
+    # Stream 2: everything added when the corpus grew to 50.
     rng_new = random.Random(SEED + 1)
 
-    # Shuffle new names with separate rng
     es_names_new = [
         (n, "female") for n in NAMES_ES_F[7:]
     ] + [(n, "male") for n in NAMES_ES_M[7:]]
@@ -268,22 +279,23 @@ def build_personas(total: int = TOTAL) -> list[Persona]:
     rng_new.shuffle(es_names_new)
     rng_new.shuffle(en_names_new)
 
-    # Shuffle new years pool with separate rng
     years_pool_new = [1, 3, 5, 6, 7, 8, 9, 11, 13, 2, 4, 10, 12, 3, 5, 7, 9, 11, 2, 4, 6, 8]
     rng_new.shuffle(years_pool_new)
 
-    # Concatenate: originals first (preserved), then new
+    # Appended, never interleaved: the original entries keep their positions,
+    # so index i < 28 still resolves to the same name, role, city and university.
     es_names = es_names_orig + es_names_new
     en_names = en_names_orig + en_names_new
     years_pool = years_pool_orig + years_pool_new
 
-    # Build plan: original 14 ES + 14 EN, then new 11 ES + 11 EN
+    # 14 ES + 14 EN as before, then 11 ES + 11 EN appended - which is what keeps
+    # the corpus at an even 25/25 split overall.
     plan: list[Language] = ["es"] * 14 + ["en"] * 14 + ["es"] * 11 + ["en"] * 11
 
-    # Process personas in two groups: first 28 (with original rng), last 22 (with new rng)
     es_i = en_i = 0
     for idx, lang in enumerate(plan):
-        # Choose rng based on whether this is an original or new persona
+        # The birth-year jitter below consumes randomness, so it has to come
+        # from the same stream that produced this persona's name.
         rng_active = rng if idx < 28 else rng_new
 
         if lang == "es":

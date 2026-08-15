@@ -18,11 +18,17 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from cvscreener.branding import GREY_MUTED, GREY_TEXT, MINT  # noqa: E402
+from cvscreener.branding import (  # noqa: E402
+    AMBER,
+    GREY_MUTED,
+    GREY_TEXT,
+    SKY,
+    role_group,
+)
 from cvscreener.config import settings  # noqa: E402
 
 import charts  # noqa: E402
-from theme import inject_css, masthead, metric  # noqa: E402
+from theme import inject_css, masthead, metric, role_tiles, sidebar_logo  # noqa: E402
 
 API = settings.api_url
 
@@ -143,9 +149,12 @@ def render_citations(citations: list[dict]) -> None:
             )
             try:
                 pdf = httpx.get(f"{API}/cv/{c['cv_id']}", timeout=15).content
+                # The one primary action in this panel - opening the real
+                # document behind a citation - so it takes the mint fill.
                 cols[2].download_button(
                     "PDF", pdf, file_name=c["source_file"],
                     mime="application/pdf", key=f"dl-{c['cv_id']}-{id(c)}",
+                    type="primary",
                 )
             except httpx.HTTPError:
                 cols[2].caption("n/a")
@@ -157,11 +166,7 @@ def render_citations(citations: list[dict]) -> None:
 health = api_health()
 
 with st.sidebar:
-    st.markdown(
-        f"<div class='lt-brand' style='font-size:22px'>leadtech<span>;</span></div>"
-        f"<div style='color:{GREY_MUTED};font-size:12px;margin-bottom:14px'>CV Screener</div>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(sidebar_logo("CV Screener"), unsafe_allow_html=True)
 
     if health is None:
         st.error("Backend unreachable.\n\nStart it with `.\\run.ps1`")
@@ -235,15 +240,28 @@ with tab_chat:
                 clear_conversation()
                 st.rerun()
 
-    for msg in st.session_state.messages:
-        css = "lt-msg-user" if msg["role"] == "user" else "lt-msg-bot"
-        st.markdown(f"<div class='{css}'>{msg['content']}</div>", unsafe_allow_html=True)
-        if msg.get("citations"):
-            render_citations(msg["citations"])
-        if msg.get("chart"):
-            fig = charts.from_spec(msg["chart"])
-            if fig:
-                st.plotly_chart(fig, use_container_width=True, key=f"c{id(msg)}")
+    # The whole conversation lives in one container declared *before* the input
+    # box. Without it the new exchange streams in below `st.chat_input`, which
+    # leaves the input stranded in the middle of the transcript until the next
+    # rerun shuffles it back to the bottom.
+    conversation = st.container()
+
+    with conversation:
+        # Streamlit derives a chart's element ID from its type and parameters,
+        # so two figures with identical data collide with a
+        # StreamlitDuplicateElementId - which is easy to hit here, because a
+        # chat answer can legitimately plot the same breakdown the Insights tab
+        # already shows. Every chart in this app therefore carries an explicit
+        # key, and the position in the transcript is what makes this one unique.
+        for turn, msg in enumerate(st.session_state.messages):
+            css = "lt-msg-user" if msg["role"] == "user" else "lt-msg-bot"
+            st.markdown(f"<div class='{css}'>{msg['content']}</div>", unsafe_allow_html=True)
+            if msg.get("citations"):
+                render_citations(msg["citations"])
+            if msg.get("chart"):
+                fig = charts.from_spec(msg["chart"])
+                if fig:
+                    st.plotly_chart(fig, use_container_width=True, key=f"chat-turn-{turn}")
 
     question = st.chat_input("Ask about the candidates, in English or Spanish...")
     if not question and st.session_state.get("pending"):
@@ -251,13 +269,17 @@ with tab_chat:
 
     if question:
         st.session_state.messages.append({"role": "user", "content": question})
-        st.markdown(f"<div class='lt-msg-user'>{question}</div>", unsafe_allow_html=True)
+        # `with conversation:` makes it the active container, so everything
+        # below - including the placeholders and st.caption - lands above the
+        # input box rather than after it.
+        with conversation:
+            st.markdown(f"<div class='lt-msg-user'>{question}</div>", unsafe_allow_html=True)
 
-        # Two placeholders reserved up front. `st.empty()` returns a handle
-        # that can be rewritten in place, which is how the answer grows
-        # smoothly instead of Streamlit appending a new block per token.
-        badge_slot = st.empty()
-        answer_slot = st.empty()
+            # Two placeholders reserved up front. `st.empty()` returns a handle
+            # that can be rewritten in place, which is how the answer grows
+            # smoothly instead of Streamlit appending a new block per token.
+            badge_slot = st.empty()
+            answer_slot = st.empty()
         answer, meta = "", {}
 
         try:
@@ -282,6 +304,14 @@ with tab_chat:
                         bits.append(
                             f"<span class='lt-chip-warn'>not in any CV: {term}</span>"
                         )
+                    # Asked to plot a field the candidate table does not hold.
+                    # Said here, before the answer streams, so the user is not
+                    # left waiting for a figure that is never coming.
+                    if payload.get("chart_unavailable"):
+                        bits.append(
+                            "<span class='lt-chip-warn'>"
+                            "field not in the database &mdash; no chart</span>"
+                        )
                     badge_slot.markdown(" ".join(bits), unsafe_allow_html=True)
                 elif event == "token":
                     # Rewrite the whole bubble each token, with a block cursor
@@ -302,16 +332,24 @@ with tab_chat:
         # Final repaint without the cursor.
         answer_slot.markdown(f"<div class='lt-msg-bot'>{answer}</div>", unsafe_allow_html=True)
 
-        if elapsed := meta.get("elapsed_s"):
-            st.caption(f"{elapsed}s · {model}")
+        with conversation:
+            if elapsed := meta.get("elapsed_s"):
+                st.caption(f"{elapsed}s · {model}")
 
-        render_citations(meta.get("citations", []))
+            render_citations(meta.get("citations", []))
 
-        if chart_spec := meta.get("chart"):
-            fig = charts.from_spec(chart_spec)
-            if fig:
-                st.plotly_chart(fig, use_container_width=True)
-                st.session_state.last_chart = chart_spec
+            if chart_spec := meta.get("chart"):
+                fig = charts.from_spec(chart_spec)
+                if fig:
+                    # Keyed on the turn this chart belongs to, matching the
+                    # history loop above, so the live render and its replay on
+                    # the next rerun claim the same slot rather than colliding.
+                    st.plotly_chart(
+                        fig,
+                        use_container_width=True,
+                        key=f"chat-live-{len(st.session_state.messages)}",
+                    )
+                    st.session_state.last_chart = chart_spec
 
         st.session_state.messages.append(
             {
@@ -330,18 +368,29 @@ with tab_insights:
     if frame.empty:
         st.info("No candidate table yet. Run `python -m cvscreener.ingest.index`.")
     else:
+        # Sky is this tab's accent. leadtech.com never shows two accents in one
+        # viewport - it recolours whole sections instead - so Chat keeps mint,
+        # Insights takes sky and Pipeline takes mustard.
         cols = st.columns(4)
-        cols[0].markdown(metric(len(frame), "Candidates"), unsafe_allow_html=True)
+        cols[0].markdown(metric(len(frame), "Candidates", SKY), unsafe_allow_html=True)
         cols[1].markdown(
-            metric(f"{frame['years_experience'].mean():.1f}", "Avg. years exp."),
+            metric(f"{frame['years_experience'].mean():.1f}", "Avg. years exp.", SKY),
             unsafe_allow_html=True,
         )
         cols[2].markdown(
-            metric(f"{frame['age'].mean():.0f}", "Avg. age"), unsafe_allow_html=True
+            metric(f"{frame['age'].mean():.0f}", "Avg. age", SKY), unsafe_allow_html=True
         )
         cols[3].markdown(
-            metric(frame["cv_language"].nunique(), "Languages"), unsafe_allow_html=True
+            metric(frame["cv_language"].nunique(), "Languages", SKY), unsafe_allow_html=True
         )
+
+        # The corpus by discipline, in LeadTech's own 14-colour job code. Roles
+        # are bucketed first because `current_role` is re-derived per CV, so the
+        # raw values are ~50 near-unique strings.
+        st.markdown("")
+        st.markdown("###### Corpus by discipline")
+        groups = frame["current_role"].apply(role_group).value_counts().to_dict()
+        st.markdown(role_tiles(groups), unsafe_allow_html=True)
 
         st.markdown("")
         left, right = st.columns(2)
@@ -349,22 +398,26 @@ with tab_insights:
             st.plotly_chart(
                 charts.histogram(frame["age"].dropna().tolist(), "Age"),
                 use_container_width=True,
+                key="insights-age",
             )
             counts = frame["seniority"].value_counts()
             st.plotly_chart(
                 charts.pie(counts.index.tolist(), counts.tolist(), "Seniority"),
                 use_container_width=True,
+                key="insights-seniority",
             )
         with right:
             counts = frame["city"].value_counts().head(10)
             st.plotly_chart(
                 charts.bar(counts.index.tolist(), counts.tolist(), "City"),
                 use_container_width=True,
+                key="insights-city",
             )
             skills = frame.explode("skills")["skills"].dropna().value_counts().head(12)
             st.plotly_chart(
                 charts.bar(skills.index.tolist(), skills.tolist(), "Skill"),
                 use_container_width=True,
+                key="insights-skills",
             )
 
         st.markdown("###### Candidate table")
@@ -397,7 +450,7 @@ with tab_pipeline:
                 (f"{stats['total_seconds']:.0f}s", "Build time"),
             ],
         ):
-            col.markdown(metric(value, label), unsafe_allow_html=True)
+            col.markdown(metric(value, label, AMBER), unsafe_allow_html=True)
 
         st.markdown("")
         st.markdown(
@@ -438,7 +491,7 @@ with tab_pipeline:
             )
             for c in chunks[:3]:
                 st.markdown(
-                    f"<div class='lt-source'><b style='color:{MINT}'>{c['candidate']}"
-                    f"</b> · {c['section']}<br>{c['text'][:320]}…</div>",
+                    f"<div class='lt-source'><b>{c['candidate']}</b> · "
+                    f"{c['section']}<br>{c['text'][:320]}…</div>",
                     unsafe_allow_html=True,
                 )

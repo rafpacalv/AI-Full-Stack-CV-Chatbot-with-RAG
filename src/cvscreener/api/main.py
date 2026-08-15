@@ -182,10 +182,22 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
         # is definitive rather than an artefact of what happened to rank.
         missing = missing_from_corpus(req.question, skill=plan.skill)
 
+        # The user asked to plot a field the candidate table does not hold.
+        # Reported alongside the plan so the UI can say so before the answer
+        # arrives, rather than the user waiting for a chart that never comes.
+        chart_unavailable = plan.intent == "chart" and plan.dimension == "unsupported"
+
         # First event out: the routing decision. The UI paints its badge from
         # this immediately, so the user sees the system reacting long before
         # any answer text exists.
-        yield _sse("plan", {**plan.model_dump(), "missing_terms": missing})
+        yield _sse(
+            "plan",
+            {
+                **plan.model_dump(),
+                "missing_terms": missing,
+                "chart_unavailable": chart_unavailable,
+            },
+        )
 
         # --- BRANCH A: aggregate / chart ---------------------------------
         # Counting and plotting questions are answered from the candidate
@@ -194,30 +206,45 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             embedding_future.cancel()  # this branch never searches
             pool.shutdown(wait=False)
             result = run_aggregate(plan)
-            for token in stream_aggregate_answer(req.question, result):
+            for token in stream_aggregate_answer(
+                req.question, result, chart_unavailable=chart_unavailable
+            ):
                 yield _sse("token", {"t": token})
 
             frame = result.matched
+            # Here a "citation" is every candidate the filter matched - these
+            # came from the table, not from retrieved chunks, so there is no
+            # section to point at.
+            #
+            # With no filter, though, "matched" is simply everyone, and the
+            # first twelve rows are an arbitrary slice of the corpus. Listing
+            # them under a heading that says SOURCES claims a relevance they do
+            # not have - most visibly beneath an answer explaining that the
+            # requested field does not exist. So citations are only sent when
+            # a filter actually narrowed the set.
+            citations = (
+                [
+                    {
+                        "cv_id": row["cv_id"],
+                        "candidate": row["full_name"],
+                        "source_file": row["source_file"],
+                        "sections": [],
+                    }
+                    for _, row in frame.head(12).iterrows()
+                ]
+                if result.filters
+                else []
+            )
             yield _sse(
                 "meta",
                 {
                     "mode": plan.intent,
                     "missing_terms": missing,
+                    "chart_unavailable": chart_unavailable,
                     "filters": result.filters,
                     "chart": result.chart,
                     "matched_count": int(len(frame)),
-                    # Here a "citation" is every candidate the filter matched -
-                    # these came from the table, not from retrieved chunks, so
-                    # there is no section to point at.
-                    "citations": [
-                        {
-                            "cv_id": row["cv_id"],
-                            "candidate": row["full_name"],
-                            "source_file": row["source_file"],
-                            "sections": [],
-                        }
-                        for _, row in frame.head(12).iterrows()
-                    ],
+                    "citations": citations,
                     "chunks": [],
                     "elapsed_s": round(time.time() - started, 2),
                 },

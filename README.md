@@ -207,11 +207,66 @@ single `skill` field. A plain Titlecase technology in a multi-term question
 | **gemma2:9b, not gemma4:12b** | Profiled on this 8 GB RTX 4070 Laptop: the 12B gets only 4.4 GB onto the GPU and runs the rest on CPU → **7.3 tok/s**. The 9B fits entirely → **18.3 tok/s**. 2.5× faster for comparable quality once prompts were tightened. |
 | **bge-m3 embeddings** | Genuinely multilingual — one index serves both languages, no translation step. |
 | **RRF, not weighted scores** | Measured: bge-m3 scores unrelated text at 0.475 and relevant text at 0.580. A high floor and a narrow band, against unbounded corpus-dependent BM25 scores. Rank-based fusion needs no constants that would break on a different corpus. |
-| **Constrained decoding** | Ollama enforces the JSON Schema, so there is no output parsing or JSON-repair code anywhere. |
+| **Constrained decoding** | Ollama enforces the JSON Schema, so there is no output parsing or JSON-repair code anywhere. It also has a sharp edge — see *The cost of a guarantee* below. |
 | **Few-shot in the router** | Schema fixes shape, not meaning. Zero-shot, gemma2 classified *"genera un histograma…"* as `retrieve`. The examples fixed it. |
 | **Regex + LLM extraction** | E-mail, phone and date of birth have rigid forms; `re` handles them exactly and instantly. The LLM only does what needs judgement. |
 | **Concurrent route + embed** | Independent, both models resident in VRAM. Overlapping halves time-to-first-token: ~13 s → ~7 s. |
 | **ReportLab, not HTML→PDF** | Pure-Python wheels. No Chrome or GTK for a reviewer to install. |
+
+### The cost of a guarantee
+
+Constrained decoding is sold as free correctness: the schema is enforced, so the
+output is always valid and no parsing code is needed. Both halves are true here.
+The part that is not advertised is what happens when the *right* answer is not in
+the schema.
+
+`QueryPlan.dimension` is a `Literal` — an enum in the emitted JSON Schema. Ask
+*"make me a pie chart of the candidates by gender"* and the model cannot answer
+`gender`: it is not a legal token, and the decoder never gets to consider it. It
+renormalises over the values that are legal and returns the nearest one. No
+exception, no malformed JSON, no low-confidence score. Measured on this corpus:
+
+| Question | Emitted dimension |
+|---|---|
+| *Make me a pie chart of the candidates by gender* | `cv_language` |
+| *Genera un diagrama sectorial por género de los candidatos* | `seniority` |
+
+Both produced a correct text answer beside a confident, well-formed, completely
+wrong chart — and the two disagreed with each other, which is the only reason it
+was noticeable at all. The failure mode is worse than a crash: nothing about the
+figure says it is not what was asked for.
+
+The fix does not try to make the model better at this. Enum members and a
+few-shot example were added so `unsupported` is at least *expressible*, but that
+is a hint, not a guarantee — a constrained decoder can always pick a
+legal-and-wrong value. The guarantee is a deterministic check: after routing,
+the chosen dimension must be supported by a word the user actually wrote
+(`dimension_supported_by` in [`rag/router.py`](src/cvscreener/rag/router.py)). If
+it is not, the chart is withheld and the answer opens by saying the field is not
+in the database.
+
+This is the same shape as [the CNN keyword fix](#the-second-bug-semantic-search-is-too-forgiving): the model's output
+is checked against the literal question, because a model that cannot express
+"I don't know" will always express something else. Tests cover both directions —
+eight legitimate chart questions must still be accepted, and four absent fields
+must match none of the eight legal dimensions.
+
+Fixing the chart exposed the mirror image of the same bug. With the figure now
+correct, the *prose* beside it was invented: asked to split 50 candidates by
+seniority, gemma2 reported 40 % Junior / 50 % Mid-level / 10 % Senior against a
+true 20 / 28 / 52 — near enough to inverted. The cause was that a chart question
+handed the model only *"there are 50 candidates"* plus a table silently
+truncated to 40 rows, and asked it to describe a distribution. So it counted the
+rows. The chart payload already held exact counts, so those are now passed in as
+a computed fact and the truncation announces itself — the same rule the count
+already followed: **the model phrases arithmetic, it never performs it.**
+
+**Why not just add gender to the table?** Because the pipeline re-derives every
+fact from the extracted PDF text and never reads the generation metadata, which
+is what makes the RAG honest. Gender is not stated on these CVs. The only ways
+to obtain it are to break that boundary or to infer it from names and photos —
+and a screening tool inferring protected attributes is a worse idea than a
+missing chart.
 
 ### Two bugs that only surfaced by reading the extracted text
 
@@ -250,9 +305,47 @@ Photos come from a diffusion model; the people do not exist.
 
 ## Interface
 
-Branding is taken from leadtech.com's production CSS and logo SVGs — mint
-`#00FFC6`, deep indigo `#140C29`, with Comfortaa and Roboto (the fallbacks their
-own stylesheet declares for their proprietary face).
+Branding is taken from leadtech.com, and the second pass at it was more useful
+than the first. The palette originally came from reading their CSS bundle; it
+was later re-derived from a computed-style audit of four live pages
+(`/`, `/about-us`, `/work-with-us`, `/contact`) plus pixel histograms of the
+full-page captures. Write-up and screenshots: [`docs/brand-capture.md`](docs/brand-capture.md).
+
+Three things that reading the stylesheet got wrong:
+
+- **`#140C29` is not a LeadTech colour.** It is in the CSS, but 17 of its 26
+  rules are scoped to `.adventure-2022` — a one-off campaign microsite — and it
+  appears **zero times** in the computed styles of their actual pages. Their
+  real dark tones are `#000000` and `#262627`. The app canvas moved accordingly.
+- **Mint is a fill, never a stroke.** The audit found zero non-transparent
+  borders anywhere on any page, and mint is never a border, underline, link or
+  heading colour — only a surface, always under black text. The old UI used mint
+  as a 1px outline in five places, which was exactly the one role their brand
+  never gives it.
+- **`#D1F2FF` is a bigger field than mint** on every page they ship
+  (3.3–12.8 % against mint's 0.3–5.5 %). It now carries secondary text here, so
+  mint no longer has to mean every kind of emphasis at once.
+
+Mint also has a budget: 1–3 % of a dark viewport, because mint on white measures
+a contrast ratio of 1.30 (a pastel) while mint on black measures 16.12 — the same
+coverage is several times louder here than on their site. Measured on the
+shipped screens with a pixel histogram, it lands at **0.21–2.46 %**.
+
+Two further rules are lifted verbatim: `border-radius: 3px` on buttons and `0`
+on everything else — the whole home page has a radius count of `{3px: 5}` — and
+panels separated by stepping the flat background rather than by drawing a line.
+One deliberate deviation, since a console is not a landing page: their buttons
+do not react to hover at all, these take a one-step background lift.
+
+The masthead uses their actual wordmark SVG, with the trailing semicolon
+recoloured mint. Type is Comfortaa and Roboto, the fallbacks their own
+stylesheet declares for their proprietary face.
+
+The **Insights** tab codes candidates by discipline using LeadTech's own closed
+14-colour job palette — the densest use of colour they publish. Eight groups map
+to a real LeadTech discipline; machine learning and the catch-all borrow unused
+codes from the same set, so the strip stays inside their palette without
+pretending LeadTech has an ML department.
 
 The chart palette is **not** the brand palette. Brand mint sits at OKLCH
 L 0.889, far above the band a dark chart surface needs, and brand mint/green and
@@ -261,6 +354,12 @@ re-stepped in OKLCH and the two collisions dropped; the result passes all six
 checks of the colour validator (lightness band, chroma floor, CVD separation,
 normal-vision floor, contrast). Worst adjacent pair: ΔE 10.3 deuteranopia,
 against a target of 8.
+
+That validation ran against the old indigo surface. When the canvas moved to
+black, only the contrast check was affected, and a darker surface can only raise
+it: the five ratios went 6.45/5.29/5.61/5.24/5.66 → 7.18/5.89/6.25/5.84/6.31.
+The palette did not need re-stepping; a test asserts the floor rather than
+trusting the argument.
 
 ![Insights](docs/img/ui-insights.png)
 
@@ -308,3 +407,12 @@ Interactive docs at `http://127.0.0.1:8000/docs`.
   (`UPC` vs the full name), and "Lead" seniority is sometimes read as "Senior".
 - **The cross-lingual ratio (0.90) is corpus-tuned.** It was measured on these
   50 CVs and would need re-checking on a materially different corpus.
+- **Only eight fields can be charted.** Anything else is refused rather than
+  substituted (see *The cost of a guarantee*). The cue lists that decide this are
+  bilingual keyword sets, so a chart question that never names its field —
+  *"break the candidates down"* — is treated as unsupported rather than guessed
+  at. That is the intended trade, but it is a trade.
+- **A plain Titlecase technology can slip past the keyword check** in a
+  multi-term question (*"COBOL and Fortran"*), because `QueryPlan` carries a
+  single `skill` field. Acronyms and punctuated tokens (`Node.js`, `CI/CD`) are
+  caught.

@@ -37,7 +37,7 @@ def _base_layout(fig: go.Figure, title: str, x_title: str, y_title: str) -> go.F
         margin={"l": 56, "r": 24, "t": 52, "b": 56},
         showlegend=False,  # single series: the title names it
         hoverlabel={
-            "bgcolor": "#211B33",
+            "bgcolor": "#262627",
             "bordercolor": PRIMARY,
             "font": {"color": CHART_TEXT, "family": f"{FONT_BODY}, sans-serif"},
         },

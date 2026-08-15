@@ -1,9 +1,16 @@
+# Mirrors src/cvscreener/branding.py. Streamlit needs its own copy because the
+# theme is read before any Python of ours runs.
+#
+# The canvas is pure black and the panels #262627: those are LeadTech's two real
+# dark tones. The indigo this file used before (#140C29) turned out to belong to
+# a one-off campaign microsite and appears nowhere in the computed styles of
+# their actual pages - see docs/brand-capture.md.
 [theme]
 base = "dark"
 primaryColor = "#00FFC6"
-backgroundColor = "#140C29"
-secondaryBackgroundColor = "#1E1636"
-textColor = "#EDEBF2"
+backgroundColor = "#000000"
+secondaryBackgroundColor = "#262627"
+textColor = "#FFFFFF"
 font = "sans serif"
 
 [server]

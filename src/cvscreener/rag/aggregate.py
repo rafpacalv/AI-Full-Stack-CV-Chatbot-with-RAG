@@ -1,7 +1,7 @@
 """Answer counting, listing and charting questions over the whole candidate set.
 
 Everything here runs on ``candidates.parquet`` with pandas, so the numbers are
-exact and cover all 28 CVs rather than whichever handful a retriever surfaced.
+exact and cover all 50 CVs rather than whichever handful a retriever surfaced.
 The output is a small, serialisable result the API can hand to the UI: a
 sentence, the matching rows, and - when a chart was requested - the data to
 plot, never a rendered image.
@@ -118,7 +118,12 @@ def _chart_payload(frame: pd.DataFrame, plan: QueryPlan) -> dict | None:
     payload could feed a different renderer without touching this file.
     """
     dim = plan.dimension
-    if dim in ("none", "") or frame.empty:
+    # "unsupported" means the question asked to break the candidates down by a
+    # field this table does not have (gender, salary, nationality...). The text
+    # answer is still computed and still correct; only the figure is withheld,
+    # because the alternative - plotting a different field - is what produced a
+    # confident, wrong pie chart next to a right answer. See router.py.
+    if dim in ("none", "", "unsupported") or frame.empty:
         return None
 
     label = DIMENSION_LABELS.get(dim, dim)
@@ -164,12 +169,46 @@ def _chart_payload(frame: pd.DataFrame, plan: QueryPlan) -> dict | None:
     }
 
 
+def _chart_summary(chart: dict | None) -> str:
+    """State the plotted numbers exactly, for the narrator to quote.
+
+    Without this a chart question hands the model only "there are 50
+    candidates" plus a truncated table, and asks it to describe a distribution -
+    so it counts the rows itself and gets it wrong. Measured: asked to split 50
+    candidates by seniority it answered 40 % Junior / 50 % Mid-level / 10 %
+    Senior against a true 20 / 28 / 52, near enough to inverted.
+
+    The chart payload already holds the exact counts, so they are handed over as
+    a fact. Same rule as the count itself: the model phrases arithmetic, it
+    never performs it.
+    """
+    if not chart:
+        return ""
+    label = chart.get("label", chart.get("dimension", ""))
+
+    if chart["type"] == "histogram":
+        values = chart.get("values") or []
+        if not values:
+            return ""
+        average = sum(values) / len(values)
+        return (
+            f" {label} across those {len(values)} candidates: "
+            f"minimum {min(values):g}, maximum {max(values):g}, mean {average:.1f}."
+        )
+
+    pairs = ", ".join(
+        f"{category} {value}" for category, value in zip(chart["categories"], chart["values"])
+    )
+    total = sum(chart["values"])
+    return f" Exact breakdown by {label.lower()} (total {total}): {pairs}."
+
+
 def run_aggregate(plan: QueryPlan) -> AggregateResult:
     frame = load_candidates()
     matched, used = apply_filters(frame, plan)
     chart = _chart_payload(matched, plan) if plan.intent == "chart" else None
     return AggregateResult(
-        text=_describe(len(matched), len(frame), used),
+        text=_describe(len(matched), len(frame), used) + _chart_summary(chart),
         matched=matched,
         filters=used,
         chart=chart,

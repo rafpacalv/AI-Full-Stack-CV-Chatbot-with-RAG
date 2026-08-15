@@ -20,7 +20,7 @@ from pathlib import Path
 import httpx
 from PIL import Image, ImageDraw, ImageFont
 
-from ..branding import INK, MINT
+from ..branding import BLACK, MINT
 from ..config import settings
 from .personas import Persona
 
@@ -54,7 +54,7 @@ def _monogram(persona: Persona, path: Path) -> Path:
     Drawn locally with Pillow so a network failure degrades the CV instead of
     aborting a 30-minute batch. It still looks deliberate rather than broken.
     """
-    img = Image.new("RGB", (SIZE, SIZE), INK)
+    img = Image.new("RGB", (SIZE, SIZE), BLACK)
     draw = ImageDraw.Draw(img)
     draw.ellipse((36, 36, SIZE - 36, SIZE - 36), fill=MINT)
     initials = "".join(p[0].upper() for p in persona.full_name.split()[:2])
@@ -68,7 +68,7 @@ def _monogram(persona: Persona, path: Path) -> Path:
     draw.text(
         ((SIZE - box[2] + box[0]) / 2, (SIZE - box[3] + box[1]) / 2 - 12),
         initials,
-        fill=INK,
+        fill=BLACK,
         font=font,
     )
     img.save(path, "JPEG", quality=92)

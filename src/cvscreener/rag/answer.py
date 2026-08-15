@@ -23,6 +23,7 @@ from ..textutils import fold_accents
 from .aggregate import AggregateResult
 from .keywords import warning_sentence
 from .retrieve import RetrievedChunk
+from .router import CHARTABLE_DIMENSIONS
 
 MAX_CONTEXT_CHARS = 7000
 
@@ -119,7 +120,15 @@ def _table_context(frame: pd.DataFrame, limit: int = 40) -> str:
     ]
     if frame.empty:
         return "(no candidates matched)"
-    return frame[columns].head(limit).to_string(index=False)
+    body = frame[columns].head(limit).to_string(index=False)
+    if len(frame) > limit:
+        # Say so explicitly. An unannounced truncation invites the model to
+        # count these rows and present the total as if it had seen them all.
+        body += (
+            f"\n(truncated: showing {limit} of {len(frame)} rows - do not count "
+            "these rows, use the computed result above)"
+        )
+    return body
 
 
 def stream_retrieval_answer(
@@ -162,12 +171,45 @@ def stream_retrieval_answer(
     )
 
 
-def stream_aggregate_answer(question: str, result: AggregateResult) -> Iterator[str]:
+def chart_unavailable_sentence(lang: str) -> str:
+    """Instruction appended when the requested breakdown cannot be plotted.
+
+    Phrased as an instruction to the model rather than printed verbatim so it
+    lands in the same voice as the rest of the answer - but the *decision* was
+    made deterministically in the router, not by the model.
+    """
+    fields = ", ".join(CHARTABLE_DIMENSIONS)
+    if lang == "es":
+        return (
+            "\n\nIMPORTANTE: no se puede generar el gráfico pedido porque ese "
+            "campo no está en la base de datos. Empieza la respuesta diciéndolo "
+            "claramente, y añade que sí se puede representar por: "
+            f"{fields}. No inventes el dato ni lo sustituyas por otro campo."
+        )
+    return (
+        "\n\nIMPORTANT: the requested chart cannot be produced because that "
+        "field is not in the database. Open your answer by saying so plainly, "
+        f"and add that these fields can be charted instead: {fields}. "
+        "Do not invent the data or substitute a different field."
+    )
+
+
+def stream_aggregate_answer(
+    question: str,
+    result: AggregateResult,
+    *,
+    chart_unavailable: bool = False,
+) -> Iterator[str]:
     """Narrate a computed result.
 
     The count is already exact, so the model's only job is to phrase it. The
     number is handed over as a fact and the prompt forbids recomputing it -
     letting a 9B model do arithmetic over a table is how wrong totals happen.
+
+    ``chart_unavailable`` says the user asked to plot a field the table does not
+    hold. The text answer is still right, so it is still streamed; what changes
+    is that the answer has to lead with the absence instead of quietly arriving
+    next to a chart of something else.
     """
     lang = detect_question_language(question)
     frame = result.matched
@@ -193,6 +235,7 @@ def stream_aggregate_answer(question: str, result: AggregateResult) -> Iterator[
             f"Pregunta: {question}\n\n"
             f"Resultado calculado: {result.text}\n"
             f"Candidatos que cumplen ({len(frame)}):\n{_table_context(frame)}"
+            f"{chart_unavailable_sentence('es') if chart_unavailable else ''}"
         )
     else:
         system = (
@@ -210,6 +253,7 @@ def stream_aggregate_answer(question: str, result: AggregateResult) -> Iterator[
             f"Question: {question}\n\n"
             f"Computed result: {result.text}\n"
             f"Matching candidates ({len(frame)}):\n{_table_context(frame)}"
+            f"{chart_unavailable_sentence('en') if chart_unavailable else ''}"
         )
 
     yield from client.chat_stream(

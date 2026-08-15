@@ -359,3 +359,191 @@ def test_aggregate_counts_match_the_source_table():
     result = run_aggregate(QueryPlan(intent="aggregate", skill="Python", dimension="skills"))
     assert len(result.matched) == expected
     assert len(frame) == 50
+
+
+# --------------------------------------------------------------------------
+# Branding
+# --------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "role,expected",
+    [
+        # Both languages, all seniority suffixes the extractor actually emits.
+        ("Ingeniera Backend (Lead)", "Backend"),
+        ("Full-Stack Engineer (Junior)", "Backend"),
+        ("Senior Frontend Engineer", "Frontend & Mobile"),
+        ("Desarrollador Mobile Senior", "Frontend & Mobile"),
+        ("Ingeniero de Datos (Junior)", "Data & BI"),
+        ("Junior Business Intelligence Analyst", "Data & BI"),
+        ("Senior Machine Learning Engineer", "Machine Learning"),
+        ("Site Reliability Engineer", "DevOps"),
+        ("Ingeniera DevOps Junior", "DevOps"),
+        ("Senior SEO Specialist", "SEO"),
+        ("Growth / Paid Media Manager (Lead)", "SEM & Growth"),
+        ("Diseñador UX/UI Senior", "UX & Design"),
+        ("QA Automation Engineer (Lead)", "QA"),
+        ("Product Manager Lead", "Product"),
+        # Ordering traps: the first matching pattern wins, so "Product Manager"
+        # must be tested before "design" and "Data Engineer" before "backend".
+        ("Product Designer (Lead)", "UX & Design"),
+        ("Senior Product Manager", "Product"),
+        ("Underwater Basket Weaver", "Other"),
+        (None, "Other"),
+    ],
+)
+def test_role_group_buckets_free_text_titles(role, expected):
+    from cvscreener.branding import role_group
+
+    assert role_group(role) == expected
+
+
+def test_every_candidate_falls_in_a_named_group():
+    """No CV should land in the catch-all: the strip is a summary, not a shrug."""
+    from cvscreener.branding import role_group
+    from cvscreener.rag.aggregate import load_candidates
+
+    groups = load_candidates()["current_role"].apply(role_group)
+    assert "Other" not in set(groups)
+    assert len(groups) == 50
+
+
+def test_group_colours_are_distinct_and_from_the_brand_set():
+    """Two groups sharing a colour would make the tile strip lie."""
+    from cvscreener.branding import DISCIPLINE_COLOURS, _GROUP_DISCIPLINE, group_colour
+
+    backgrounds = [group_colour(group)[0] for group in _GROUP_DISCIPLINE]
+    assert len(set(backgrounds)) == len(backgrounds)
+    assert set(backgrounds) <= set(DISCIPLINE_COLOURS.values())
+
+
+def test_the_palette_holds_up_against_the_black_canvas():
+    """The chart sequence was validated against #140C29, then the surface moved.
+
+    Only the contrast check depends on the surface, and black can only raise it,
+    but "can only raise it" is worth asserting rather than assuming.
+    """
+    from cvscreener.branding import CHART_SEQUENCE_DARK, CHART_SURFACE
+
+    def relative_luminance(hex_colour: str) -> float:
+        channels = [int(hex_colour.lstrip("#")[i : i + 2], 16) / 255 for i in (0, 2, 4)]
+        linear = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+    surface = relative_luminance(CHART_SURFACE)
+    for colour in CHART_SEQUENCE_DARK:
+        ratio = (relative_luminance(colour) + 0.05) / (surface + 0.05)
+        assert ratio >= 4.5, f"{colour} only reaches {ratio:.2f}:1 on {CHART_SURFACE}"
+
+
+# --------------------------------------------------------------------------
+# Chart dimension verification
+# --------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "question,dimension",
+    [
+        ("Genera un histograma de las edades de los candidatos que sepan Python", "age"),
+        ("Muestra un gráfico de candidatos por ciudad", "city"),
+        ("Reparte por seniority en un gráfico circular", "seniority"),
+        ("Pie chart of candidates by university", "university"),
+        ("Bar chart of candidates by skill", "skills"),
+        ("Gráfico de candidatos por idioma del CV", "cv_language"),
+        ("Distribución por años de experiencia", "years_experience"),
+        ("Gráfico de candidatos por puesto", "current_role"),
+    ],
+)
+def test_legitimate_dimensions_are_accepted(question, dimension):
+    """The guard must not block the charts that do work."""
+    from cvscreener.rag.router import dimension_supported_by
+
+    assert dimension_supported_by(question, dimension)
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Make me a pie chart of the candidates by gender",
+        "Haz un diagrama sectorial de los candidatos por género",
+        "Gráfico circular por sexo",
+        "Pie chart of candidates by salary",
+    ],
+)
+def test_absent_fields_match_no_dimension(question):
+    """A field the table does not hold must not look like any field it does.
+
+    The bug this covers: `Dimension` is an enum in the JSON Schema, so
+    constrained decoding cannot emit "gender" and returns the nearest legal
+    value instead - measured as `cv_language` in English and `seniority` in
+    Spanish. Every legal dimension has to reject these questions, not just the
+    two that happened to be picked.
+    """
+    from cvscreener.rag.router import DIMENSION_CUES, dimension_supported_by
+
+    matched = [d for d in DIMENSION_CUES if dimension_supported_by(question, d)]
+    assert not matched, f"{question!r} was read as {matched}"
+
+
+def test_unsupported_dimension_produces_no_chart():
+    """Withholding the figure is the point: a wrong chart outranks no chart."""
+    from cvscreener.rag.aggregate import run_aggregate
+    from cvscreener.rag.router import QueryPlan
+
+    plan = QueryPlan(intent="chart", chart_type="pie", dimension="unsupported")
+    result = run_aggregate(plan)
+    assert result.chart is None
+    # The text answer is still computed - only the plot is withheld.
+    assert result.text
+    assert len(result.matched) == 50
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Make me a pie chart of the candidates by gender",
+        "Genera un diagrama sectorial por género de los candidatos",
+    ],
+)
+def test_router_refuses_to_chart_a_field_it_does_not_have(question):
+    from cvscreener.llm import client
+    from cvscreener.rag.router import route
+
+    if not client.is_up():
+        pytest.skip("Ollama not reachable")
+
+    plan = route(question)
+    assert plan.dimension == "unsupported", f"routed to {plan.dimension}"
+
+
+def test_chart_answers_carry_the_exact_breakdown():
+    """The narrator must be handed the counts, never left to derive them.
+
+    Without this the prompt for a chart question said only "there are 50
+    candidates" and attached a table truncated to 40 rows, so gemma2 counted the
+    rows itself: it reported 40% Junior / 50% Mid-level / 10% Senior against a
+    true 20 / 28 / 52. The chart was right and the prose beside it was invented.
+    """
+    from cvscreener.rag.aggregate import load_candidates, run_aggregate
+    from cvscreener.rag.router import QueryPlan
+
+    frame = load_candidates()
+    truth = frame["seniority"].value_counts()
+
+    result = run_aggregate(
+        QueryPlan(intent="chart", chart_type="pie", dimension="seniority")
+    )
+    assert result.chart is not None
+    # The payload the UI plots and the sentence the model is given must agree
+    # with the table, and with each other.
+    plotted = dict(zip(result.chart["categories"], result.chart["values"]))
+    assert plotted == truth.to_dict()
+    for level, count in truth.items():
+        assert f"{level} {count}" in result.text
+
+
+def test_truncated_tables_announce_themselves():
+    """An unannounced truncation invites the model to count the rows shown."""
+    from cvscreener.rag.aggregate import load_candidates
+    from cvscreener.rag.answer import _table_context
+
+    frame = load_candidates()
+    assert len(frame) > 10
+    assert "truncated" in _table_context(frame, limit=10)
+    assert "truncated" not in _table_context(frame, limit=len(frame))
