@@ -24,9 +24,10 @@ back in, and the filters it resolved are inherited by the follow-up. See
 
 from __future__ import annotations
 
+import re
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from ..config import settings
 from ..ingest.enrich import normalise_skill
@@ -35,6 +36,7 @@ from ..textutils import WORD_RE, fold_accents
 
 Intent = Literal["retrieve", "aggregate", "chart"]
 ChartType = Literal["histogram", "bar", "pie", "none"]
+SkillMatch = Literal["all", "any"]
 Dimension = Literal[
     "age", "years_experience", "seniority", "city", "current_role",
     "cv_language", "skills", "university", "unsupported", "none",
@@ -115,7 +117,7 @@ def dimension_supported_by(question: str, dimension: str) -> bool:
 # means "those candidates" resolves against the whole table. The follow-up can
 # therefore cover more people than the answer it refers to - which is the
 # correct reading of the question, not a bug.
-CARRIED_FIELDS = ("skill", "seniority", "city", "university", "candidate_name", "min_years")
+CARRIED_FIELDS = ("skills", "seniority", "city", "university", "candidate_name", "min_years")
 
 # Words that only make sense pointing at something already said.
 #
@@ -151,6 +153,36 @@ def refers_back(question: str) -> bool:
     return bool(words & _BACKREFERENCE_WORDS)
 
 
+# Words that turn a list of skills into "any of these" rather than "all of them".
+#
+# Held to the same bar as _BACKREFERENCE_WORDS above, and it excludes more than
+# it admits. A false positive here silently converts an intersection into a
+# union - a bigger, plausible, wrong number - so a word earns its place only if
+# it is hard to use non-disjunctively. That ruled out:
+#
+#   "any"        - "do you have any candidates who know Python and Docker?"
+#   "cualquiera" - "cualquiera que sepa Python y Docker" is an AND
+#   "alguno/a"   - "¿hay alguno que sepa Python y Docker?" likewise
+#
+# What survives is the bare conjunctions and "either", which are disjunctive in
+# almost any sentence they appear in. "u" is included because Spanish swaps it
+# for "o" before an o- sound: "Java u Oracle".
+_ANY_SKILL_WORDS = frozenset("o u or either".split())
+
+
+def asks_for_any_skill(question: str) -> bool:
+    """Did the user write "or" between the skills they listed?
+
+    The same deliberately dumb lexical check as :func:`refers_back`, in the same
+    direction: it can only ever force "any" *on*. Its absence proves nothing,
+    which is why the model gets to answer this too - like `follow_up` and unlike
+    `dimension`, both values are legal tokens, so the decoder is never cornered
+    into a confident wrong one.
+    """
+    words = set(WORD_RE.findall(fold_accents(question).casefold()))
+    return bool(words & _ANY_SKILL_WORDS)
+
+
 def carry_over(plan: "QueryPlan", previous: "QueryPlan") -> list[str]:
     """Inherit ``previous``'s filters onto ``plan``. Returns what was copied.
 
@@ -161,7 +193,7 @@ def carry_over(plan: "QueryPlan", previous: "QueryPlan") -> list[str]:
     machine learning?" followed by "how many candidates are in Barcelona?"
     should not quietly answer "ML candidates in Barcelona". Two things keep
     that honest rather than silent: the aggregate answer states its own
-    criteria ("N of 50 candidates match skill=machine learning, city=
+    criteria ("N of 50 candidates match skills=machine learning, city=
     Barcelona"), and the UI shows one chip per active filter. An inherited
     filter is always on screen, and "New query" drops the lot.
     """
@@ -171,7 +203,26 @@ def carry_over(plan: "QueryPlan", previous: "QueryPlan") -> list[str]:
         if not current and earlier:  # 0 and "" both mean "not set"
             setattr(plan, name, earlier)
             inherited.append(name)
+
+    # `skill_match` travels with `skills` rather than on its own terms. It cannot
+    # use the loop above: its default is "all", which is truthy, so "not current"
+    # is never true and it would silently stay "all" while inheriting a list the
+    # user had joined with "or" - turning their union back into an intersection
+    # on the follow-up.
+    if "skills" in inherited:
+        plan.skill_match = previous.skill_match
     return inherited
+
+
+# Separators a packed skill string can use. Applied as a safety net *after* the
+# schema, because a list field does not stop the model putting "python,node.js"
+# in one element of it.
+#
+# Note what is absent: "/". Five canonical skills contain one - ci/cd, ui/ux,
+# a/b testing - so splitting on it would shatter real names. Commas, semicolons
+# and the conjunctions are safe: no skill in the corpus contains any of them,
+# and "y"/"and" are matched as whole words so "Ruby" survives.
+_SKILL_SEPARATORS = re.compile(r"\s*(?:[,;&]|\band\b|\by\b)\s*", re.IGNORECASE)
 
 
 class QueryPlan(BaseModel):
@@ -182,7 +233,23 @@ class QueryPlan(BaseModel):
         default=False,
         description="True if the question is about the candidates from the previous question",
     )
-    skill: str = Field(default="", description="Skill to filter on, '' if none")
+    # A list, because a single string cannot express "Python and Kubernetes" and
+    # the decoder will not tell you it failed. Constrained to a string field, it
+    # packed both into one value - "python,kubernetes" - which then matched no
+    # canonical skill and returned zero rows, indistinguishable from "nobody has
+    # these". Five candidates did. Same family of failure as `dimension` below:
+    # the schema guarantees the shape, never the meaning.
+    skills: list[str] = Field(
+        default_factory=list,
+        description='Skills to filter on, e.g. ["Python","Kubernetes"]. [] if none',
+    )
+    # Defaults to "all" because that is what a list of skills means when the
+    # question does not say otherwise - "candidates who know Python, Docker and
+    # AWS" wants the people who have the lot.
+    skill_match: SkillMatch = Field(
+        default="all",
+        description='"all" if the candidate must have every skill, "any" if one is enough',
+    )
     seniority: str = Field(default="", description="Junior/Mid-level/Senior/Lead, '' if none")
     city: str = Field(default="", description="City to filter on, '' if none")
     university: str = Field(default="", description="University to filter on, '' if none")
@@ -191,45 +258,74 @@ class QueryPlan(BaseModel):
     chart_type: ChartType = Field(default="none")
     dimension: Dimension = Field(default="none", description="Field to aggregate or plot")
 
+    @field_validator("skills", mode="before")
+    @classmethod
+    def _unpack_skills(cls, value: object) -> list[str]:
+        """Split anything the model packed into one element, and drop blanks.
+
+        Accepts a bare string too: the schema asks for an array, but this runs on
+        whatever arrives, including a previous plan replayed by a client.
+        """
+        items = [value] if isinstance(value, str) else list(value or [])
+        out: list[str] = []
+        for item in items:
+            for part in _SKILL_SEPARATORS.split(str(item)):
+                part = part.strip()
+                if part and part not in out:
+                    out.append(part)
+        return out
+
 
 FEW_SHOT = """\
 Examples:
 
 Q: Who has experience with Python?
-{"intent":"retrieve","follow_up":false,"skill":"Python","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"none"}
+{"intent":"retrieve","follow_up":false,"skills":["Python"],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"none"}
 
 Q: Summarize the profile of Jane Doe.
-{"intent":"retrieve","follow_up":false,"skill":"","seniority":"","city":"","university":"","candidate_name":"Jane Doe","min_years":0,"chart_type":"none","dimension":"none"}
+{"intent":"retrieve","follow_up":false,"skills":[],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"Jane Doe","min_years":0,"chart_type":"none","dimension":"none"}
 
 Q: Which candidate graduated from UPC?
-{"intent":"aggregate","follow_up":false,"skill":"","seniority":"","city":"","university":"UPC","candidate_name":"","min_years":0,"chart_type":"none","dimension":"university"}
+{"intent":"aggregate","follow_up":false,"skills":[],"skill_match":"all","seniority":"","city":"","university":"UPC","candidate_name":"","min_years":0,"chart_type":"none","dimension":"university"}
 
 Q: ¿Qué candidatos estudiaron en la UPC?
-{"intent":"aggregate","follow_up":false,"skill":"","seniority":"","city":"","university":"UPC","candidate_name":"","min_years":0,"chart_type":"none","dimension":"university"}
+{"intent":"aggregate","follow_up":false,"skills":[],"skill_match":"all","seniority":"","city":"","university":"UPC","candidate_name":"","min_years":0,"chart_type":"none","dimension":"university"}
 
 Q: How many candidates know Kubernetes?
-{"intent":"aggregate","follow_up":false,"skill":"Kubernetes","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"skills"}
+{"intent":"aggregate","follow_up":false,"skills":["Kubernetes"],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"skills"}
+
+Q: Dame un listado de candidatos que sepan Python y Kubernetes.
+{"intent":"aggregate","follow_up":false,"skills":["Python","Kubernetes"],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"skills"}
+
+Q: List candidates with knowledge of Python and Node.js.
+{"intent":"aggregate","follow_up":false,"skills":["Python","Node.js"],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"skills"}
+
+Q: ¿Quién sabe Python o Kubernetes?
+{"intent":"aggregate","follow_up":false,"skills":["Python","Kubernetes"],"skill_match":"any","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"skills"}
+
+Q: Candidates who know either Java or Scala.
+{"intent":"aggregate","follow_up":false,"skills":["Java","Scala"],"skill_match":"any","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"skills"}
 
 Q: ¿Cuántos candidatos hay en Barcelona?
-{"intent":"aggregate","follow_up":false,"skill":"","seniority":"","city":"Barcelona","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"city"}
+{"intent":"aggregate","follow_up":false,"skills":[],"skill_match":"all","seniority":"","city":"Barcelona","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"city"}
 
 Q: List all senior engineers with more than 5 years of experience.
-{"intent":"aggregate","follow_up":false,"skill":"","seniority":"Senior","city":"","university":"","candidate_name":"","min_years":5,"chart_type":"none","dimension":"seniority"}
+{"intent":"aggregate","follow_up":false,"skills":[],"skill_match":"all","seniority":"Senior","city":"","university":"","candidate_name":"","min_years":5,"chart_type":"none","dimension":"seniority"}
 
 Q: Genera un histograma de las edades de los candidatos que sepan Python.
-{"intent":"chart","follow_up":false,"skill":"Python","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"histogram","dimension":"age"}
+{"intent":"chart","follow_up":false,"skills":["Python"],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"histogram","dimension":"age"}
 
 Q: Show me a bar chart of candidates by city.
-{"intent":"chart","follow_up":false,"skill":"","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"bar","dimension":"city"}
+{"intent":"chart","follow_up":false,"skills":[],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"bar","dimension":"city"}
 
 Q: Reparte por seniority en un gráfico circular.
-{"intent":"chart","follow_up":false,"skill":"","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"seniority"}
+{"intent":"chart","follow_up":false,"skills":[],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"seniority"}
 
 Q: Make me a pie chart of the candidates by gender.
-{"intent":"chart","follow_up":false,"skill":"","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"unsupported"}
+{"intent":"chart","follow_up":false,"skills":[],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"unsupported"}
 
 Q: Haz un diagrama sectorial de los candidatos por género.
-{"intent":"chart","follow_up":false,"skill":"","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"unsupported"}
+{"intent":"chart","follow_up":false,"skills":[],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"unsupported"}
 """
 
 # Appended only when there is a previous turn, so single-question routing sees
@@ -241,24 +337,24 @@ FOLLOW_UP_EXAMPLES = """\
 Examples with a previous question:
 
 Previous question: Who has experience with machine learning?
-Previous filters: skill=machine learning
+Previous filters: skills=machine learning
 Q: Now show me a pie chart of those candidates by seniority.
-{"intent":"chart","follow_up":true,"skill":"","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"seniority"}
+{"intent":"chart","follow_up":true,"skills":[],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"pie","dimension":"seniority"}
 
 Previous question: ¿Quién tiene experiencia en aprendizaje automático?
-Previous filters: skill=machine learning
+Previous filters: skills=machine learning
 Q: ¿Y cuántos de ellos son senior?
-{"intent":"aggregate","follow_up":true,"skill":"","seniority":"Senior","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"seniority"}
+{"intent":"aggregate","follow_up":true,"skills":[],"skill_match":"all","seniority":"Senior","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"seniority"}
 
 Previous question: Resume el perfil de Jane Doe.
 Previous filters: candidate_name=Jane Doe
 Q: ¿Dónde estudió?
-{"intent":"retrieve","follow_up":true,"skill":"","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"none"}
+{"intent":"retrieve","follow_up":true,"skills":[],"skill_match":"all","seniority":"","city":"","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"none"}
 
 Previous question: Who has experience with machine learning?
-Previous filters: skill=machine learning
+Previous filters: skills=machine learning
 Q: How many candidates are based in Barcelona?
-{"intent":"aggregate","follow_up":false,"skill":"","seniority":"","city":"Barcelona","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"city"}
+{"intent":"aggregate","follow_up":false,"skills":[],"skill_match":"all","seniority":"","city":"Barcelona","university":"","candidate_name":"","min_years":0,"chart_type":"none","dimension":"city"}
 """
 
 FOLLOW_UP_RULES = """\
@@ -290,15 +386,34 @@ current_role, cv_language, skills, university. If the user asks to break the
 candidates down by anything else - gender, salary, nationality, availability -
 answer "unsupported". Never substitute a different field for the one requested.
 
+"skills" is a list. Put each technology the question names in its own element -
+["Python","Kubernetes"], never ["Python and Kubernetes"] - because they are
+matched one by one against what each CV lists.
+
+"skill_match" says how to combine them. "all" - the default - is for "Python
+and Kubernetes": the candidate must have every skill listed. Use "any" only
+when the user separates the skills with "or" / "o" / "either", where having one
+of them is enough.
+
 Only fill a filter field when the question actually names it. Leave the rest
 empty. Reply with JSON only."""
 
 
 def _filter_summary(plan: QueryPlan) -> str:
     """The plan's active filters, as the prompt shows them back to the model."""
-    parts = [
-        f"{name}={getattr(plan, name)}" for name in CARRIED_FIELDS if getattr(plan, name)
-    ]
+    parts = []
+    for name in CARRIED_FIELDS:
+        value = getattr(plan, name)
+        if not value:
+            continue
+        # Lists are flattened rather than repr'd: showing the model
+        # "skills=['python', 'node.js']" invites it to copy the brackets into a
+        # field it is meant to leave empty. The skills are joined by the operator
+        # that is actually in force, so a follow-up inheriting a union is not
+        # shown something that reads like an intersection.
+        if isinstance(value, list):
+            value = (" or " if plan.skill_match == "any" else ", ").join(value)
+        parts.append(f"{name}={value}")
     return ", ".join(parts) or "none"
 
 
@@ -382,8 +497,38 @@ def route(
     else:
         plan.follow_up = False
 
-    # Fold the skill onto its canonical name so "Aprendizaje Automático" and
-    # "Machine Learning" hit the same rows in the candidate table.
-    if plan.skill:
-        plan.skill = normalise_skill(plan.skill)
+    # Fold each skill onto its canonical name so "Aprendizaje Automático" and
+    # "Machine Learning" hit the same rows in the candidate table. Normalising
+    # can collapse two spellings of one skill into a single name, so duplicates
+    # are dropped afterwards rather than before.
+    if plan.skills:
+        canonical: list[str] = []
+        for skill in plan.skills:
+            folded = normalise_skill(skill)
+            if folded and folded not in canonical:
+                canonical.append(folded)
+        plan.skills = canonical
+
+    # "or" in the user's own words forces `any` on; nothing forces it off. Same
+    # shape as the `follow_up` floor above, and applied only once there are two
+    # skills to combine - with fewer, `skill_match` changes no result, and a
+    # stray "o" in "de 30 o mas anos" would set a flag that then gets inherited
+    # by a follow-up that does have two.
+    if len(plan.skills) > 1 and asks_for_any_skill(question):
+        plan.skill_match = "any"
+
+    # A question naming two or more skills is a set-membership question, so it
+    # belongs on the aggregate branch even when it reads like prose.
+    #
+    # Semantic search has no boolean logic: asked for "Python and Node.js" it
+    # returns the nearest chunks, which are the candidates matching *either*
+    # term, and the answer then lists them as though they matched both. Observed
+    # exactly that - four names offered for an intersection that is empty. The
+    # aggregate branch computes the intersection and says so when it is empty,
+    # which is the honest answer to the question that was asked.
+    if plan.intent == "retrieve" and len(plan.skills) > 1:
+        plan.intent = "aggregate"
+        if plan.dimension == "none":
+            plan.dimension = "skills"
+
     return plan

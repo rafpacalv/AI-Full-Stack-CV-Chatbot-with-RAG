@@ -152,6 +152,41 @@ tests verify it stops wrong charts without blocking the eight legitimate dimensi
    - Not the obvious vector: Starlette normalises `../`, but a backslash is not a URL
      path separator, so it survives routing and `Path.glob` walks up on Windows
    - Fix: Validate `cv_id` against `[A-Za-z0-9_-]{1,64}` **and** re-check the resolved parent
+9. **One skill field could not hold two skills** — "candidatos que sepan Python y
+   Kubernetes" answered "ninguno". Five candidates qualified
+   - Same family as #3, one level worse. `skill` was a `str`, so the decoder packed
+     both into it (`"python,kubernetes"`), which matched no canonical skill and
+     returned zero rows. `dimension` at least had `dimension_supported_by` checking
+     it; a free-text field had no gate at all, and a filter matching nothing is
+     indistinguishable from a filter nobody satisfies
+   - Fix: `skills: list[str]`, intersected in `apply_filters`. A validator still
+     unpacks anything the model packs into one element (`,`, `;`, `and`, `y` — never
+     `/`, which would shatter `ci/cd` and `ui/ux`)
+10. **Two branches, two meanings of "and"** — "candidates with Python and Node.js"
+    listed four people, then the follow-up chart said there were none
+    - The retrieve branch never applies `plan.skills`: it searches text, which has no
+      boolean logic, so it returned candidates matching *either* and the answer
+      presented them as matching both. Nobody in the corpus has both. The follow-up
+      inherited the filter into the aggregate branch, which computes a real
+      intersection — so the two answers contradicted each other, and the *first* one
+      was the wrong one
+    - Fix: a plan naming ≥2 skills is rerouted to `aggregate`, which can intersect.
+      An empty intersection now reports the per-skill counts ("python 17, node.js 3,
+      none have both") — "0 of 50" alone reads identically to a skill nobody listed
+11. **Fixing the AND broke the OR** — caught while probing #9/#10, before either shipped
+    - Making several skills mean an intersection is right for "Python **y** Kubernetes"
+      and wrong for "Python **o** Kubernetes", which then answered 5 (the intersection)
+      instead of 25 (the union). Worse than the bug it came from: the old failure
+      returned an obviously broken 0, this one returns a plausible number
+    - Fix: `skill_match: "all" | "any"`, defaulting to `all`. The model resolves it —
+      both values are legal tokens, so the decoder is not cornered the way it is with
+      `dimension` — under a lexical floor (`asks_for_any_skill`) that can only force
+      `any` **on**. The word list excludes "any"/"cualquiera"/"alguno": a false
+      positive here turns an intersection into a union silently, and those three are
+      routinely used non-disjunctively ("*any* candidate who knows Python and Docker")
+    - `skill_match` cannot ride the ordinary `carry_over` loop: its default is truthy,
+      so "the follow-up left it empty" is never true. It travels with `skills`
+      explicitly, or a follow-up re-intersects an inherited union
 
 ## Logging Strategy
 

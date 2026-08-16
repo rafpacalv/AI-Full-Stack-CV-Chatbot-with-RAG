@@ -151,10 +151,23 @@ def apply_filters(frame: pd.DataFrame, plan: QueryPlan) -> tuple[pd.DataFrame, d
     # Skills live in a list column, so this is a membership test per row, not an
     # equality test. Both sides go through normalise_skill so a Spanish query
     # term matches the canonical name stored at ingest time.
-    if plan.skill:
-        wanted = normalise_skill(plan.skill)
-        out = out[out["skills_normalised"].apply(lambda s: wanted in list(s))]
-        used["skill"] = wanted
+    #
+    # Several skills combine as the question asked. "Python and Kubernetes" is
+    # an intersection; "Python or Kubernetes" is a union, and answering either
+    # with the other is silent and plausible - the union of two common skills is
+    # a healthy-looking number that answers a question nobody put.
+    #
+    # The operator is spelled into `used`, not just the list, because that string
+    # is what the answer states as its criteria and what the UI shows as a chip.
+    # "skills=java, python" gives the reader no way to tell which was applied.
+    if plan.skills:
+        wanted = {normalise_skill(s) for s in plan.skills}
+        if plan.skill_match == "any":
+            out = out[out["skills_normalised"].apply(lambda s: bool(wanted & set(s)))]
+            used["skills"] = " or ".join(sorted(wanted))
+        else:
+            out = out[out["skills_normalised"].apply(lambda s: wanted <= set(s))]
+            used["skills"] = ", ".join(sorted(wanted))
 
     if plan.seniority:
         target = plan.seniority.casefold()
@@ -193,6 +206,56 @@ def _describe(count: int, total: int, used: dict[str, str]) -> str:
         return f"There are {total} candidates in the database."
     criteria = ", ".join(f"{k}={v}" for k, v in used.items())
     return f"{count} of {total} candidates match {criteria}."
+
+
+@lru_cache(maxsize=1)
+def skill_vocabulary() -> frozenset[str]:
+    """Every canonical skill any candidate lists."""
+    frame = load_candidates()
+    return frozenset(skill for row in frame["skills_normalised"] for skill in row)
+
+
+def _skill_shortfall(frame: pd.DataFrame, plan: QueryPlan, matched: pd.DataFrame) -> str:
+    """Explain an empty skill filter, because "0" on its own is ambiguous.
+
+    Zero rows has two completely different causes and the count cannot tell them
+    apart: nobody has this combination, or the skill is not a thing anybody
+    listed (a typo, or a technology absent from the corpus). Reported as "0 of 50
+    match" both read as "we checked and nobody qualifies", which is a false
+    statement in the second case.
+
+    So the shortfall is spelled out as a fact for the narrator: which of the
+    requested skills nobody lists at all, and - when they all exist but no single
+    candidate has the lot - how many have each one. That last number is what
+    makes an empty intersection legible: "17 know Python, 3 know Node.js, none
+    know both" is an answer; "0 of 50" is a dead end.
+    """
+    if not plan.skills or not matched.empty:
+        return ""
+
+    wanted = [normalise_skill(s) for s in plan.skills]
+    known = skill_vocabulary()
+
+    absent = [s for s in wanted if s not in known]
+    if absent:
+        return (
+            f" No CV lists {', '.join(absent)} as a skill at all, so this is not a"
+            " case of nobody qualifying - the skill itself is absent from the corpus."
+        )
+
+    # Only "all" can come up empty with every skill known: a union of skills the
+    # corpus does contain always has someone in it.
+    if len(wanted) > 1 and plan.skill_match == "all":
+        counts = [
+            (s, int(frame["skills_normalised"].apply(lambda row, s=s: s in list(row)).sum()))
+            for s in wanted
+        ]
+        breakdown = ", ".join(f"{skill} {n}" for skill, n in counts)
+        return (
+            f" No candidate lists all of them together. Counted individually:"
+            f" {breakdown}."
+        )
+    return ""
 
 
 def _chart_payload(frame: pd.DataFrame, plan: QueryPlan) -> dict | None:
@@ -294,7 +357,11 @@ def run_aggregate(plan: QueryPlan) -> AggregateResult:
     matched, used = apply_filters(frame, plan)
     chart = _chart_payload(matched, plan) if plan.intent == "chart" else None
     return AggregateResult(
-        text=_describe(len(matched), len(frame), used) + _chart_summary(chart),
+        text=(
+            _describe(len(matched), len(frame), used)
+            + _skill_shortfall(frame, plan, matched)
+            + _chart_summary(chart)
+        ),
         matched=matched,
         filters=used,
         chart=chart,

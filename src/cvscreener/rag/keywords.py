@@ -27,6 +27,7 @@ shown to the user and enforced in the prompt.
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from functools import lru_cache
 
 from ..ingest.index import tokenize
@@ -64,11 +65,15 @@ def corpus_vocabulary() -> frozenset[str]:
     return frozenset(vocabulary)
 
 
-def extract_query_terms(question: str, *, extra: str = "") -> list[str]:
+def extract_query_terms(question: str, *, extra: Sequence[str] = ()) -> list[str]:
     """Pull out the terms the user expects to be matched literally.
 
-    ``extra`` is the skill the router extracted, which catches spelled-out
+    ``extra`` holds the skills the router extracted, which catches spelled-out
     names ("convolutional neural networks") that no acronym pattern would.
+
+    One per element, never pre-joined: "python,node.js" tokenises to two words
+    that both exist in the corpus, so a packed string passes a check that each
+    skill on its own would have to earn.
     """
     terms: list[str] = []
 
@@ -78,8 +83,7 @@ def extract_query_terms(question: str, *, extra: str = "") -> list[str]:
 
     terms.extend(TECHY_RE.findall(question))
 
-    if extra:
-        terms.append(extra)
+    terms.extend(term for term in extra if term)
 
     # De-duplicate case-insensitively, preserving the user's own spelling.
     seen: set[str] = set()
@@ -92,7 +96,7 @@ def extract_query_terms(question: str, *, extra: str = "") -> list[str]:
     return unique
 
 
-def missing_from_corpus(question: str, *, skill: str = "") -> list[str]:
+def missing_from_corpus(question: str, *, skills: Sequence[str] = ()) -> list[str]:
     """Terms from the question that appear in no CV at all.
 
     A term counts as present if *every* token it tokenises to is in the corpus
@@ -103,7 +107,7 @@ def missing_from_corpus(question: str, *, skill: str = "") -> list[str]:
     vocabulary = corpus_vocabulary()
     absent: list[str] = []
 
-    for term in extract_query_terms(question, extra=skill):
+    for term in extract_query_terms(question, extra=skills):
         tokens = tokenize(term)
         if not tokens:
             continue

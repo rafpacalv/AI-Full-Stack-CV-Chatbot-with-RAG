@@ -286,7 +286,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
         # Which literal terms from the question exist in no CV at all. Checked
         # against the whole corpus, not the retrieved chunks, so the statement
         # is definitive rather than an artefact of what happened to rank.
-        missing = missing_from_corpus(req.question, skill=plan.skill)
+        missing = missing_from_corpus(req.question, skills=plan.skills)
 
         # The user asked to plot a field the candidate table does not hold.
         # Reported alongside the plan so the UI can say so before the answer

@@ -171,23 +171,26 @@ def test_tokenizer_folds_accents_and_keeps_tech_tokens():
 
 # --- literal-term verification --------------------------------------------
 @pytest.mark.parametrize(
-    ("question", "skill", "expected"),
+    ("question", "skills", "expected"),
     [
-        ("¿Qué candidatos tienen conocimientos en CNN?", "cnn", ["CNN"]),
-        ("Who has experience with CNN?", "cnn", ["CNN"]),
-        ("Busco alguien que sepa COBOL", "cobol", ["COBOL"]),
+        ("¿Qué candidatos tienen conocimientos en CNN?", ["cnn"], ["CNN"]),
+        ("Who has experience with CNN?", ["cnn"], ["CNN"]),
+        ("Busco alguien que sepa COBOL", ["cobol"], ["COBOL"]),
         # Present in the corpus: must NOT be flagged.
-        ("¿Quién sabe SQL y Docker?", "sql", []),
-        ("¿Qué candidatos estudiaron en la UPC?", "", []),
-        ("Who knows Kubernetes?", "kubernetes", []),
-        ("Who has worked with Node.js?", "node.js", []),
-        ("¿Quién sabe aprendizaje automático?", "machine learning", []),
+        ("¿Quién sabe SQL y Docker?", ["sql", "docker"], []),
+        ("¿Qué candidatos estudiaron en la UPC?", [], []),
+        ("Who knows Kubernetes?", ["kubernetes"], []),
+        ("Who has worked with Node.js?", ["node.js"], []),
+        ("¿Quién sabe aprendizaje automático?", ["machine learning"], []),
+        # Each skill is checked on its own. Joined into "python,cobol" the pair
+        # tokenises to two known-looking words and the absence slips through.
+        ("¿Quién sabe Python y COBOL?", ["python", "cobol"], ["COBOL"]),
         # No hard terms at all - a name is not a technology.
-        ("Resume el perfil de Katarzyna Wilczyńska", "", []),
+        ("Resume el perfil de Katarzyna Wilczyńska", [], []),
     ],
 )
 @index_built
-def test_terms_absent_from_the_corpus_are_detected(question, skill, expected):
+def test_terms_absent_from_the_corpus_are_detected(question, skills, expected):
     """Regression: a question about "CNN" was answered with a Computer Vision CV.
 
     Dense retrieval returns nearest neighbours whether or not the exact term
@@ -200,7 +203,7 @@ def test_terms_absent_from_the_corpus_are_detected(question, skill, expected):
     """
     from cvscreener.rag.keywords import missing_from_corpus
 
-    assert missing_from_corpus(question, skill=skill) == expected
+    assert missing_from_corpus(question, skills=skills) == expected
 
 
 @index_built
@@ -230,7 +233,7 @@ def test_absent_term_answer_states_the_absence():
 
     negations = ("no aparece", "ningun", "not mentioned", "no cv", "does not", "not appear")
     for question in ("¿Qué candidatos tienen conocimientos en CNN?", "Who has experience with CNN?"):
-        missing = missing_from_corpus(question, skill="cnn")
+        missing = missing_from_corpus(question, skills=["cnn"])
         assert missing == ["CNN"]
         answer = "".join(
             stream_retrieval_answer(question, search(question, top_k=5), missing_terms=missing)
@@ -358,9 +361,74 @@ def test_aggregate_counts_match_the_source_table():
     frame = load_candidates()
     expected = frame["skills_normalised"].apply(lambda s: "python" in list(s)).sum()
 
-    result = run_aggregate(QueryPlan(intent="aggregate", skill="Python", dimension="skills"))
+    result = run_aggregate(QueryPlan(intent="aggregate", skills=["Python"], dimension="skills"))
     assert len(result.matched) == expected
     assert len(frame) == 50
+
+
+@index_built
+def test_two_skills_intersect_instead_of_matching_nobody():
+    """The bug: "candidatos que sepan Python y Kubernetes" answered "none".
+
+    `skill` was a single string, so the constrained decoder packed both into it
+    - "python,kubernetes" - which is not a canonical skill, so the membership
+    test matched no row and the answer said nobody qualified. Five candidates
+    did. The count is asserted against the table's own intersection so it
+    tracks the corpus rather than a number written down here.
+    """
+    from cvscreener.rag.aggregate import load_candidates, run_aggregate
+    from cvscreener.rag.router import QueryPlan
+
+    frame = load_candidates()
+    both = frame["skills_normalised"].apply(
+        lambda s: {"python", "kubernetes"} <= set(s)
+    )
+    expected = int(both.sum())
+    assert expected > 0, "corpus changed: pick a pair that some candidate has"
+
+    result = run_aggregate(
+        QueryPlan(intent="aggregate", skills=["Python", "Kubernetes"], dimension="skills")
+    )
+    assert len(result.matched) == expected
+    # An intersection, not a union: everyone returned has both.
+    for _, row in result.matched.iterrows():
+        assert {"python", "kubernetes"} <= set(row["skills_normalised"])
+
+
+@index_built
+def test_an_empty_intersection_says_why_it_is_empty():
+    """Zero has two meanings and the count cannot distinguish them.
+
+    Nobody in the corpus lists both Python and Node.js, so "0 of 50" is
+    technically true and useless - it reads the same as a skill nobody has ever
+    heard of. The per-skill counts are what turn it into an answer.
+    """
+    from cvscreener.rag.aggregate import run_aggregate
+    from cvscreener.rag.router import QueryPlan
+
+    result = run_aggregate(
+        QueryPlan(intent="aggregate", skills=["Python", "Node.js"], dimension="skills")
+    )
+    assert result.matched.empty, "corpus changed: pick a pair nobody has together"
+    assert "python" in result.text and "node.js" in result.text
+    assert "individually" in result.text.casefold(), (
+        f"the empty intersection is unexplained: {result.text!r}"
+    )
+
+
+@index_built
+def test_a_skill_nobody_lists_is_not_reported_as_nobody_qualifying():
+    """"No candidate knows COBOL" and "COBOL is not in the data" differ."""
+    from cvscreener.rag.aggregate import run_aggregate, skill_vocabulary
+    from cvscreener.rag.router import QueryPlan
+
+    assert "cobol" not in skill_vocabulary()
+    result = run_aggregate(QueryPlan(intent="aggregate", skills=["COBOL"]))
+
+    assert result.matched.empty
+    assert "absent from the corpus" in result.text, (
+        f"an unknown skill read as an ordinary zero: {result.text!r}"
+    )
 
 
 # --------------------------------------------------------------------------
@@ -649,6 +717,174 @@ def test_university_questions_route_to_the_whole_table(question):
 
 
 # --------------------------------------------------------------------------
+# Multi-skill questions
+# --------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        (["python,kubernetes"], ["python", "kubernetes"]),
+        (["Python and Node.js"], ["Python", "Node.js"]),
+        (["Python y Kubernetes"], ["Python", "Kubernetes"]),
+        (["Python; Docker; AWS"], ["Python", "Docker", "AWS"]),
+        # A bare string is accepted too - a replayed plan may carry one.
+        ("Python", ["Python"]),
+        # Already correct: left alone.
+        (["Python", "Kubernetes"], ["Python", "Kubernetes"]),
+        # The separators that would shatter a real skill name are not split on.
+        (["CI/CD"], ["CI/CD"]),
+        (["UI/UX design"], ["UI/UX design"]),
+        (["Ruby"], ["Ruby"]),  # not "Rub" + "" - "y" is matched as a whole word
+        ([""], []),
+    ],
+)
+def test_a_packed_skill_string_is_unpacked(raw, expected):
+    """The schema asks for a list; it cannot stop the model filling one element.
+
+    This is the belt to the schema's braces. `skills` being a list is what lets
+    the model answer correctly, but the same decoder that packed two skills into
+    a string field will happily pack them into a string *inside* the list.
+    """
+    from cvscreener.rag.router import QueryPlan
+
+    assert QueryPlan(intent="aggregate", skills=raw).skills == expected
+
+
+def test_multi_skill_questions_do_not_go_to_semantic_retrieval():
+    """The bug: "candidates with Python and Node.js" listed four who had one.
+
+    Semantic search has no AND. Asked for two skills it returns the nearest
+    chunks - candidates matching either - and the answer presents them as
+    matching both. Nobody in this corpus has both, so every name offered was
+    wrong. A question naming two skills is a set-membership question and belongs
+    on the branch that can compute an intersection.
+    """
+    from cvscreener.llm import client
+    from cvscreener.rag.router import route
+
+    if not client.is_up():
+        pytest.skip("Ollama not reachable")
+
+    for question in (
+        "List candidates with knowledge of Python and Node.js",
+        "Dame un listado de candidatos que sepan Python y Kubernetes",
+    ):
+        plan = route(question)
+        assert len(plan.skills) > 1, f"only got {plan.skills} from {question!r}"
+        assert plan.intent in ("aggregate", "chart"), (
+            f"{question!r} routed to {plan.intent}, which cannot intersect"
+        )
+
+
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("¿Quién sabe Python o Kubernetes?", True),
+        ("Candidates who know either Python or Java", True),
+        ("¿Alguien que sepa Java u Oracle?", True),
+        # "and" questions, and the near-misses that must NOT flip the operator.
+        ("¿Quién sabe Python y Kubernetes?", False),
+        ("Candidates who know Python, Docker and AWS", False),
+        ("Do you have any candidates who know Python and Docker?", False),
+        ("Cualquiera que sepa Python y Docker", False),
+        ("¿Hay alguno que sepa Python y Docker?", False),
+    ],
+)
+def test_or_between_skills_is_detected_without_swallowing_and(question, expected):
+    """A false positive here is worse than a false negative.
+
+    Missing an "or" answers a narrower question than asked and the count is
+    visibly small. Inventing one answers a wider question with a healthy-looking
+    number, which nothing about the output contradicts - so "any", "cualquiera"
+    and "alguno" are deliberately not on the list.
+    """
+    from cvscreener.rag.router import asks_for_any_skill
+
+    assert asks_for_any_skill(question) is expected
+
+
+@index_built
+def test_any_unions_the_skills_instead_of_intersecting_them():
+    """The regression I introduced fixing the AND: "or" silently meant "and".
+
+    Making several skills mean an intersection was right for "Python and
+    Kubernetes" and wrong for "Python or Kubernetes", which then answered with
+    the 5-candidate intersection instead of the 25-candidate union - a plausible
+    number for a question nobody asked.
+    """
+    from cvscreener.rag.aggregate import load_candidates, run_aggregate
+    from cvscreener.rag.router import QueryPlan
+
+    frame = load_candidates()
+    has = lambda skill: frame["skills_normalised"].apply(lambda s: skill in list(s))  # noqa: E731
+    union = int((has("python") | has("kubernetes")).sum())
+    intersection = int((has("python") & has("kubernetes")).sum())
+    assert union > intersection, "corpus changed: pick two skills that differ"
+
+    both = run_aggregate(
+        QueryPlan(intent="aggregate", skills=["Python", "Kubernetes"], skill_match="all")
+    )
+    either = run_aggregate(
+        QueryPlan(intent="aggregate", skills=["Python", "Kubernetes"], skill_match="any")
+    )
+
+    assert len(both.matched) == intersection
+    assert len(either.matched) == union
+    # The criteria state which operator ran, so the number is never orphaned.
+    assert "or" in either.filters["skills"], either.filters
+    assert "or" not in both.filters["skills"], both.filters
+
+
+def test_a_follow_up_keeps_the_operator_it_inherited():
+    """`skill_match` cannot ride the ordinary inheritance loop.
+
+    Its default, "all", is truthy, so "the new question left it empty" is never
+    true and a follow-up would quietly re-intersect a union.
+    """
+    from cvscreener.rag.router import QueryPlan, carry_over
+
+    previous = QueryPlan(intent="aggregate", skills=["python", "java"], skill_match="any")
+    plan = QueryPlan(intent="chart", chart_type="pie", dimension="seniority")
+
+    assert carry_over(plan, previous) == ["skills"]
+    assert plan.skills == ["python", "java"]
+    assert plan.skill_match == "any", "the union was silently narrowed to an intersection"
+
+
+def test_the_router_resolves_the_operator_end_to_end():
+    """Against the live model, not just the lexical floor under it."""
+    from cvscreener.llm import client
+    from cvscreener.rag.router import route
+
+    if not client.is_up():
+        pytest.skip("Ollama not reachable")
+
+    for question in ("¿Quién sabe Python o Kubernetes?", "Candidates who know Java or Scala"):
+        plan = route(question)
+        assert plan.skill_match == "any", f"{question!r} resolved to {plan.skill_match}"
+
+    for question in ("¿Quién sabe Python y Kubernetes?", "Candidates who know Java and Scala"):
+        plan = route(question)
+        assert plan.skill_match == "all", f"{question!r} resolved to {plan.skill_match}"
+
+
+def test_one_skill_still_reaches_the_prose():
+    """The rerouting is for intersections only.
+
+    "Who has experience with Python?" is a question about what people did with
+    it, and the aggregate branch answers with names and a count. Sending every
+    skill question there would trade an answer for a tally.
+    """
+    from cvscreener.llm import client
+    from cvscreener.rag.router import route
+
+    if not client.is_up():
+        pytest.skip("Ollama not reachable")
+
+    plan = route("Who has experience with Python?")
+    assert plan.intent == "retrieve", f"routed to {plan.intent}"
+
+
+# --------------------------------------------------------------------------
 # Follow-up questions
 # --------------------------------------------------------------------------
 @pytest.mark.parametrize(
@@ -700,11 +936,11 @@ def test_a_follow_up_inherits_the_filters_it_does_not_restate():
     """
     from cvscreener.rag.router import QueryPlan, carry_over
 
-    previous = QueryPlan(intent="retrieve", skill="machine learning")
+    previous = QueryPlan(intent="retrieve", skills=["machine learning"])
     plan = QueryPlan(intent="chart", chart_type="pie", dimension="seniority")
 
-    assert carry_over(plan, previous) == ["skill"]
-    assert plan.skill == "machine learning"
+    assert carry_over(plan, previous) == ["skills"]
+    assert plan.skills == ["machine learning"]
     # What to *do* is never inherited - only who to do it to.
     assert plan.intent == "chart"
     assert plan.dimension == "seniority"
@@ -713,12 +949,12 @@ def test_a_follow_up_inherits_the_filters_it_does_not_restate():
 def test_the_new_question_wins_over_the_inherited_one():
     from cvscreener.rag.router import QueryPlan, carry_over
 
-    previous = QueryPlan(intent="aggregate", city="Barcelona", skill="Python")
+    previous = QueryPlan(intent="aggregate", city="Barcelona", skills=["Python"])
     plan = QueryPlan(intent="aggregate", city="Madrid")
 
     carry_over(plan, previous)
     assert plan.city == "Madrid", "a restated filter must not be overwritten"
-    assert plan.skill == "Python", "an unstated filter should still be inherited"
+    assert plan.skills == ["Python"], "an unstated filter should still be inherited"
 
 
 def test_carry_over_never_touches_what_to_do():
@@ -772,7 +1008,7 @@ def test_a_follow_up_narrows_the_same_set_the_first_question_found():
     from cvscreener.rag.aggregate import load_candidates, run_aggregate
     from cvscreener.rag.router import QueryPlan, carry_over
 
-    previous = QueryPlan(intent="retrieve", skill="machine learning")
+    previous = QueryPlan(intent="retrieve", skills=["machine learning"])
     plan = QueryPlan(intent="chart", chart_type="pie", dimension="seniority")
     carry_over(plan, previous)
 
@@ -809,12 +1045,12 @@ def test_the_conversation_is_carried_by_the_client_not_the_server():
         previous_question="who knows Python?",
         previous_plan={
             "intent": "retrieve",
-            "skill": "Python",
+            "skills": ["Python"],
             "missing_terms": [],
             "chart_unavailable": False,
         },
     )
-    assert request.previous_plan.skill == "Python"
+    assert request.previous_plan.skills == ["Python"]
 
 
 # --------------------------------------------------------------------------

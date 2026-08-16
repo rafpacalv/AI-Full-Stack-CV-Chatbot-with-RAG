@@ -65,7 +65,7 @@ CHIP_LIMIT = 8
 # `router.CARRIED_FIELDS`: that one governs what a follow-up inherits, and the
 # two answering different questions is why `min_years` is inherited but not
 # displayed as a chip - ">= 5" beside a name reads as noise.
-FILTER_KEYS = ("skill", "seniority", "city", "university", "candidate_name")
+FILTER_KEYS = ("skills", "seniority", "city", "university", "candidate_name")
 
 BADGE_TEXT = {
     "retrieve": "Semantic retrieval",
@@ -184,6 +184,21 @@ def new_query() -> None:
     st.session_state.pop("pending", None)
 
 
+def filter_text(value: object, joiner: str = ", ") -> str:
+    """One filter value as a chip reads it.
+
+    `skills` is a list, and the rest are scalars, so this is the one place that
+    knows the difference - a chip saying "skills: ['python', 'node.js']" leaks
+    Python syntax at the user.
+
+    The joiner carries the operator. A chip reading "skills: java, python" beside
+    an answer about 20 people is unreadable until it says "java or python".
+    """
+    if isinstance(value, list):
+        return joiner.join(str(v) for v in value)
+    return str(value) if value else ""
+
+
 def routing_badge(plan: dict) -> str:
     """The routing decision, as the row of chips above an answer.
 
@@ -204,9 +219,10 @@ def routing_badge(plan: dict) -> str:
 
     # Any filter the router extracted, so its reasoning is visible rather than
     # hidden behind the answer.
+    joiner = " or " if plan.get("skill_match") == "any" else ", "
     for key in FILTER_KEYS:
-        if plan.get(key):
-            bits.append(f"<span class='lt-chip-muted'>{key}: {plan[key]}</span>")
+        if value := filter_text(plan.get(key), joiner):
+            bits.append(f"<span class='lt-chip-muted'>{key}: {value}</span>")
 
     # Terms that appear in no CV. Shown as a warning chip so the absence is
     # visible at a glance, not buried in the prose - a recruiter searching for a
@@ -356,8 +372,11 @@ with tab_chat:
         context_col, button_col = st.columns([5, 1])
         with context_col:
             if carried := st.session_state.context:
+                joiner = " or " if carried["plan"].get("skill_match") == "any" else ", "
                 filters = ", ".join(
-                    f"{k}: {v}" for k in FILTER_KEYS if (v := carried["plan"].get(k))
+                    f"{k}: {v}"
+                    for k in FILTER_KEYS
+                    if (v := filter_text(carried["plan"].get(k), joiner))
                 )
                 st.caption(
                     f"Following on from “{carried['question']}”"
