@@ -531,6 +531,12 @@ def route(
     # exactly that - four names offered for an intersection that is empty. The
     # aggregate branch computes the intersection and says so when it is empty,
     # which is the honest answer to the question that was asked.
+    #
+    # Deliberately not extended to a single skill. That question ("who has
+    # experience with Python?") is asking what people did with it, and the
+    # aggregate branch would answer a tally - see
+    # test_one_skill_still_reaches_the_prose. Retrieval keeps it, and is instead
+    # scoped to the candidates who qualify before it searches (see api/main.py).
     if plan.intent == "retrieve" and len(plan.skills) > 1:
         plan.intent = "aggregate"
         if plan.dimension == "none":

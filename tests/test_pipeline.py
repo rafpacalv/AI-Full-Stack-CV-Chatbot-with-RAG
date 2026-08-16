@@ -899,6 +899,42 @@ def test_multi_skill_questions_do_not_go_to_semantic_retrieval():
         )
 
 
+def test_a_skill_question_never_offers_a_cv_without_that_skill():
+    """The bug: asked for Python, the sources listed a Java/Kafka candidate.
+
+    Retrieval ranks by similarity, so a backend CV reads close enough to a
+    Python question to win a slot without listing Python at all - and the UI
+    then offered it as a source. The count is the second half: three candidates
+    were written up, five CVs offered, and seventeen actually qualify.
+
+    Asserted against the parquet rather than a fixed list of names, so it keeps
+    meaning something if the corpus is regenerated.
+    """
+    from cvscreener.rag.aggregate import apply_filters, load_candidates
+    from cvscreener.rag.retrieve import IndexNotBuilt, search
+    from cvscreener.rag.router import QueryPlan
+
+    frame = load_candidates()
+    scope = QueryPlan(intent="aggregate", skills=["Python"])
+    qualifying = apply_filters(frame, scope)[0]["cv_id"].tolist()
+    assert len(qualifying) > settings.top_k, (
+        "corpus changed: this test needs a skill more candidates hold than "
+        "top-k can return, or it proves nothing about truncation"
+    )
+
+    try:
+        hits = search("candidates with knowledge of Python", cv_ids=qualifying)
+    except IndexNotBuilt:
+        pytest.skip("index not built")
+
+    assert hits, "the scoped search returned nothing"
+    offered = {h.chunk.cv_id for h in hits}
+    assert offered <= set(qualifying), (
+        f"offered {offered - set(qualifying)} as sources for a Python question; "
+        "none of those CVs list Python"
+    )
+
+
 @pytest.mark.parametrize(
     ("question", "expected"),
     [

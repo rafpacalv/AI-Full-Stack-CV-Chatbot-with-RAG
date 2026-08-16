@@ -37,7 +37,13 @@ from ..logs import (
     log_chat,
     read_transcript,
 )
-from ..rag.aggregate import candidates_summary, cv_ids_for_name, run_aggregate
+from ..rag.aggregate import (
+    apply_filters,
+    candidates_summary,
+    cv_ids_for_name,
+    load_candidates,
+    run_aggregate,
+)
 from ..rag.answer import stream_aggregate_answer, stream_retrieval_answer, tidy_answer
 from ..rag.keywords import missing_from_corpus
 from ..rag.retrieve import IndexNotBuilt, embed_query, load_index, search
@@ -398,6 +404,35 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             # in the corpus at all.
             cv_ids = cv_ids_for_name(plan.candidate_name) or None
 
+        # Scope the search to the candidates who actually list the skill the
+        # question named. Retrieval ranks by similarity, not by whether anyone
+        # qualifies, so "candidates with knowledge of Python" surfaced a CV whose
+        # skills are Java, Spring Boot and Kafka - offered to the user as a
+        # source for a question it does not answer. The parquet knows who lists
+        # Python; that is a fact to look up, not to infer from how a chunk reads.
+        #
+        # `apply_filters` is reused rather than reimplemented here, on a plan
+        # carrying only the skill. Two copies of "does this candidate have this
+        # skill" is how the aggregate branch starts finding people the retrieve
+        # branch cannot.
+        qualifying: list[str] = []
+        if plan.skills:
+            scope = QueryPlan(
+                intent="aggregate", skills=plan.skills, skill_match=plan.skill_match
+            )
+            qualifying = apply_filters(load_candidates(), scope)[0]["cv_id"].tolist()
+            if qualifying:
+                if cv_ids is None:
+                    cv_ids = qualifying
+                else:
+                    # Intersect, never widen. "What has Carla done with Python?"
+                    # is already narrowed to her CV, and replacing that with all
+                    # seventeen Python candidates answers a question nobody
+                    # asked. An empty intersection keeps the narrower scope, on
+                    # the same reasoning as `or None` above: her CV may describe
+                    # the work without listing the skill.
+                    cv_ids = [i for i in cv_ids if i in qualifying] or cv_ids
+
         # Inheriting the filters is not enough on this branch: a follow-up has
         # to be *searched* too, and "¿y dónde estudió?" is four words that match
         # nothing in particular. Dense and BM25 both need the subject, so the
@@ -459,6 +494,12 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
                 "filters": {},
                 "chart": None,
                 "matched_count": len(citations),
+                # How many candidates qualify in total, against however many
+                # top-k reached. Retrieval stops at five; seventeen candidates
+                # list Python. Without this the UI shows five names under a
+                # heading that says nothing about the other twelve, and a
+                # truncated list reads exactly like a complete one.
+                "qualifying_count": len(qualifying),
                 "citations": list(citations.values()),
                 "chunks": [h.as_dict() for h in hits],
                 "elapsed_s": round(time.time() - started, 2),

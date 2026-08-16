@@ -240,12 +240,35 @@ def routing_badge(plan: dict) -> str:
     return " ".join(bits)
 
 
-def render_citations(citations: list[dict]) -> None:
+def render_citations(
+    citations: list[dict], mode: str = "retrieve", qualifying: int = 0
+) -> None:
+    """List the CVs behind an answer, labelled by what they actually are.
+
+    The two branches put different things in this list and the difference is not
+    cosmetic. An aggregate matched these candidates: every one of them satisfies
+    the stated filter, so they are sources in the ordinary sense, and there are
+    no others. A retrieval *read* them - they are the nearest chunks, the
+    narrator writes up only the ones that answered the question, and top-k means
+    there may be more it never saw. Asked for candidates who know Python it named
+    three, this list held five, and seventeen qualified. Under a heading saying
+    "Sources", the two unnamed CVs read as answers the prose forgot, and the
+    twelve missing ones are invisible.
+
+    So the retrieve side says what it did (read) and, when the count is known,
+    what it read *of* - "5 of 17". The aggregate side keeps "Sources", because
+    there the list really is all of them.
+    """
     if not citations:
         return
+    read_only = mode == "retrieve"
+    heading = "CVs read" if read_only else "Sources"
+    # Only worth saying when retrieval saw less than the whole qualifying set;
+    # equal counts make "5 of 5" noise.
+    truncated = read_only and qualifying > len(citations)
     st.markdown(
         f"<div style='color:{GREY_MUTED};font-size:12px;margin-top:10px;"
-        "text-transform:uppercase;letter-spacing:.07em'>Sources</div>",
+        f"text-transform:uppercase;letter-spacing:.07em'>{heading}</div>",
         unsafe_allow_html=True,
     )
     # An aggregate can match all 50 candidates, and 50 mint chips is both
@@ -259,7 +282,20 @@ def render_citations(citations: list[dict]) -> None:
         )
     st.markdown(chips, unsafe_allow_html=True)
 
-    with st.expander(f"Open the {len(citations)} source CV(s)"):
+    if truncated:
+        st.markdown(
+            f"<span class='lt-chip-warn'>{qualifying} candidates match &mdash; "
+            f"the {len(citations)} closest were read</span>",
+            unsafe_allow_html=True,
+        )
+
+    if not read_only:
+        label = f"Open the {len(citations)} source CV(s)"
+    elif truncated:
+        label = f"Open the {len(citations)} CV(s) read, of {qualifying} that match"
+    else:
+        label = f"Open the {len(citations)} CV(s) read — not every one is cited above"
+    with st.expander(label):
         for c in citations:
             cols = st.columns([3, 2, 1])
             cols[0].markdown(f"**{c['candidate']}**")
@@ -412,7 +448,11 @@ with tab_chat:
                 unsafe_allow_html=True,
             )
             if msg.get("citations"):
-                render_citations(msg["citations"])
+                render_citations(
+                    msg["citations"],
+                    msg.get("mode", "retrieve"),
+                    msg.get("qualifying_count", 0),
+                )
             if msg.get("chart"):
                 fig = charts.from_spec(msg["chart"])
                 if fig:
@@ -484,7 +524,11 @@ with tab_chat:
             if elapsed := meta.get("elapsed_s"):
                 st.caption(f"{elapsed}s · {model}")
 
-            render_citations(meta.get("citations", []))
+            render_citations(
+                meta.get("citations", []),
+                meta.get("mode", "retrieve"),
+                meta.get("qualifying_count", 0),
+            )
 
             if chart_spec := meta.get("chart"):
                 fig = charts.from_spec(chart_spec)
@@ -504,6 +548,11 @@ with tab_chat:
                 "role": "assistant",
                 "content": answer,
                 "plan": resolved_plan,
+                # Which branch produced the citations and how many candidates
+                # qualified, so the replayed turn labels them the same way the
+                # live one did.
+                "mode": meta.get("mode", "retrieve"),
+                "qualifying_count": meta.get("qualifying_count", 0),
                 "citations": meta.get("citations", []),
                 "chart": meta.get("chart"),
                 "chunks": meta.get("chunks", []),
