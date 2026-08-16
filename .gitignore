@@ -19,3 +19,4 @@ data/logs/
 
 # The assessment brief is LeadTech internal material - kept locally, never published.
 ai-full-stack-developer-business-case.pdf
+*.png

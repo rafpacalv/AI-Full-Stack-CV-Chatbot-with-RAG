@@ -30,6 +30,8 @@ class Settings(BaseSettings):
 
     api_host: str = "127.0.0.1"
     api_port: int = 8000
+    # Only used to scope the API's CORS policy to the UI's origin.
+    ui_port: int = 8501
 
     photo_enabled: bool = True
     pollinations_url: str = "https://image.pollinations.ai/prompt"

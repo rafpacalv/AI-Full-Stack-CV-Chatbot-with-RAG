@@ -31,6 +31,8 @@ follows the site.
 
 from __future__ import annotations
 
+import html
+import re
 from functools import lru_cache
 from pathlib import Path
 
@@ -117,6 +119,23 @@ def inject_css() -> None:
         # keeps it inside the 1-3% area budget the brand implies.
         f".lt-msg-user {{ display: inline-block; max-width: 88%; background: {MINT}; color: {BLACK}; padding: 13px 19px; border-radius: 0; margin: 12px 0 2px 0; font-weight: 500; line-height: 1.5; }}",
         f".lt-msg-bot {{ background: {SLATE}; color: {WHITE}; padding: 18px 22px; border-radius: 0; margin: 4px 0 16px 0; line-height: 1.65; }}",
+        # The bubbles now hold real <p>/<ul> rather than a blob of text, so the
+        # browser's default margins have to be tightened or each candidate's
+        # block drifts apart.
+        ".lt-msg-bot p, .lt-msg-user p { margin: 0 0 6px 0; }",
+        ".lt-msg-bot p:last-child, .lt-msg-user p:last-child { margin-bottom: 0; }",
+        ".lt-msg-bot ul, .lt-msg-user ul { margin: 4px 0 12px 0; padding-left: 20px; }",
+        ".lt-msg-bot ul:last-child, .lt-msg-user ul:last-child { margin-bottom: 0; }",
+        ".lt-msg-bot li { margin: 0 0 4px 0; }",
+        # The candidate heading is the anchor for scanning the answer, so it
+        # gets a little air above it - but not before the first one.
+        f".lt-msg-bot p:has(strong) {{ margin-top: 14px; color: {WHITE}; }}",
+        ".lt-msg-bot > p:first-child { margin-top: 0; }",
+        # Sky, not mint: the candidate names need to stand out, and mint is a
+        # fill on this brand, never a text colour. Sky is their secondary text
+        # colour on dark and is exactly what this is for.
+        f".lt-msg-bot strong {{ color: {SKY}; font-weight: 700; }}",
+        ".lt-cursor { opacity: 0.7; }",
         # citation chips: mint fill, black text - their "Barcelona HQ" chip
         f".lt-chip {{ display: inline-block; background: {MINT}; color: {BLACK}; padding: 4px 13px; border-radius: 0; font-size: 12px; margin: 3px 6px 3px 0; font-weight: 500; letter-spacing: 0.02em; }}",
         f".lt-chip-muted {{ display: inline-block; background: {SLATE}; color: {SKY}; padding: 4px 13px; border-radius: 0; font-size: 12px; margin: 3px 6px 3px 0; }}",
@@ -176,6 +195,63 @@ def inject_css() -> None:
         f"<style>{''.join(rules)}</style>",
         unsafe_allow_html=True,
     )
+
+
+_BOLD_RE = re.compile(r"\*\*(.+?)\*\*")
+_ITALIC_RE = re.compile(r"(?<!\*)\*([^*\n]+)\*(?!\*)")
+_BULLET_RE = re.compile(r"^[ \t]*(?:[-*•]|\d+\.)\s+(.*)$")
+
+
+def render_markdown(text: str) -> str:
+    """Convert the model's markdown to HTML for the chat bubbles.
+
+    Needed because of a CommonMark rule that bites here specifically: markdown
+    is **not** processed inside a raw HTML block, and a blank line *terminates*
+    that block. The bubbles are ``<div class='lt-msg-bot'>…</div>``, so an
+    answer with a blank line in it rendered half one way and half the other -
+    the first candidate came out as literal ``**Guillem Roca Prats**`` with the
+    bullets collapsed into a paragraph, while everyone after the first blank
+    line rendered properly. Visible in a screenshot, invisible in the text.
+
+    This is a deliberately narrow converter, not a markdown implementation. The
+    answer format is fixed by the prompt - a bold heading line per candidate
+    and bullets underneath - so bold, italic, bullets, numbered items and
+    paragraphs are the whole grammar. Anything else degrades to a paragraph,
+    which is a worse-looking answer rather than a broken page.
+
+    It also escapes first, which closes a hole: model output was going into
+    ``unsafe_allow_html=True`` verbatim, so a CV containing markup could have
+    put it in the page.
+    """
+    blocks: list[str] = []
+    for block in re.split(r"\n\s*\n", text.strip()):
+        lines = [line for line in block.splitlines() if line.strip()]
+        if not lines:
+            continue
+
+        # A block mixes a heading line with the bullets under it, so runs of
+        # each kind are emitted as they are met rather than assuming one shape.
+        rendered: list[str] = []
+        bullets: list[str] = []
+
+        def flush() -> None:
+            if bullets:
+                rendered.append("<ul>" + "".join(f"<li>{b}</li>" for b in bullets) + "</ul>")
+                bullets.clear()
+
+        for line in lines:
+            content = html.escape(line.strip())
+            content = _BOLD_RE.sub(r"<strong>\1</strong>", content)
+            content = _ITALIC_RE.sub(r"<em>\1</em>", content)
+            if match := _BULLET_RE.match(content):
+                bullets.append(match.group(1))
+            else:
+                flush()
+                rendered.append(f"<p>{content}</p>")
+        flush()
+        blocks.append("".join(rendered))
+
+    return "".join(blocks)
 
 
 def masthead(subtitle: str) -> None:

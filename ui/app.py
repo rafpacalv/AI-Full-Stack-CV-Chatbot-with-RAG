@@ -1,9 +1,8 @@
 """LeadTech CV Screener - Streamlit front end.
 
 Talks to the FastAPI backend over Server-Sent Events so answers stream in as the
-local model produces them. Three tabs mirror the three things the brief asks to
-be shown: the chat itself, the insights it can compute, and the pipeline behind
-both.
+local model produces them. Four tabs: the chat itself, the insights it can
+compute, the pipeline behind both, and the log of everything asked of it.
 """
 
 from __future__ import annotations
@@ -22,13 +21,22 @@ from cvscreener.branding import (  # noqa: E402
     AMBER,
     GREY_MUTED,
     GREY_TEXT,
+    PINK,
     SKY,
     role_group,
 )
 from cvscreener.config import settings  # noqa: E402
+from cvscreener.rag.answer import tidy_answer  # noqa: E402
 
 import charts  # noqa: E402
-from theme import inject_css, masthead, metric, role_tiles, sidebar_logo  # noqa: E402
+from theme import (  # noqa: E402
+    inject_css,
+    masthead,
+    metric,
+    render_markdown,
+    role_tiles,
+    sidebar_logo,
+)
 
 API = settings.api_url
 
@@ -77,6 +85,29 @@ def api_stats() -> dict | None:
         r = httpx.get(f"{API}/stats", timeout=10)
         return r.json() if r.status_code == 200 else None
     except httpx.HTTPError:
+        return None
+
+
+def api_logs(limit: int = 200) -> list[dict]:
+    """The question/answer transcript. Deliberately not cached.
+
+    Everything else here is behind `st.cache_data`, but a log you have to wait
+    60 seconds to see updating is not a log. It is a local file read, so the
+    cost of skipping the cache is nothing.
+    """
+    try:
+        r = httpx.get(f"{API}/logs", params={"limit": limit}, timeout=15)
+        return r.json()["records"] if r.status_code == 200 else []
+    except (httpx.HTTPError, KeyError, ValueError):
+        return []
+
+
+def api_clear_logs() -> int | None:
+    """Empty the transcript. Returns how many records went, or None on failure."""
+    try:
+        r = httpx.delete(f"{API}/logs", timeout=15)
+        return r.json()["removed"] if r.status_code == 200 else None
+    except (httpx.HTTPError, KeyError, ValueError):
         return None
 
 
@@ -229,7 +260,9 @@ with st.sidebar:
 # --------------------------------------------------------------------------
 masthead("AI-powered CV screening · bilingual RAG on local Ollama")
 
-tab_chat, tab_insights, tab_pipeline = st.tabs(["Chat", "Insights", "Pipeline"])
+tab_chat, tab_insights, tab_pipeline, tab_logs = st.tabs(
+    ["Chat", "Insights", "Pipeline", "Logs"]
+)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -263,7 +296,10 @@ with tab_chat:
         # key, and the position in the transcript is what makes this one unique.
         for turn, msg in enumerate(st.session_state.messages):
             css = "lt-msg-user" if msg["role"] == "user" else "lt-msg-bot"
-            st.markdown(f"<div class='{css}'>{msg['content']}</div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div class='{css}'>{render_markdown(msg['content'])}</div>",
+                unsafe_allow_html=True,
+            )
             if msg.get("citations"):
                 render_citations(msg["citations"])
             if msg.get("chart"):
@@ -281,7 +317,10 @@ with tab_chat:
         # below - including the placeholders and st.caption - lands above the
         # input box rather than after it.
         with conversation:
-            st.markdown(f"<div class='lt-msg-user'>{question}</div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div class='lt-msg-user'>{render_markdown(question)}</div>",
+                unsafe_allow_html=True,
+            )
 
             # Two placeholders reserved up front. `st.empty()` returns a handle
             # that can be rewritten in place, which is how the answer grows
@@ -326,7 +365,9 @@ with tab_chat:
                     # on the end to signal that more is coming.
                     answer += payload.get("t", "")
                     answer_slot.markdown(
-                        f"<div class='lt-msg-bot'>{answer}▌</div>", unsafe_allow_html=True
+                        f"<div class='lt-msg-bot'>{render_markdown(answer)}"
+                        "<span class='lt-cursor'>▌</span></div>",
+                        unsafe_allow_html=True,
                     )
                 elif event == "meta":
                     # Citations, retrieval trace and any chart. Sent once, after
@@ -337,8 +378,15 @@ with tab_chat:
         except httpx.HTTPError as exc:
             st.error(f"Backend error: {exc}")
 
-        # Final repaint without the cursor.
-        answer_slot.markdown(f"<div class='lt-msg-bot'>{answer}</div>", unsafe_allow_html=True)
+        # Final repaint: cursor gone, and the answer tidied. The clean-up waits
+        # until the stream is complete because it works on whole lines - during
+        # streaming a bullet legitimately looks empty for the moment before its
+        # text arrives.
+        answer = tidy_answer(answer)
+        answer_slot.markdown(
+            f"<div class='lt-msg-bot'>{render_markdown(answer)}</div>",
+            unsafe_allow_html=True,
+        )
 
         with conversation:
             if elapsed := meta.get("elapsed_s"):
@@ -503,3 +551,111 @@ with tab_pipeline:
                     f"{c['section']}<br>{c['text'][:320]}…</div>",
                     unsafe_allow_html=True,
                 )
+
+
+with tab_logs:
+    # Pink is this tab's accent, following the one-accent-per-view rule: Chat
+    # is mint, Insights sky, Pipeline mustard. Pink is what leadtech.com uses
+    # on /about-us, where mint has no fill presence at all.
+    records = api_logs(limit=500)
+
+    if not records:
+        st.info(
+            "Nothing logged yet. Every question, its answer and any error are "
+            "written to `data/logs/chat.jsonl` as one JSON object per line."
+        )
+    else:
+        frame = pd.DataFrame(records)
+        failed = frame["error"].notna().sum() if "error" in frame else 0
+        latencies = pd.to_numeric(frame.get("elapsed_s"), errors="coerce").dropna()
+
+        cols = st.columns(4)
+        cols[0].markdown(metric(len(frame), "Questions", PINK), unsafe_allow_html=True)
+        cols[1].markdown(metric(int(failed), "Errors", PINK), unsafe_allow_html=True)
+        cols[2].markdown(
+            metric(f"{latencies.median():.1f}s" if len(latencies) else "—", "Median", PINK),
+            unsafe_allow_html=True,
+        )
+        # Median, not mean: one cold-start question at 30s drags an average far
+        # enough to misrepresent every other question in the file.
+        cols[3].markdown(
+            metric(frame["intent"].replace("", "?").nunique(), "Intents", PINK),
+            unsafe_allow_html=True,
+        )
+
+        st.markdown("")
+        st.markdown("###### Exchanges")
+        table = pd.DataFrame(
+            {
+                # Labelled UTC because that is what is stored, and on a machine
+                # two hours ahead an unlabelled 10:15 next to a 12:15 wall clock
+                # reads as a bug in the log rather than a timezone.
+                "Time (UTC)": frame["ts"].astype(str).str.slice(11, 19),
+                "Intent": frame["intent"].replace("", "—"),
+                "Seconds": pd.to_numeric(frame.get("elapsed_s"), errors="coerce"),
+                "Question": frame["question"],
+                "Sources": frame["citations"].apply(len),
+                "Missing": frame["missing_terms"].apply(lambda t: ", ".join(t) if t else ""),
+                "Error": frame["error"].fillna(""),
+            }
+        )
+        st.dataframe(table, use_container_width=True, hide_index=True, height=320)
+
+        with st.expander("Read a full exchange"):
+            labels = [
+                f"{r['ts'][11:19]} · {r['question'][:70]}" for r in records
+            ]
+            chosen = st.selectbox("Exchange", labels, label_visibility="collapsed")
+            record = records[labels.index(chosen)]
+            st.markdown(
+                f"<div class='lt-msg-user'>{render_markdown(record['question'])}</div>",
+                unsafe_allow_html=True,
+            )
+            if record.get("error"):
+                st.error(record["error"])
+            if record.get("answer"):
+                st.markdown(
+                    f"<div class='lt-msg-bot'>{render_markdown(record['answer'])}</div>",
+                    unsafe_allow_html=True,
+                )
+
+        st.markdown("")
+        left, right = st.columns([1, 1])
+        with left:
+            st.download_button(
+                "Download JSONL",
+                "\n".join(json.dumps(r, ensure_ascii=False) for r in reversed(records)),
+                file_name="chat.jsonl",
+                mime="application/x-ndjson",
+                use_container_width=True,
+            )
+        with right:
+            # Two steps, because this cannot be undone and the button sits next
+            # to a harmless download. The confirmation replaces the button
+            # rather than sitting beside it, so there is nothing to mis-click.
+            if st.session_state.get("confirm_clear_logs"):
+                if st.button(
+                    f"Delete {len(records)} records — confirm",
+                    type="primary",
+                    use_container_width=True,
+                ):
+                    removed = api_clear_logs()
+                    st.session_state.confirm_clear_logs = False
+                    if removed is None:
+                        st.error("Could not clear the log.")
+                    else:
+                        st.toast(f"Cleared {removed} records.")
+                        st.rerun()
+            elif st.button("Clear log", use_container_width=True):
+                st.session_state.confirm_clear_logs = True
+                st.rerun()
+
+        if st.session_state.get("confirm_clear_logs"):
+            if st.button("Cancel", key="cancel-clear-logs"):
+                st.session_state.confirm_clear_logs = False
+                st.rerun()
+
+    st.caption(
+        "The rotating application log (warmup, Ollama failures, tracebacks) is "
+        "kept separately in `data/logs/cvscreener.log` and is not cleared here."
+    )

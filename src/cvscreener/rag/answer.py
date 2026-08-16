@@ -13,6 +13,7 @@ does not do reliably unless told.
 
 from __future__ import annotations
 
+import re
 from typing import Iterator
 
 import pandas as pd
@@ -33,13 +34,29 @@ de datos de CVs.
 
 Reglas estrictas:
 1. Usa ÚNICAMENTE la información de los fragmentos de CV proporcionados.
-2. Si los fragmentos no contienen la respuesta, dilo claramente. Nunca inventes \
-candidatos, empresas, fechas ni tecnologías.
+2. Si los fragmentos no contienen la respuesta, dilo claramente en UNA sola \
+frase y NO uses el formato de lista de la regla 5: no menciones a nadie. Esta \
+regla tiene prioridad sobre todas las demás. Nunca inventes candidatos, \
+empresas, fechas ni tecnologías.
 3. Cita siempre a los candidatos por su nombre completo.
 4. Algunos CVs están en inglés: tradúcelos al responder, pero no cambies los \
 nombres propios ni los nombres de tecnologías.
-5. Sé conciso y concreto. Usa listas cuando compares varios candidatos.
-6. Responde SIEMPRE en español."""
+5. Cuando SÍ haya candidatos que respondan a la pregunta, AGRUPA POR PERSONA. \
+Cada candidato aparece UNA sola vez, con su nombre como encabezado, y debajo \
+sus datos. Nunca repitas un nombre en varias entradas de la lista, ni siquiera \
+si tiene varios proyectos. Usa exactamente este formato:
+
+**Nombre Completo** — su puesto o resumen en una línea
+- un logro o dato concreto
+- otro logro o dato concreto
+
+**Otro Candidato** — su puesto o resumen en una línea
+- un logro o dato concreto
+
+6. Si de un candidato solo consta su puesto y ningún detalle, escribe \
+únicamente su línea de encabezado. NUNCA escribas una viñeta vacía.
+7. Sé conciso y concreto.
+8. Responde SIEMPRE en español."""
 
 SYSTEM_EN = """\
 You are LeadTech's recruitment assistant. You answer questions about a CV \
@@ -47,13 +64,28 @@ database.
 
 Strict rules:
 1. Use ONLY the information in the provided CV excerpts.
-2. If the excerpts do not contain the answer, say so plainly. Never invent \
-candidates, companies, dates or technologies.
+2. If the excerpts do not contain the answer, say so plainly in ONE sentence \
+and do NOT use the list format from rule 5: name nobody. This rule overrides \
+every other rule. Never invent candidates, companies, dates or technologies.
 3. Always refer to candidates by their full name.
 4. Some CVs are written in Spanish: translate when answering, but keep proper \
 nouns and technology names unchanged.
-5. Be concise and specific. Use lists when comparing several candidates.
-6. ALWAYS answer in English."""
+5. When candidates DO answer the question, GROUP BY PERSON. Each candidate \
+appears ONCE, with their name as a heading and their details underneath. Never \
+repeat a name across several list entries, not even when they have several \
+relevant projects. Use exactly this format:
+
+**Full Name** — their role or a one-line summary
+- one concrete achievement or fact
+- another concrete achievement or fact
+
+**Other Candidate** — their role or a one-line summary
+- one concrete achievement or fact
+
+6. If only a candidate's role is recorded and no details, write their heading \
+line alone. NEVER write an empty bullet.
+7. Be concise and specific.
+8. ALWAYS answer in English."""
 
 # Function words that are distinctive to one language and common in questions.
 _ES_MARKERS = (
@@ -90,18 +122,35 @@ def detect_question_language(question: str) -> str:
 
 
 def build_context(chunks: list[RetrievedChunk]) -> str:
-    """Render retrieved chunks as a numbered, attributable context block."""
+    """Render retrieved chunks grouped by candidate, one numbered block each.
+
+    Grouping is not cosmetic. Listed flat, the model mirrors the shape it is
+    given and emits one bullet per fragment - measured, a question about
+    machine learning returned the same candidate five separate times, once for
+    his profile and once for each achievement inside a single experience
+    chunk, each prefixed with his name. The reader has to reassemble the person
+    from the pieces.
+
+    So the context is shaped like the answer that is wanted: one numbered
+    entry per person, their sections nested underneath. Candidates keep the
+    order they were retrieved in, so the best match is still first.
+    """
+    # dict preserves insertion order, which is RRF order: best candidate first.
+    grouped: dict[str, list[RetrievedChunk]] = {}
+    for item in chunks:
+        grouped.setdefault(item.chunk.candidate, []).append(item)
+
     parts: list[str] = []
     total = 0
-    for i, item in enumerate(chunks, 1):
-        # Every block is labelled with its candidate, file and section. Without
-        # that the model sees a wall of anonymous text and cannot attribute
-        # anything correctly - or cite it.
-        block = (
-            f"[{i}] Candidate: {item.chunk.candidate} "
-            f"(file: {item.chunk.source_file}, section: {item.chunk.section})\n"
-            f"{item.chunk.text}"
+    for i, (candidate, items) in enumerate(grouped.items(), 1):
+        # Every block is labelled with its candidate and file. Without that the
+        # model sees a wall of anonymous text and cannot attribute anything
+        # correctly - or cite it.
+        sections = "\n".join(
+            f"  [{item.chunk.section}] {item.chunk.text}" for item in items
         )
+        block = f"[{i}] Candidate: {candidate} (file: {items[0].chunk.source_file})\n{sections}"
+
         # Stop at the budget rather than truncating mid-block: half a CV
         # excerpt is worse than one fewer excerpt. gemma2:9b has an 8k window
         # and this keeps well inside it.
@@ -110,6 +159,27 @@ def build_context(chunks: list[RetrievedChunk]) -> str:
         parts.append(block)
         total += len(block)
     return "\n\n".join(parts)
+
+
+_EMPTY_BULLET_RE = re.compile(r"^[ \t]*[-*•]+[ \t]*$", re.MULTILINE)
+_BLANK_RUN_RE = re.compile(r"\n{3,}")
+
+
+def tidy_answer(text: str) -> str:
+    """Remove bullets the model opened and had nothing to put in.
+
+    The grouped format asks for a heading per candidate and bullets beneath.
+    When a candidate was retrieved on their headline alone there is nothing to
+    put in a bullet, and gemma2:9b emits an empty one anyway - the prompt says
+    not to, twice, in both languages, and it does it regardless. A 9B model
+    reliably follows the shape of an example and unreliably follows a
+    prohibition, so this is not worth another round of prompt wording: an empty
+    list item is never valid output, which makes it a job for code.
+
+    Applied where the finished answer exists rather than mid-stream, so
+    token-by-token rendering is untouched.
+    """
+    return _BLANK_RUN_RE.sub("\n\n", _EMPTY_BULLET_RE.sub("", text)).strip()
 
 
 def _table_context(frame: pd.DataFrame, limit: int = 40) -> str:

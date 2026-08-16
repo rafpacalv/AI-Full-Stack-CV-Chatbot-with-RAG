@@ -24,7 +24,7 @@ worth flagging rather than quietly editing:
 | 1 — Path traversal in `/cv/{cv_id}` | **Fixed** — identifier validated, resolved path confined to the corpus directory |
 | 2 — Unbounded `question` / `top_k` | **Fixed** — 2000 chars and `top_k <= 50`, enforced by pydantic |
 | 3 — Exception detail returned to the client | **Accepted** — deliberate for a local demo; see the finding |
-| 4 — CORS `allow_origins=["*"]` | **Accepted** — bound to 127.0.0.1; documented |
+| 4 — CORS `allow_origins=["*"]` | **Fixed** — scoped to the UI's origin when `DELETE /logs` was added |
 | 5 — Prompt injection via CV text | **Accepted** — synthetic corpus; the real mitigation is noted |
 | 6 — Pickle deserialisation of the BM25 index | **Accepted** — the file is produced by the ingest step, not user-supplied |
 | 7 — Outdated dependencies | **Open** — no known CVEs; not upgraded during the assessment |
@@ -338,8 +338,20 @@ except Exception as exc:
 
 ## Finding 4: CORS Allows All Origins
 
-**Severity:** Low  
+**Severity:** Low
 **File:Line:** `src/cvscreener/api/main.py:71-76`
+**Status: FIXED** — accepted at the time of this review, then fixed when
+`DELETE /logs` was added. A wildcard policy is harmless while every endpoint is
+read-only and is not once one of them destroys data: any site the user happened
+to be visiting could have wiped their transcript with a single `fetch` to
+localhost. Now scoped to the UI's origin.
+
+Worth recording that the reasoning below understated the case. CORS was never
+buying this app anything at all — the request to the API is made by Streamlit's
+*server*, in Python, not by the page in the browser, so no browser ever calls
+this API cross-origin. The wildcard was pure attack surface with no
+corresponding benefit, which makes it a cheaper fix than "low severity,
+localhost-only" suggests.
 
 ### What the code does
 

@@ -828,3 +828,227 @@ def test_the_default_model_still_comes_from_settings():
     from cvscreener.api import main
 
     assert "req.model or settings.chat_model" in inspect.getsource(main._chat_events)
+
+
+# --------------------------------------------------------------------------
+# Answer shape
+# --------------------------------------------------------------------------
+def test_context_is_grouped_one_block_per_candidate():
+    """Listed flat, the model mirrors the shape and repeats a name per fragment.
+
+    Measured before this: "¿Quién tiene experiencia con aprendizaje
+    automático?" returned Guillem Roca Prats five separate times - once for his
+    profile and once per achievement inside a single experience chunk - each
+    bullet re-stating his name. Only two of the five retrieved chunks were his.
+    """
+    from types import SimpleNamespace
+
+    from cvscreener.rag.answer import build_context
+
+    def hit(cv_id, candidate, section, text):
+        # The filename must not embed the candidate's name, or the count below
+        # would pass for the wrong reason.
+        return SimpleNamespace(
+            chunk=SimpleNamespace(
+                candidate=candidate, section=section, text=text,
+                source_file=f"{cv_id}.pdf",
+            )
+        )
+
+    # Interleaved on purpose: grouping must not depend on arrival order.
+    context = build_context([
+        hit("cv_03", "Guillem Roca Prats", "Perfil", "Ingeniero de ML."),
+        hit("cv_44", "Rosa García López", "Encabezado", "Ingeniera de Machine Learning."),
+        hit("cv_03", "Guillem Roca Prats", "Experiencia", "PyTorch, MLflow."),
+    ])
+
+    assert context.count("Guillem Roca Prats") == 1, context
+    assert context.count("Rosa García López") == 1, context
+    # Two numbered entries for two people, not three for three chunks.
+    assert "[1] Candidate:" in context and "[2] Candidate:" in context
+    assert "[3] Candidate:" not in context
+    # Both of Guillem's sections survive, nested under his single entry.
+    assert "[Perfil]" in context and "[Experiencia]" in context
+    # Retrieval order is preserved: the best-matching candidate stays first.
+    assert context.index("Guillem") < context.index("Rosa")
+
+
+def test_context_still_respects_the_token_budget():
+    from types import SimpleNamespace
+
+    from cvscreener.rag.answer import MAX_CONTEXT_CHARS, build_context
+
+    hits = [
+        SimpleNamespace(
+            chunk=SimpleNamespace(
+                candidate=f"Person {i}", section="Experience",
+                text="x" * 2000, source_file=f"cv_{i}.pdf",
+            )
+        )
+        for i in range(20)
+    ]
+    assert len(build_context(hits)) <= MAX_CONTEXT_CHARS
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("**Rosa** — Ingeniera\n-  \n\n\n", "**Rosa** — Ingeniera"),
+        ("**A** — role\n- real\n-\n\n**B** — role\n- also", "**A** — role\n- real\n\n**B** — role\n- also"),
+        ("- \n*  \n•\n", ""),
+    ],
+)
+def test_empty_bullets_are_removed(raw, expected):
+    """The prompt forbids them in both languages and gemma2:9b writes them anyway."""
+    from cvscreener.rag.answer import tidy_answer
+
+    assert tidy_answer(raw) == expected
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "**A** — role\n- keeps -- dashes inside text\n- 5 - 3 = 2",
+        "plain prose with a - hyphen in it",
+        "- a real bullet with content",
+    ],
+)
+def test_tidying_leaves_real_content_alone(text):
+    from cvscreener.rag.answer import tidy_answer
+
+    assert tidy_answer(text) == text.strip()
+
+
+# --------------------------------------------------------------------------
+# Chat bubble rendering
+# --------------------------------------------------------------------------
+def test_bubbles_render_markdown_the_html_block_would_have_swallowed():
+    """CommonMark does not process markdown inside a raw HTML block.
+
+    The bubbles are `<div class='lt-msg-bot'>…</div>`, and a blank line
+    *terminates* that block - so a grouped answer rendered half one way and
+    half the other: the first candidate appeared as literal `**Name**` with the
+    bullets collapsed into a paragraph, everyone after the first blank line
+    rendered fine. Converting before injection is what makes it consistent.
+    """
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ui"))
+    from theme import render_markdown
+
+    html = render_markdown(
+        "**Guillem Roca Prats** — Senior ML Engineer\n"
+        "- PyTorch, +15% accuracy.\n"
+        "- MLflow, -20% time.\n"
+        "\n"
+        "**Rosa García López** — Ingeniera de ML"
+    )
+
+    # No markdown syntax survives into the page.
+    assert "**" not in html
+    assert html.count("<strong>") == 2
+    # Both bullets are one list, and the second candidate is a separate block.
+    assert html.count("<li>") == 2
+    assert html.count("<ul>") == 1
+    # The heading before the blank line is rendered, not left raw - the bug.
+    assert "<strong>Guillem Roca Prats</strong>" in html
+
+
+def test_bubbles_escape_html_from_the_model():
+    """Answers go into unsafe_allow_html=True, so the text must be escaped.
+
+    A CV is an attacker-controlled document in any real deployment, and its
+    text reaches the prompt and can be echoed into the answer.
+    """
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ui"))
+    from theme import render_markdown
+
+    html = render_markdown("<script>alert(1)</script> and <b>raw</b>")
+    assert "<script>" not in html
+    assert "&lt;script&gt;" in html
+    assert "<b>" not in html
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("plain prose", "<p>plain prose</p>"),
+        ("- only a bullet", "<ul><li>only a bullet</li></ul>"),
+        ("1. numbered", "<ul><li>numbered</li></ul>"),
+        ("*italic*", "<p><em>italic</em></p>"),
+        ("", ""),
+    ],
+)
+def test_markdown_subset_shapes(text, expected):
+    import sys
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ui"))
+    from theme import render_markdown
+
+    assert render_markdown(text) == expected
+
+
+def test_transcript_reads_back_newest_first(transcript):
+    from cvscreener.logs import log_chat, read_transcript
+
+    for i in range(5):
+        log_chat(f"q{i}", f"a{i}", model="m", intent="retrieve")
+
+    records = read_transcript(limit=3)
+    assert [r["question"] for r in records] == ["q4", "q3", "q2"]
+    assert transcript.exists()
+
+
+def test_transcript_survives_a_corrupt_line(transcript):
+    """A torn final line must not hide the records before it."""
+    from cvscreener.logs import log_chat, read_transcript
+
+    log_chat("good", "answer", model="m")
+    with open(transcript, "a", encoding="utf-8") as handle:
+        handle.write('{"question": "truncated"\n')
+
+    records = read_transcript()
+    assert [r["question"] for r in records] == ["good"]
+
+
+def test_clearing_the_transcript_reports_what_it_removed(transcript):
+    from cvscreener.logs import clear_transcript, log_chat, read_transcript
+
+    for i in range(4):
+        log_chat(f"q{i}", "a", model="m")
+
+    assert clear_transcript() == 4
+    assert read_transcript() == []
+    # Truncated, not deleted: the API appends from a worker thread, and on
+    # Windows an open handle blocks removal.
+    assert transcript.exists()
+    # Clearing again is not an error, and writing still works afterwards.
+    assert clear_transcript() == 0
+    log_chat("after", "a", model="m")
+    assert len(read_transcript()) == 1
+
+
+def test_clearing_a_missing_transcript_is_not_an_error(tmp_path, monkeypatch):
+    from cvscreener.config import Settings
+    from cvscreener.logs import clear_transcript
+
+    monkeypatch.setattr(Settings, "logs_dir", property(lambda self: tmp_path / "nope"))
+    assert clear_transcript() == 0
+
+
+def test_cors_is_not_a_wildcard():
+    """DELETE /logs is destructive, so any site must not be able to reach it.
+
+    Streamlit's *server* calls this API from Python, never the browser page, so
+    CORS buys the app nothing and a wildcard only widens what a web page can
+    reach - including a drive-by DELETE to localhost.
+    """
+    from cvscreener.api.main import app
+
+    cors = [m for m in app.user_middleware if "CORS" in str(m)]
+    assert cors, "the CORS middleware disappeared"
+    origins = cors[0].kwargs["allow_origins"]
+    assert "*" not in origins
+    assert any("8501" in origin for origin in origins)

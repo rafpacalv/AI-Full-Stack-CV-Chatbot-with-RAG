@@ -76,11 +76,23 @@ Query        question → router ┬─ retrieve  → dense ⊕ BM25 → RRF →
 ### Three things worth pointing at
 
 **1 · The router exists because top-*k* cannot count.**
-"Who knows Kubernetes?" is a retrieval question. "*How many* candidates know
-Kubernetes?" is not — with `k=5`, the correct answer is unreachable by
-construction, however good the retriever. So a schema-constrained classifier
-sends counting and charting questions to pandas over the full candidate table
-instead. Exact counts verified against the source data, not estimated.
+
+Two different questions, two different paths:
+
+- **"Who has Kubernetes experience?"** → retrieve the 5 most relevant CV chunks → name them
+- **"How many candidates know Kubernetes?"** → scan all 50 CVs → count exactly
+
+Here's why the distinction matters. Suppose 8 of the 50 candidates list Kubernetes,
+but they appear scattered across different CV sections. With `top_k=5`, you might
+only retrieve chunks from 3 of those 8 (if each candidate has a Kubernetes bullet).
+Your retriever is doing its job — returning the *most relevant* chunks — but you've
+now mathematically capped your answer: you can never find more than 5 candidates,
+even though 8 exist. Answer: "some candidates have Kubernetes" is incomplete.
+
+The **router** (a schema-constrained LLM classifier) recognizes counting questions
+like "*how many*" or "*count*" and sends them to a different path: `pandas` over the
+structured candidate table, scanning all 50 at once. That path trades relevance ranking
+for completeness — you get an exact count, not a best-effort retrieval.
 
 **2 · Metadata is re-derived from the PDFs, never reused from the generator.**
 `data/profiles/*.json` holds exactly the structured data the ingestion step
@@ -95,36 +107,36 @@ See below.
 
 ## The most interesting bug
 
-Hybrid retrieval fuses a dense retriever with BM25 using Reciprocal Rank Fusion,
-which rewards documents appearing in *both* rankings. In a bilingual corpus that
-quietly breaks:
+The system combines two search methods: **dense retrieval** (semantic embeddings)
+and **BM25** (keyword matching). It fuses them using Reciprocal Rank Fusion (RRF),
+which gives higher scores to chunks that rank well in *both* methods.
 
-```
-Spanish query → BM25 scores:  { es: 56 non-zero,  en: 0 }
-```
+In a **bilingual corpus**, this creates a hidden asymmetry:
 
-A lexical retriever **cannot match across a language boundary**. So an English
-chunk can only ever collect rank mass from one of the two retrievers — it is
-structurally capped at roughly half the fused score of a Spanish chunk, no
-matter how relevant it is.
+- **Dense retrieval** is truly bilingual. Embeddings for Spanish and English sit
+  in the same vector space, so the embedding of *"diseño de producto"* (ES) is
+  close to the embedding of *"product design"* (EN) in the index.
+- **BM25** is lexical-only. It cannot match Spanish words in English chunks.
 
-This suppressed correct answers. For *"¿Qué candidato se dedica al diseño de
-producto y accesibilidad?"*:
+Ask in Spanish: *"¿Qué candidato se dedica al diseño de producto y accesibilidad?"*
 
-| Chunk | Dense similarity | In results? |
-|---|---|---|
-| **Rasmus Lindqvist** (EN, Product Designer) | **0.5183** — best in the entire index | ❌ no |
-| Adrián Quesada (ES) | 0.4667 (0.90 of best) | ✅ yes |
-| Marta Sanchis (ES) | 0.4597 (0.89 of best) | ✅ yes |
+| Chunk | Method | Dense score | BM25 rank | Fused score | In top 5? |
+|---|---|---|---|---|---|
+| **Rasmus Lindqvist** (EN: "Product Designer") | both | 0.5183 ⭐ (best) | ❌ (0) | **low** | ❌ |
+| Adrián Quesada (ES: "Diseño de producto") | both | 0.4667 | ✅ rank 2 | **high** | ✅ |
+| Marta Sanchis (ES: "Diseño UX") | both | 0.4597 | ✅ rank 3 | **high** | ✅ |
 
-The best match in the corpus was losing to two weaker ones because of a scoring
-artefact.
+**What went wrong:** Rasmus is the best semantic match (0.5183 vs 0.4667), but he
+appears in only *one* ranking (dense). Adrián and Marta appear in *both* (dense +
+BM25), so RRF gives them higher combined scores even though they're individually
+weaker. The system was **structurally biasing against correct English results**.
 
-**The fix** reserves final slots for other-language chunks whose *dense*
-similarity stands on its own — at least 0.90 of the best in the index. The
-threshold is relative and stays within a single metric, so it never blends the
-two incomparable score scales that RRF was chosen to avoid. Three regression
-tests pin the behaviour.
+**The fix** reserves the final result slots for cross-language chunks. If an
+English chunk's dense similarity is at least 0.90 of the best match in the entire
+index, it gets included despite losing the BM25 vote. This fairness threshold is
+purely *relative* (comparing one metric to itself), never blending BM25's
+corpus-dependent scores with semantic scores. Three regression tests pin the
+behaviour.
 
 **What that threshold does not do.** It is a fairness gate, not a relevance
 filter. Because the ratio is relative within one query, an off-topic question
@@ -300,6 +312,55 @@ both now tested.
 All four ways of asking return the same six people, and `UPC`/`UPF`/`UPM`/`UPV`
 and `UB`/`UAB` stay apart.
 
+### The model mirrors the shape of its context
+
+*"¿Quién tiene experiencia con aprendizaje automático?"* returned the same
+candidate five times — once for his profile and once per achievement — each
+bullet re-stating his name. The reader had to reassemble the person from the
+pieces.
+
+The obvious reading is "too many chunks from one candidate", and it is wrong:
+only **two** of the five retrieved chunks were his. The model was flattening the
+achievements from *inside* one experience chunk into top-level entries. It was
+handed a flat list of five fragments and produced a flat list of bullets,
+because a flat list is what it was shown.
+
+So the fix is not mainly a prompt. `build_context` now groups the retrieved
+chunks by candidate — one numbered entry per person, their sections nested
+underneath, candidates still in RRF order so the best match leads. The context
+is shaped like the answer that is wanted. The prompt adds the format explicitly,
+with an example: a 9B model follows a demonstrated shape far more reliably than
+a described one.
+
+Four candidates, four entries, matching the four citations — and one candidate
+who had been retrieved and cited but omitted from the prose now appears, so the
+sources and the answer stopped contradicting each other.
+
+Two defects that this introduced, both worth recording:
+
+**An empty bullet.** The template asks for bullets, so a candidate retrieved on
+their headline alone got a heading and then `-` with nothing after it. The
+prompt forbids this in both languages and gemma2:9b did it anyway. Rather than
+a third round of wording: an empty list item is never valid output, which makes
+it a job for code. `tidy_answer()` strips them where the finished answer exists,
+never mid-stream, since a bullet legitimately looks empty for the moment before
+its text arrives.
+
+**Half the answer rendered as raw markdown.** Visible only in a screenshot: the
+first candidate appeared as literal `**Guillem Roca Prats**` with the bullets
+collapsed into a paragraph, while everyone after him rendered correctly. This is
+the same CommonMark rule that already has a comment in `theme.py` — markdown is
+not processed inside a raw HTML block, and a blank line *terminates* that block.
+The chat bubbles are `<div class='lt-msg-bot'>…</div>`, and the grouped format
+was the first thing to put blank lines inside one.
+
+Fixed by converting to HTML before injection, with a deliberately narrow
+converter: bold, italic, bullets, numbered items, paragraphs. That is the whole
+grammar, because the prompt fixes the format; anything else degrades to a
+paragraph. It escapes first, which also closes a hole — model output was going
+into `unsafe_allow_html=True` verbatim, so a CV containing markup could have put
+it in the page.
+
 ### Two bugs that only surfaced by reading the extracted text
 
 **Silent glyph corruption.** ReportLab draws bullets in the style's
@@ -400,6 +461,7 @@ trusting the argument.
 | **Chat** | Streamed answers, routing badge, citation chips, source PDF download, live model switch |
 | **Insights** | Corpus-level charts and the full candidate table |
 | **Pipeline** | Ingestion stats and the retrieval trace for the last question — dense rank, BM25 rank and fused score per chunk |
+| **Logs** | Every exchange with its routing, latency and errors; read one back in full, download the JSONL, or clear it |
 
 ---
 
@@ -426,6 +488,7 @@ data/             cvs/ · photos/ · profiles/ · index/ · logs/
 | `POST /route` | The query plan alone |
 | `GET /candidates` | The full candidate table |
 | `GET /cv/{cv_id}` | The original PDF |
+| `GET /logs` · `DELETE /logs` | The question/answer transcript · empty it |
 | `GET /stats` · `GET /health` | Index stats · liveness |
 
 Interactive docs at `http://127.0.0.1:8000/docs`.
@@ -461,7 +524,26 @@ to "not logging", never to "not answering", and there is a test for that.
 
 Questions and answers are recorded in full because this corpus is synthetic.
 Against real CVs that is a retention and consent decision, not a code one:
-recruiter queries plus candidate names on disk is personal data.
+recruiter queries plus candidate names on disk is personal data. Which is why
+the transcript is visible and erasable from the app itself rather than being
+something you have to know a file path to find — the **Logs** tab shows every
+exchange with its routing, latency and errors, lets you read one back in full,
+download the JSONL, or clear the lot.
+
+Clearing is two steps: the first press replaces the button with a confirmation
+naming the number of records, so a single mis-click next to a harmless Download
+destroys nothing. The transcript is *truncated* rather than deleted — on Windows
+an open handle blocks removal, and the API appends to this file from a worker
+thread. The rotating application log is deliberately not cleared by that button;
+it holds the diagnostics you would want precisely when something has gone wrong.
+
+Adding `DELETE /logs` also forced a real change: the CORS policy was
+`allow_origins=["*"]`, which was harmless while every endpoint was read-only,
+and is not once one of them destroys data — any site the user was visiting could
+have wiped the transcript with one `fetch` to localhost. It is now scoped to the
+UI's origin. Worth noting that CORS was never buying this app anything: the
+request to the API is made by Streamlit's *server*, in Python, and no browser
+ever calls it cross-origin.
 
 ## Security
 

@@ -24,16 +24,21 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from typing import Iterator
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from ..config import settings
 from ..llm import client
-from ..logs import configure as configure_logging, log_chat
+from ..logs import (
+    clear_transcript,
+    configure as configure_logging,
+    log_chat,
+    read_transcript,
+)
 from ..rag.aggregate import candidates_summary, load_candidates, run_aggregate
-from ..rag.answer import stream_aggregate_answer, stream_retrieval_answer
+from ..rag.answer import stream_aggregate_answer, stream_retrieval_answer, tidy_answer
 from ..rag.keywords import missing_from_corpus
 from ..rag.retrieve import IndexNotBuilt, embed_query, load_index, search
 from ..rag.router import QueryPlan, route
@@ -72,11 +77,23 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# The Streamlit UI is a separate process on another port.
+# The Streamlit UI is a separate process on another port - but the request to
+# this API is made by Streamlit's *server*, in Python, not by the page in the
+# browser. No browser ever calls this API cross-origin, so CORS buys the app
+# nothing and only widens what a web page can reach.
+#
+# That was harmless while every endpoint was read-only. `DELETE /logs` is not:
+# with a wildcard policy, any site the user happened to be visiting could wipe
+# their transcript with one fetch() to localhost. Narrowed to the UI's own
+# origins, which keeps `fetch` from a browser console working during
+# development without leaving the door open to the whole web.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=[
+        f"http://localhost:{settings.ui_port}",
+        f"http://127.0.0.1:{settings.ui_port}",
+    ],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -172,6 +189,23 @@ def cv_pdf(cv_id: str) -> FileResponse:
         if path.resolve().parent == root:
             return FileResponse(path, media_type="application/pdf", filename=path.name)
     raise HTTPException(404, f"No PDF for {cv_id}")
+
+
+@app.get("/logs")
+def logs(limit: int = Query(default=200, ge=1, le=1000)) -> dict:
+    """The question/answer transcript, newest first."""
+    records = read_transcript(limit)
+    return {"returned": len(records), "limit": limit, "records": records}
+
+
+@app.delete("/logs")
+def clear_logs() -> dict:
+    """Empty the transcript.
+
+    The only endpoint here that destroys anything, which is why the CORS policy
+    above stopped being a wildcard when this was added.
+    """
+    return {"removed": clear_transcript()}
 
 
 @app.post("/search")
@@ -305,7 +339,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             )
             log_chat(
                 req.question,
-                "".join(spoken),
+                tidy_answer("".join(spoken)),
                 model=model,
                 intent=plan.intent,
                 elapsed_s=round(time.time() - started, 2),
@@ -386,7 +420,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
         )
         log_chat(
             req.question,
-            "".join(spoken),
+            tidy_answer("".join(spoken)),
             model=model,
             intent="retrieve",
             elapsed_s=round(time.time() - started, 2),
@@ -401,7 +435,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
     except IndexNotBuilt as exc:
         log_chat(
             req.question,
-            "".join(spoken),
+            tidy_answer("".join(spoken)),
             model=model,
             intent=plan.intent if plan else "",
             elapsed_s=round(time.time() - started, 2),
@@ -412,7 +446,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
         log.exception("chat failed")
         log_chat(
             req.question,
-            "".join(spoken),
+            tidy_answer("".join(spoken)),
             model=model,
             intent=plan.intent if plan else "",
             elapsed_s=round(time.time() - started, 2),

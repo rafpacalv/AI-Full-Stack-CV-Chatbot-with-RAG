@@ -141,7 +141,69 @@ def log_chat(
         settings.logs_dir.mkdir(parents=True, exist_ok=True)
         line = json.dumps(record, ensure_ascii=False)
         with _write_lock:
-            with open(settings.logs_dir / "chat.jsonl", "a", encoding="utf-8") as handle:
+            with open(transcript_path(), "a", encoding="utf-8") as handle:
                 handle.write(line + "\n")
     except OSError as exc:  # noqa: BLE001 - never fail a request over a log line
         log.warning("could not write the chat transcript: %s", exc)
+
+
+def transcript_path():
+    """Where the question/answer records live."""
+    return settings.logs_dir / "chat.jsonl"
+
+
+def read_transcript(limit: int = 200) -> list[dict]:
+    """Return the most recent records, newest first.
+
+    A malformed line is skipped rather than fatal. The transcript is appended
+    to from a worker thread while this may be reading it, so a torn final line
+    is possible in principle; losing it is better than failing to show the
+    other 199.
+    """
+    path = transcript_path()
+    if not path.exists():
+        return []
+
+    records: list[dict] = []
+    try:
+        with open(path, encoding="utf-8") as handle:
+            lines = handle.readlines()
+    except OSError as exc:  # noqa: BLE001
+        log.warning("could not read the chat transcript: %s", exc)
+        return []
+
+    for line in reversed(lines):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            records.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+        if len(records) >= limit:
+            break
+    return records
+
+
+def clear_transcript() -> int:
+    """Empty the transcript, returning how many records went.
+
+    Truncated rather than deleted. On Windows a file cannot be removed while
+    another handle is open, and the API appends to this one from a worker
+    thread - truncation has no such problem, and it also means the next write
+    does not have to recreate anything.
+    """
+    path = transcript_path()
+    if not path.exists():
+        return 0
+
+    with _write_lock:
+        try:
+            removed = sum(1 for line in open(path, encoding="utf-8") if line.strip())
+            open(path, "w", encoding="utf-8").close()
+        except OSError as exc:  # noqa: BLE001
+            log.warning("could not clear the chat transcript: %s", exc)
+            return 0
+
+    log.info("chat transcript cleared (%d records)", removed)
+    return removed
