@@ -17,7 +17,7 @@ import pandas as pd
 
 from ..config import settings
 from ..ingest.enrich import normalise_skill
-from ..textutils import fold_accents
+from ..textutils import WORD_RE, fold_accents
 from .router import QueryPlan
 
 
@@ -60,9 +60,6 @@ DIMENSION_LABELS = {
 }
 
 
-_WORD_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
-
-
 def _university_keys(value: str) -> set[str]:
     """Every string this university could reasonably be called.
 
@@ -85,7 +82,7 @@ def _university_keys(value: str) -> set[str]:
     # typed in lower case still resolves. This is what unifies the rows the
     # extractor spelled out with the rows it abbreviated: "Universitat de
     # Barcelona" and "UB" both produce the key "ub".
-    initials = "".join(w[0] for w in _WORD_RE.findall(text) if len(w) > 2)
+    initials = "".join(w[0] for w in WORD_RE.findall(text) if len(w) > 2)
     if len(initials) >= 2:
         keys.add(initials.casefold())
 
@@ -117,6 +114,30 @@ def _university_matches(query: str, stored: str) -> bool:
     if not (_is_spelled_out(left) and _is_spelled_out(right)):
         return False
     return left in right or right in left
+
+
+def name_matches(query: str, stored: str) -> bool:
+    """Is ``query`` a way of referring to the candidate called ``stored``?
+
+    Substring on folded, case-insensitive text, because people ask for
+    "Wilczynska", not the full legal name, and usually without the diacritics.
+
+    One definition, used twice: the table filter below narrows rows with it, and
+    the retrieval branch of the API resolves "summarise X" to a cv_id with it.
+    Those were two independent copies of the same three lines, which is exactly
+    how "the aggregate found her but the search did not" starts.
+    """
+    return fold_accents(str(query)).casefold() in fold_accents(str(stored)).casefold()
+
+
+def cv_ids_for_name(name: str) -> list[str]:
+    """Every CV the name could refer to; empty when nobody matches.
+
+    Empty is meaningful to the caller: the model may have misread a name that is
+    not in the corpus at all, and searching everything beats searching nothing.
+    """
+    frame = load_candidates()
+    return frame[frame["full_name"].apply(lambda n: name_matches(name, n))]["cv_id"].tolist()
 
 
 def apply_filters(frame: pd.DataFrame, plan: QueryPlan) -> tuple[pd.DataFrame, dict[str, str]]:
@@ -160,13 +181,8 @@ def apply_filters(frame: pd.DataFrame, plan: QueryPlan) -> tuple[pd.DataFrame, d
         out = out[out["years_experience"] >= plan.min_years]
         used["min_years"] = f">= {plan.min_years}"
 
-    # Substring match, not equality: people ask for "Wilczynska", not the full
-    # legal name, and often without the diacritics.
     if plan.candidate_name:
-        target = fold_accents(plan.candidate_name).casefold()
-        out = out[
-            out["full_name"].apply(lambda n: target in fold_accents(str(n)).casefold())
-        ]
+        out = out[out["full_name"].apply(lambda n: name_matches(plan.candidate_name, n))]
         used["candidate"] = plan.candidate_name
 
     return out, used

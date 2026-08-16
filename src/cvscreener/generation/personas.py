@@ -45,10 +45,6 @@ class Persona:
         return 2026 - self.birth_year
 
     @property
-    def slug(self) -> str:
-        return self.full_name.lower().replace(" ", "-").replace("'", "")
-
-    @property
     def role_display(self) -> str:
         """Resolve 'Ingeniero/a Backend' to a real gendered title.
 

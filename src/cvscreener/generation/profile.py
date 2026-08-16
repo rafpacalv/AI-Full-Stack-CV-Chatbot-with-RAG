@@ -9,11 +9,11 @@ from __future__ import annotations
 import json
 import logging
 import random
-import unicodedata
 from pathlib import Path
 
 from ..config import settings
 from ..llm import client
+from ..textutils import fold_accents
 from .personas import DEGREE_FIELDS_ES, Persona
 from .schema import CVProfile, GeneratedContent
 
@@ -24,11 +24,17 @@ log = logging.getLogger(__name__)
 EMAIL_DOMAINS = ["example.com", "example.org", "example.net"]
 
 
-def _ascii_slug(text: str) -> str:
-    """'Núria Badia' -> 'nuria.badia' (accents folded, ASCII only)."""
-    decomposed = unicodedata.normalize("NFKD", text)
-    stripped = "".join(c for c in decomposed if not unicodedata.combining(c))
-    parts = [p.lower() for p in stripped.replace("'", "").split() if p]
+def _email_handle(text: str) -> str:
+    """'Núria Badia Roldán' -> 'nuria.badia', the local part of an address.
+
+    Not :func:`textutils.ascii_slug`, deliberately. That one replaces every run
+    of non-alphanumerics with the separator, so "Sinéad O'Halloran" would become
+    "sinead.o" once truncated to two parts. An apostrophe inside a surname is
+    dropped here rather than split on, and only the first two names are kept -
+    both rules belong to e-mail addresses, not to slugs. What the two shared was
+    the accent folding, which is now imported instead of copied.
+    """
+    parts = [p.lower() for p in fold_accents(text).replace("'", "").split() if p]
     return ".".join(parts[:2])
 
 
@@ -39,7 +45,7 @@ def _contact(persona: Persona) -> tuple[str, str, str]:
     across runs - regenerating one CV never silently changes its e-mail.
     """
     rng = random.Random(persona.cv_id)
-    handle = _ascii_slug(persona.full_name)
+    handle = _email_handle(persona.full_name)
     email = f"{handle}@{rng.choice(EMAIL_DOMAINS)}"
     # Country-appropriate dialling code, so a Barcelona candidate does not end
     # up with a Dutch number.

@@ -361,6 +361,53 @@ paragraph. It escapes first, which also closes a hole — model output was going
 into `unsafe_allow_html=True` verbatim, so a CV containing markup could have put
 it in the page.
 
+### Every question was answered as if it were the first
+
+*"¿Quién tiene experiencia en aprendizaje automático?"* — correct. Then
+*"genera un diagrama sectorial sobre el nivel de seniority de los candidatos
+anteriores"* — a pie chart of **all 50 CVs**.
+
+Nothing had gone wrong in the chart path. The second question simply names no
+criteria: routed on its own it has no filters, so the aggregate covers the whole
+corpus and does so entirely correctly. The router had never been shown the
+conversation.
+
+The fix is to carry the **previous plan**, not the previous answer:
+
+- `QueryPlan` gains `follow_up`, and the router receives the preceding question
+  and its resolved plan. Filters the new question leaves empty are inherited;
+  `intent`, `chart_type` and `dimension` never are, because a follow-up always
+  supplies its own verb and inheriting `chart` would replot forever.
+- The plan handed back is the *resolved* one, already carrying whatever it
+  inherited itself — so a third question follows on from the second without
+  anyone tracking the whole chain.
+- On the semantic branch the previous question is also **prepended to the search
+  text**. Inheriting a filter does not help `"¿y dónde estudió?"`, which is four
+  words that match nothing; dense and BM25 both need the subject.
+
+Two details worth the space:
+
+**What is inherited is the filter, not the result.** The first question may have
+been semantic, so its answer came from the five chunks that happened to rank.
+Re-running the *filter* means "those candidates" resolves against the whole
+table — the follow-up can legitimately cover more people than the answer it
+refers to.
+
+**Why the model is trusted here and not for `dimension`.** The gender chart bug
+happened because the true answer was not a legal token, so constrained decoding
+returned the nearest one with no way to signal it. `follow_up` is a boolean:
+both truths are legal, the decoder is never cornered, and its output carries
+real information. A lexical check on the user's own words (*"anteriores"*,
+*"those"*, *"de ellos"*) can still force the flag **on**, never off — its
+absence proves nothing, since *"¿y por seniority?"* is a follow-up containing no
+such word.
+
+And because inheriting on a genuine change of subject is the failure mode, an
+inherited filter is never silent: the aggregate states its own criteria in the
+answer, the routing badge shows one chip per active filter plus a *"follows the
+previous question"* marker, and the chat header names the question being
+followed. **New query** drops the lot.
+
 ### Two bugs that only surfaced by reading the extracted text
 
 **Silent glyph corruption.** ReportLab draws bullets in the style's
@@ -458,7 +505,7 @@ trusting the argument.
 
 | Tab | |
 |---|---|
-| **Chat** | Streamed answers, routing badge, citation chips, source PDF download, live model switch |
+| **Chat** | Streamed answers, routing badge, citation chips, source PDF download, live model switch, follow-up questions and **New query** to reset the context |
 | **Insights** | Corpus-level charts and the full candidate table |
 | **Pipeline** | Ingestion stats and the retrieval trace for the last question — dense rank, BM25 rank and fused score per chunk |
 | **Logs** | Every exchange with its routing, latency and errors; read one back in full, download the JSONL, or clear it |
@@ -484,6 +531,7 @@ data/             cvs/ · photos/ · profiles/ · index/ · logs/
 | Endpoint | |
 |---|---|
 | `POST /chat` | SSE: `plan` → `token`* → `meta` (citations, chunks, chart) → `done` |
+| | Conversation state travels in the request (`previous_question`, `previous_plan`), so the server holds no sessions and every request is reproducible from its own body |
 | `POST /search` | Raw retrieval with dense/BM25/RRF scores |
 | `POST /route` | The query plan alone |
 | `GET /candidates` | The full candidate table |
@@ -566,6 +614,12 @@ Fixed, along with the two unbounded inputs, and covered by tests:
 | Path traversal in `/cv/{cv_id}` | Identifier must be alphanumeric, and the resolved file must sit in the corpus directory |
 | Unbounded `question` / `top_k` | 2000 characters, `top_k ≤ 50`, rejected by pydantic before any model runs |
 
+`previous_question`, added later for follow-ups, carries the same 2000-character
+bound — it reaches the same prompt as `question`, so it gets the same ceiling.
+Conversation state living in the request rather than on the server is also one
+fewer thing to secure: there is no session store to grow without limit, expire,
+or hand one user's conversation to another.
+
 The rest are accepted with reasons given in the report — chiefly that the app
 binds to `127.0.0.1`, the corpus is synthetic, and the pickled BM25 index is
 written by the ingest step rather than supplied by a user.
@@ -605,6 +659,14 @@ explaining the fix quotes the line that caused it.
   bilingual keyword sets, so a chart question that never names its field —
   *"break the candidates down"* — is treated as unsupported rather than guessed
   at. That is the intended trade, but it is a trade.
+- **A follow-up can inherit a filter across a change of subject.** The router
+  decides whether a question points backwards, and it can be wrong in the
+  direction that matters — answering a fresh question about the previous
+  question's people. The mitigation is visibility rather than cleverness: the
+  aggregate states its criteria in the answer, the badge shows one chip per
+  active filter and marks the turn as a follow-up, and **New query** resets.
+  Only the immediately preceding turn is carried, so a mistake cannot propagate
+  further than the user can see.
 - **A plain Titlecase technology can slip past the keyword check** in a
   multi-term question (*"COBOL and Fortran"*), because `QueryPlan` carries a
   single `skill` field. Acronyms and punctuated tokens (`Node.js`, `CI/CD`) are

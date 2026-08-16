@@ -201,11 +201,34 @@ def _table_context(frame: pd.DataFrame, limit: int = 40) -> str:
     return body
 
 
+def _previous_turn_line(previous_question: str, lang: str) -> str:
+    """Show the model what a follow-up is following up on.
+
+    Only the question, never the previous answer. Feeding an answer back in
+    would let one turn's mistake become the next turn's evidence, and the
+    grounding rule - answer only from the CV excerpts - has to stay true of
+    every turn independently. The question is safe: it is the user's own words,
+    and all it does is resolve "those" to something nameable.
+    """
+    if not previous_question:
+        return ""
+    if lang == "es":
+        return (
+            f"Pregunta anterior del usuario: {previous_question}\n"
+            "La pregunta siguiente se refiere a esos mismos candidatos.\n"
+        )
+    return (
+        f"The user's previous question: {previous_question}\n"
+        "The question below refers to those same candidates.\n"
+    )
+
+
 def stream_retrieval_answer(
     question: str,
     chunks: list[RetrievedChunk],
     *,
     missing_terms: list[str] | None = None,
+    previous_question: str = "",
     model: str | None = None,
 ) -> Iterator[str]:
     """Answer from retrieved chunks.
@@ -216,7 +239,12 @@ def stream_retrieval_answer(
     from an adjacent one - answering a question about "CNN" with a Computer
     Vision candidate. Telling it which terms are genuinely absent turns a
     silent overclaim into an explicit "no CV mentions this".
+
+    ``previous_question`` is set only when the router resolved this as a
+    follow-up, and exists so a question like "¿y dónde estudió?" has a subject.
     """
+    # From the current question, not the conversation: the reply goes back in
+    # the language just used, so switching language mid-conversation works.
     lang = detect_question_language(question)
     if not chunks:
         yield (
@@ -229,6 +257,7 @@ def stream_retrieval_answer(
     prompt = (
         f"{'Fragmentos de CV' if lang == 'es' else 'CV excerpts'}:\n\n"
         f"{build_context(chunks)}\n\n"
+        f"{_previous_turn_line(previous_question, lang)}"
         f"{'Pregunta' if lang == 'es' else 'Question'}: {question}"
         f"{warning_sentence(missing_terms or [], lang)}"
     )
@@ -270,6 +299,7 @@ def stream_aggregate_answer(
     result: AggregateResult,
     *,
     chart_unavailable: bool = False,
+    previous_question: str = "",
     model: str | None = None,
 ) -> Iterator[str]:
     """Narrate a computed result.
@@ -304,6 +334,7 @@ def stream_aggregate_answer(
             )
         )
         prompt = (
+            f"{_previous_turn_line(previous_question, 'es')}"
             f"Pregunta: {question}\n\n"
             f"Resultado calculado: {result.text}\n"
             f"Candidatos que cumplen ({len(frame)}):\n{_table_context(frame)}"
@@ -322,6 +353,7 @@ def stream_aggregate_answer(
             )
         )
         prompt = (
+            f"{_previous_turn_line(previous_question, 'en')}"
             f"Question: {question}\n\n"
             f"Computed result: {result.text}\n"
             f"Matching candidates ({len(frame)}):\n{_table_context(frame)}"

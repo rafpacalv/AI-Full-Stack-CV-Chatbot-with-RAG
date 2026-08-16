@@ -19,6 +19,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
+from ..textutils import fold_accents
+
 # Canonical section names, keyed by the headings our two languages produce.
 SECTION_ALIASES: dict[str, str] = {
     # Spanish
@@ -82,16 +84,8 @@ def _normalise_heading(line: str) -> str | None:
 
     # Signal 2: it is a heading name we recognise. Accents and punctuation are
     # stripped first so "FORMACIÓN ACADÉMICA" matches the plain-ASCII key.
-    key = re.sub(r"[^a-z ]", "", _fold(stripped).lower()).strip()
+    key = re.sub(r"[^a-z ]", "", fold_accents(stripped).lower()).strip()
     return SECTION_ALIASES.get(key)
-
-
-def _fold(text: str) -> str:
-    import unicodedata
-
-    return "".join(
-        c for c in unicodedata.normalize("NFKD", text) if not unicodedata.combining(c)
-    )
 
 
 def _split_long(text: str, limit: int = MAX_CHUNK_CHARS) -> list[str]:

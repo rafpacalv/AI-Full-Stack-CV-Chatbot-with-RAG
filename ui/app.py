@@ -61,6 +61,12 @@ SAMPLE_QUESTIONS = [
 # count. The full set is always listed in the expander underneath.
 CHIP_LIMIT = 8
 
+# The filters worth showing the user, in reading order. Not derived from
+# `router.CARRIED_FIELDS`: that one governs what a follow-up inherits, and the
+# two answering different questions is why `min_years` is inherited but not
+# displayed as a chip - ">= 5" beside a name reads as noise.
+FILTER_KEYS = ("skill", "seniority", "city", "university", "candidate_name")
+
 BADGE_TEXT = {
     "retrieve": "Semantic retrieval",
     "aggregate": "Table aggregate",
@@ -120,9 +126,19 @@ def api_candidates() -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def stream_chat(question: str, model: str):
-    """Yield ('plan'|'token'|'meta'|'error', payload) tuples from the SSE stream."""
+def stream_chat(question: str, model: str, context: dict | None = None):
+    """Yield ('plan'|'token'|'meta'|'error', payload) tuples from the SSE stream.
+
+    ``context`` is the previous turn - its question and the plan the router
+    resolved for it - so a follow-up like "now chart those by seniority" knows
+    who "those" are. The API keeps no session state, so the conversation only
+    exists for as long as this client keeps sending it: "New query" simply
+    stops.
+    """
     payload = {"question": question, "model": model}
+    if context:
+        payload["previous_question"] = context["question"]
+        payload["previous_plan"] = context["plan"]
     with httpx.stream(
         "POST", f"{API}/chat", json=payload, timeout=httpx.Timeout(600.0, connect=10.0)
     ) as response:
@@ -147,17 +163,65 @@ def stream_chat(question: str, model: str):
                     continue  # never let one malformed frame kill the stream
 
 
-def clear_conversation() -> None:
-    """Reset the chat.
+def new_query() -> None:
+    """Start again with no conversational context.
 
-    Clears the retrieval trace and last chart too, not just the messages: the
-    Pipeline tab reads `last_meta`, so leaving it behind would show a trace for
-    a question no longer on screen.
+    `context` is the important one: it is what makes the next question a
+    follow-up, so dropping it is the whole point of the button. The messages go
+    with it deliberately - keeping the transcript on screen while silently
+    forgetting it would leave the UI showing a conversation the model can no
+    longer see.
+
+    The retrieval trace and last chart go too, because the Pipeline tab reads
+    `last_meta` and would otherwise show the trace of a question that is no
+    longer anywhere. The Logs tab is untouched: that is the permanent record,
+    and it has its own, separate, two-step clear.
     """
     st.session_state.messages = []
     st.session_state.last_chart = None
+    st.session_state.context = None
     st.session_state.pop("last_meta", None)
     st.session_state.pop("pending", None)
+
+
+def routing_badge(plan: dict) -> str:
+    """The routing decision, as the row of chips above an answer.
+
+    Built from the `plan` SSE payload and kept on the message, so it survives
+    the rerun that commits each turn. It used to be written straight into a
+    live `st.empty()`, which meant the moment the transcript was re-rendered
+    the explanation of *how* the answer was reached vanished - leaving the
+    answer with nothing to justify it.
+    """
+    intent = plan.get("intent", "retrieve")
+    bits = [f"<span class='lt-badge lt-badge-{intent}'>{BADGE_TEXT.get(intent, intent)}</span>"]
+
+    # Read as a follow-up: the filter chips beside this one may include
+    # something the user did not say in this question, so say where they
+    # came from.
+    if plan.get("follow_up"):
+        bits.append("<span class='lt-chip-muted'>follows the previous question</span>")
+
+    # Any filter the router extracted, so its reasoning is visible rather than
+    # hidden behind the answer.
+    for key in FILTER_KEYS:
+        if plan.get(key):
+            bits.append(f"<span class='lt-chip-muted'>{key}: {plan[key]}</span>")
+
+    # Terms that appear in no CV. Shown as a warning chip so the absence is
+    # visible at a glance, not buried in the prose - a recruiter searching for a
+    # specific technology needs to know immediately that nobody lists it.
+    for term in plan.get("missing_terms") or []:
+        bits.append(f"<span class='lt-chip-warn'>not in any CV: {term}</span>")
+
+    # Asked to plot a field the candidate table does not hold. Said before the
+    # answer streams, so the user is not left waiting for a figure that is
+    # never coming.
+    if plan.get("chart_unavailable"):
+        bits.append(
+            "<span class='lt-chip-warn'>field not in the database &mdash; no chart</span>"
+        )
+    return " ".join(bits)
 
 
 def render_citations(citations: list[dict]) -> None:
@@ -250,8 +314,8 @@ with st.sidebar:
             st.session_state.pending = q
 
     st.divider()
-    if st.button("Clear conversation", use_container_width=True):
-        clear_conversation()
+    if st.button("New query", use_container_width=True, key="new-query-sidebar"):
+        new_query()
         st.rerun()
 
 
@@ -268,17 +332,33 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "last_chart" not in st.session_state:
     st.session_state.last_chart = None
+# The previous turn's question and resolved plan, or None for a fresh start.
+if "context" not in st.session_state:
+    st.session_state.context = None
 
 with tab_chat:
-    # Clear sits with the conversation, not only in the sidebar, and appears
-    # only when there is something to clear - an always-visible destructive
-    # action on an empty chat is just noise.
+    # "New query" sits with the conversation, not only in the sidebar, and
+    # appears only when there is something to reset.
+    #
+    # Next to it, the context the next question will be resolved against. The
+    # conversation is only useful if the user can see what it currently
+    # remembers - an inherited filter that nobody can see is indistinguishable
+    # from a bug.
     if st.session_state.messages:
-        spacer, clear_col = st.columns([6, 1])
-        with clear_col:
-            if st.button("Clear", key="clear-chat", use_container_width=True,
-                         help="Start a new conversation"):
-                clear_conversation()
+        context_col, button_col = st.columns([5, 1])
+        with context_col:
+            if carried := st.session_state.context:
+                filters = ", ".join(
+                    f"{k}: {v}" for k in FILTER_KEYS if (v := carried["plan"].get(k))
+                )
+                st.caption(
+                    f"Following on from “{carried['question']}”"
+                    + (f" · {filters}" if filters else "")
+                )
+        with button_col:
+            if st.button("New query", key="new-query-chat", use_container_width=True,
+                         help="Forget this conversation and start a fresh context"):
+                new_query()
                 st.rerun()
 
     # The whole conversation lives in one container declared *before* the input
@@ -295,6 +375,10 @@ with tab_chat:
         # already shows. Every chart in this app therefore carries an explicit
         # key, and the position in the transcript is what makes this one unique.
         for turn, msg in enumerate(st.session_state.messages):
+            # The badge belongs to the answer and is drawn above it, matching
+            # the live order where the routing decision arrives before any text.
+            if msg.get("plan"):
+                st.markdown(routing_badge(msg["plan"]), unsafe_allow_html=True)
             css = "lt-msg-user" if msg["role"] == "user" else "lt-msg-bot"
             st.markdown(
                 f"<div class='{css}'>{render_markdown(msg['content'])}</div>",
@@ -328,38 +412,19 @@ with tab_chat:
             badge_slot = st.empty()
             answer_slot = st.empty()
         answer, meta = "", {}
+        resolved_plan = None
 
         try:
-            for event, payload in stream_chat(question, model):
+            for event, payload in stream_chat(question, model, st.session_state.context):
                 if event == "plan":
-                    # Routing decision - arrives first, so the user sees which
-                    # strategy was chosen before any text appears.
-                    intent = payload.get("intent", "retrieve")
-                    bits = [
-                        f"<span class='lt-badge lt-badge-{intent}'>{BADGE_TEXT.get(intent, intent)}</span>"
-                    ]
-                    # Show any filter the router extracted, so its reasoning is
-                    # visible rather than hidden behind the answer.
-                    for key in ("skill", "seniority", "city", "university", "candidate_name"):
-                        if payload.get(key):
-                            bits.append(f"<span class='lt-chip-muted'>{key}: {payload[key]}</span>")
-                    # Terms that appear in no CV. Shown as a warning chip so the
-                    # absence is visible at a glance, not buried in the prose -
-                    # a recruiter searching for a specific technology needs to
-                    # know immediately that nobody lists it.
-                    for term in payload.get("missing_terms") or []:
-                        bits.append(
-                            f"<span class='lt-chip-warn'>not in any CV: {term}</span>"
-                        )
-                    # Asked to plot a field the candidate table does not hold.
-                    # Said here, before the answer streams, so the user is not
-                    # left waiting for a figure that is never coming.
-                    if payload.get("chart_unavailable"):
-                        bits.append(
-                            "<span class='lt-chip-warn'>"
-                            "field not in the database &mdash; no chart</span>"
-                        )
-                    badge_slot.markdown(" ".join(bits), unsafe_allow_html=True)
+                    # Kept for the next turn. This is the *resolved* plan, so it
+                    # already carries anything this question inherited - which
+                    # is what lets a third question follow on from a second one
+                    # without the client having to remember the whole chain.
+                    resolved_plan = payload
+                    # Arrives first, so the user sees which strategy was chosen
+                    # before any text appears.
+                    badge_slot.markdown(routing_badge(payload), unsafe_allow_html=True)
                 elif event == "token":
                     # Rewrite the whole bubble each token, with a block cursor
                     # on the end to signal that more is coming.
@@ -411,12 +476,20 @@ with tab_chat:
             {
                 "role": "assistant",
                 "content": answer,
+                "plan": resolved_plan,
                 "citations": meta.get("citations", []),
                 "chart": meta.get("chart"),
                 "chunks": meta.get("chunks", []),
             }
         )
         st.session_state.last_meta = meta
+
+        # Hand this turn forward. Only when the router actually produced a plan:
+        # if the request failed there is nothing meaningful to follow on from,
+        # and the previous context is more useful kept than replaced.
+        if resolved_plan:
+            st.session_state.context = {"question": question, "plan": resolved_plan}
+        st.rerun()
 
 
 with tab_insights:
@@ -592,6 +665,11 @@ with tab_logs:
                 # reads as a bug in the log rather than a timezone.
                 "Time (UTC)": frame["ts"].astype(str).str.slice(11, 19),
                 "Intent": frame["intent"].replace("", "—"),
+                # Absent from records written before follow-ups existed, hence
+                # the reindex rather than a bare column read.
+                "Follow-up": frame.get(
+                    "follow_up", pd.Series(False, index=frame.index)
+                ).fillna(False).map({True: "yes", False: ""}),
                 "Seconds": pd.to_numeric(frame.get("elapsed_s"), errors="coerce"),
                 "Question": frame["question"],
                 "Sources": frame["citations"].apply(len),

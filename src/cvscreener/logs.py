@@ -99,6 +99,7 @@ def log_chat(
     citations: list[str] | None = None,
     missing_terms: list[str] | None = None,
     chart: str | None = None,
+    follow_up: bool = False,
     error: str | None = None,
 ) -> None:
     """Append one question/answer record to the transcript.
@@ -120,6 +121,10 @@ def log_chat(
         "citations": citations or [],
         "missing_terms": missing_terms or [],
         "chart": chart,
+        # Whether this question inherited the previous turn's filters. Recorded
+        # because a puzzling answer is usually explained by what the question
+        # was resolved *against*, and the question alone does not show that.
+        "follow_up": follow_up,
         "error": error,
     }
 

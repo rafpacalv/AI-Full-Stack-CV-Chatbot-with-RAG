@@ -649,6 +649,175 @@ def test_university_questions_route_to_the_whole_table(question):
 
 
 # --------------------------------------------------------------------------
+# Follow-up questions
+# --------------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Genera un diagrama sectorial por seniority de los candidatos anteriores",
+        "Now show me a pie chart of those candidates by seniority",
+        "¿Y cuántos de ellos son senior?",
+        "How many of them are based in Barcelona?",
+        "Chart the same people by city",
+    ],
+)
+def test_back_references_are_recognised(question):
+    from cvscreener.rag.router import refers_back
+
+    assert refers_back(question), f"{question!r} does not read as a follow-up"
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "¿Quién tiene experiencia en aprendizaje automático?",
+        "Which candidate graduated from UPC?",
+        "How many candidates know Kubernetes?",
+        # "empresas" contains "esas", which is why the check matches whole
+        # words. A question about companies is not a follow-up.
+        "¿En qué empresas han trabajado los candidatos de Barcelona?",
+        "Muestra un gráfico de candidatos por ciudad",
+        # Words deliberately left out of the cue list, because each has a
+        # perfectly ordinary non-anaphoric use. A false positive here would
+        # answer a fresh question about the previous question's people.
+        "¿Quién tiene experiencia previa en Kubernetes?",
+        "List the candidates above 30 years old",
+        "Which candidates say where they studied?",
+    ],
+)
+def test_standalone_questions_are_not_back_references(question):
+    from cvscreener.rag.router import refers_back
+
+    assert not refers_back(question), f"{question!r} was read as a follow-up"
+
+
+def test_a_follow_up_inherits_the_filters_it_does_not_restate():
+    """The bug: "chart those candidates by seniority" plotted all 50 CVs.
+
+    The second question names no criteria, so routed on its own it has no
+    filters and the aggregate covers the whole corpus. Inheriting the previous
+    turn's filters is what makes "those" mean anything.
+    """
+    from cvscreener.rag.router import QueryPlan, carry_over
+
+    previous = QueryPlan(intent="retrieve", skill="machine learning")
+    plan = QueryPlan(intent="chart", chart_type="pie", dimension="seniority")
+
+    assert carry_over(plan, previous) == ["skill"]
+    assert plan.skill == "machine learning"
+    # What to *do* is never inherited - only who to do it to.
+    assert plan.intent == "chart"
+    assert plan.dimension == "seniority"
+
+
+def test_the_new_question_wins_over_the_inherited_one():
+    from cvscreener.rag.router import QueryPlan, carry_over
+
+    previous = QueryPlan(intent="aggregate", city="Barcelona", skill="Python")
+    plan = QueryPlan(intent="aggregate", city="Madrid")
+
+    carry_over(plan, previous)
+    assert plan.city == "Madrid", "a restated filter must not be overwritten"
+    assert plan.skill == "Python", "an unstated filter should still be inherited"
+
+
+def test_carry_over_never_touches_what_to_do():
+    """Intent, chart type and dimension describe the action, not the people.
+
+    Inheriting them would replot the previous chart on every question after it.
+    """
+    from cvscreener.rag.router import CARRIED_FIELDS, QueryPlan, carry_over
+
+    assert not {"intent", "chart_type", "dimension", "follow_up"} & set(CARRIED_FIELDS)
+
+    previous = QueryPlan(intent="chart", chart_type="pie", dimension="seniority")
+    plan = QueryPlan(intent="retrieve")
+    carry_over(plan, previous)
+    assert (plan.intent, plan.chart_type, plan.dimension) == ("retrieve", "none", "none")
+
+
+def test_min_years_of_zero_counts_as_unset():
+    """0 is the "no filter" value, so it must not block inheritance."""
+    from cvscreener.rag.router import QueryPlan, carry_over
+
+    previous = QueryPlan(intent="aggregate", min_years=5)
+    plan = QueryPlan(intent="chart", chart_type="bar", dimension="city")
+    carry_over(plan, previous)
+    assert plan.min_years == 5
+
+
+def test_a_first_question_can_never_be_a_follow_up():
+    """No previous turn means the flag is false whatever the model said.
+
+    Back-reference words can appear in a perfectly standalone question, so this
+    is the floor: with nothing to inherit from, `follow_up` is meaningless and
+    must not be reported as true.
+    """
+    from cvscreener.llm import client
+    from cvscreener.rag.router import route
+
+    if not client.is_up():
+        pytest.skip("Ollama not reachable")
+
+    plan = route("Show me those candidates who know Python")
+    assert plan.follow_up is False
+
+
+def test_a_follow_up_narrows_the_same_set_the_first_question_found():
+    """End to end, against the real table: the two questions from the report.
+
+    Asking who knows machine learning and then charting "the previous
+    candidates" by seniority must plot those candidates, not the corpus.
+    """
+    from cvscreener.rag.aggregate import load_candidates, run_aggregate
+    from cvscreener.rag.router import QueryPlan, carry_over
+
+    previous = QueryPlan(intent="retrieve", skill="machine learning")
+    plan = QueryPlan(intent="chart", chart_type="pie", dimension="seniority")
+    carry_over(plan, previous)
+
+    result = run_aggregate(plan)
+    total = len(load_candidates())
+    assert result.chart is not None, "the follow-up should still produce a chart"
+    assert sum(result.chart["values"]) == len(result.matched)
+    assert 0 < len(result.matched) < total, (
+        f"the chart covers {len(result.matched)} of {total} candidates - "
+        "the filter was not inherited"
+    )
+    # The criteria are stated in the answer text, so an inherited filter is
+    # never silent.
+    assert "machine learning" in result.text
+
+
+def test_the_conversation_is_carried_by_the_client_not_the_server():
+    """No session state on the API: the request body says everything.
+
+    This is what makes "New query" work by simply not sending the two fields,
+    and what keeps two browser tabs from sharing one conversation.
+    """
+    from cvscreener.api.main import ChatRequest
+
+    fields = ChatRequest.model_fields
+    assert "previous_question" in fields and "previous_plan" in fields
+    assert ChatRequest(question="hi").previous_plan is None
+    assert ChatRequest(question="hi").previous_question == ""
+
+    # The UI echoes back the whole `plan` SSE payload, which carries two extra
+    # keys the router does not know about. They must be ignored, not rejected.
+    request = ChatRequest(
+        question="and by city?",
+        previous_question="who knows Python?",
+        previous_plan={
+            "intent": "retrieve",
+            "skill": "Python",
+            "missing_terms": [],
+            "chart_unavailable": False,
+        },
+    )
+    assert request.previous_plan.skill == "Python"
+
+
+# --------------------------------------------------------------------------
 # Logging
 # --------------------------------------------------------------------------
 @pytest.fixture
@@ -828,6 +997,88 @@ def test_the_default_model_still_comes_from_settings():
     from cvscreener.api import main
 
     assert "req.model or settings.chat_model" in inspect.getsource(main._chat_events)
+
+
+# --------------------------------------------------------------------------
+# One definition per rule
+# --------------------------------------------------------------------------
+def test_accent_folding_is_defined_once():
+    """Nobody re-implements NFKD stripping in their own module.
+
+    There were three copies: `textutils.fold_accents`, a private `_fold` in the
+    chunker and an inline pair of lines in the profile generator. Identical
+    today is not the problem - the problem is the day one of them learns about
+    a character the others do not, and retrieval quietly stops matching what
+    ingestion stored.
+    """
+    import ast
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1] / "src" / "cvscreener"
+    offenders = []
+    for path in root.rglob("*.py"):
+        if path.name == "textutils.py":
+            continue  # the one place that is allowed to know about unicodedata
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            imported = (
+                isinstance(node, ast.Import)
+                and any(a.name == "unicodedata" for a in node.names)
+            ) or (isinstance(node, ast.ImportFrom) and node.module == "unicodedata")
+            if imported:
+                offenders.append(path.relative_to(root).as_posix())
+    assert not offenders, f"accent folding re-implemented in {offenders}"
+
+
+def test_a_name_resolves_the_same_way_wherever_it_is_asked():
+    """The table filter and the retrieval branch must agree on who "X" is.
+
+    They used to be two separate copies of the same substring match. Nothing
+    kept them in step, so a change to one would have produced the worst kind of
+    bug: "the count says she is in the corpus, the search says she is not".
+    """
+    from cvscreener.rag.aggregate import (
+        apply_filters,
+        cv_ids_for_name,
+        load_candidates,
+    )
+    from cvscreener.rag.router import QueryPlan
+
+    frame = load_candidates()
+    for full_name in frame["full_name"]:
+        surname = str(full_name).split()[-1]
+        by_table, _ = apply_filters(frame, QueryPlan(intent="aggregate", candidate_name=surname))
+        assert set(cv_ids_for_name(surname)) == set(by_table["cv_id"]), surname
+
+
+def test_generated_emails_still_reproduce():
+    """The contact details are deterministic, and the refactor kept them so.
+
+    `_ascii_slug` in the generator was folded into the shared helper. It was
+    *not* replaced by `textutils.ascii_slug`, which splits on apostrophes and
+    would have silently reissued "sinead.o" for "Sinéad O'Halloran". This walks
+    the profiles already on disk and recomputes their addresses.
+    """
+    import json
+    from pathlib import Path
+
+    from cvscreener.generation.personas import build_personas
+    from cvscreener.generation.profile import _email_handle
+
+    profiles = Path(__file__).resolve().parents[1] / "data" / "profiles"
+    if not profiles.exists():
+        pytest.skip("no generated profiles on disk")
+
+    checked = 0
+    for persona in build_personas():
+        path = profiles / f"{persona.cv_id}.json"
+        if not path.exists():
+            continue
+        stored = json.loads(path.read_text(encoding="utf-8")).get("email", "")
+        expected = f"{_email_handle(persona.full_name)}@"
+        assert stored.startswith(expected), f"{persona.full_name}: {stored} != {expected}..."
+        checked += 1
+    assert checked, "no profiles were actually compared"
 
 
 # --------------------------------------------------------------------------

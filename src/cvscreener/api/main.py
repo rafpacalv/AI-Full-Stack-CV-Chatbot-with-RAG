@@ -37,7 +37,7 @@ from ..logs import (
     log_chat,
     read_transcript,
 )
-from ..rag.aggregate import candidates_summary, load_candidates, run_aggregate
+from ..rag.aggregate import candidates_summary, cv_ids_for_name, run_aggregate
 from ..rag.answer import stream_aggregate_answer, stream_retrieval_answer, tidy_answer
 from ..rag.keywords import missing_from_corpus
 from ..rag.retrieve import IndexNotBuilt, embed_query, load_index, search
@@ -115,6 +115,19 @@ class ChatRequest(BaseModel):
     question: str = Field(min_length=1, max_length=MAX_QUESTION_CHARS)
     model: str | None = Field(default=None, description="Override the chat model")
     top_k: int | None = Field(default=None, ge=1, le=MAX_TOP_K)
+
+    # Conversational context, carried by the client rather than the server.
+    #
+    # The alternative - a session id and a dict of conversations here - buys
+    # nothing and costs a cache to expire, a key to leak between users, and a
+    # restart that silently forgets. The UI already holds the transcript in
+    # `st.session_state`; letting it hand back the one thing the router needs
+    # keeps this process stateless, makes every request reproducible from its
+    # own body, and turns "New query" into "stop sending these two fields".
+    previous_question: str = Field(default="", max_length=MAX_QUESTION_CHARS)
+    previous_plan: QueryPlan | None = Field(
+        default=None, description="The resolved plan of the preceding turn"
+    )
 
 
 class SearchRequest(BaseModel):
@@ -222,7 +235,12 @@ def search_endpoint(req: SearchRequest) -> dict:
 
 @app.post("/route")
 def route_endpoint(req: ChatRequest) -> QueryPlan:
-    return route(req.question, model=req.model)
+    return route(
+        req.question,
+        model=req.model,
+        previous=req.previous_plan,
+        previous_question=req.previous_question,
+    )
 
 
 def _chat_events(req: ChatRequest) -> Iterator[str]:
@@ -254,7 +272,12 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
         pool = ThreadPoolExecutor(max_workers=1)
         embedding_future = pool.submit(embed_query, req.question)
         try:
-            plan = route(req.question, model=model)
+            plan = route(
+                req.question,
+                model=model,
+                previous=req.previous_plan,
+                previous_question=req.previous_question,
+            )
         except Exception:
             embedding_future.cancel()  # do not leak the thread on failure
             pool.shutdown(wait=False)
@@ -269,6 +292,12 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
         # Reported alongside the plan so the UI can say so before the answer
         # arrives, rather than the user waiting for a chart that never comes.
         chart_unavailable = plan.intent == "chart" and plan.dimension == "unsupported"
+
+        # Passed on only when the router actually resolved this as a follow-up.
+        # On a change of subject the previous question is noise, and telling the
+        # model "this refers to those same candidates" when it does not is how a
+        # fresh question gets answered about the wrong people.
+        context_question = req.previous_question if plan.follow_up else ""
 
         # First event out: the routing decision. The UI paints its badge from
         # this immediately, so the user sees the system reacting long before
@@ -290,7 +319,11 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             pool.shutdown(wait=False)
             result = run_aggregate(plan)
             for token in stream_aggregate_answer(
-                req.question, result, chart_unavailable=chart_unavailable, model=model
+                req.question,
+                result,
+                chart_unavailable=chart_unavailable,
+                previous_question=context_question,
+                model=model,
             ):
                 spoken.append(token)
                 yield _sse("token", {"t": token})
@@ -348,6 +381,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
                 chart=f"{result.chart['type']}:{result.chart['dimension']}"
                 if result.chart
                 else None,
+                follow_up=plan.follow_up,
             )
             yield _sse("done", {})
             return
@@ -359,31 +393,43 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
         # patchy - a question about one person should read one person's CV.
         cv_ids = None
         if plan.candidate_name:
-            frame = load_candidates()
-            from ..textutils import fold_accents
+            # `or None` because no match must mean "search everything", not
+            # "search nothing": the model may have misread a name that is not
+            # in the corpus at all.
+            cv_ids = cv_ids_for_name(plan.candidate_name) or None
 
-            target = fold_accents(plan.candidate_name).casefold()
-            hit = frame[
-                frame["full_name"].apply(lambda n: target in fold_accents(str(n)).casefold())
-            ]
-            if not hit.empty:
-                cv_ids = hit["cv_id"].tolist()
-            # No match: fall through and search everything, because the model
-            # may simply have misread a name that is not in the corpus.
+        # Inheriting the filters is not enough on this branch: a follow-up has
+        # to be *searched* too, and "¿y dónde estudió?" is four words that match
+        # nothing in particular. Dense and BM25 both need the subject, so the
+        # previous question is prepended to supply it - the same trick as
+        # prefixing every chunk with its candidate and section, applied to the
+        # query instead of the corpus.
+        search_text = req.question
+        if context_question:
+            search_text = f"{context_question} {req.question}"
 
         # `.result()` collects the embedding started before routing. By now it
-        # is almost always finished, so this rarely blocks.
+        # is almost always finished, so this rarely blocks. It is only usable if
+        # the text it was computed from is still the text being searched; a
+        # follow-up changed that, and pays one extra embedding call for it.
+        query_vector = embedding_future.result() if search_text == req.question else None
         hits = search(
-            req.question,
+            search_text,
             top_k=req.top_k or settings.top_k,
             cv_ids=cv_ids,
-            query_vector=embedding_future.result(),
+            query_vector=query_vector,
         )
         pool.shutdown(wait=False)
 
         # Stream the answer as the model produces it. At ~18 tok/s this is the
         # difference between a live assistant and a blank screen for 12 s.
-        for token in stream_retrieval_answer(req.question, hits, missing_terms=missing, model=model):
+        for token in stream_retrieval_answer(
+            req.question,
+            hits,
+            missing_terms=missing,
+            previous_question=context_question,
+            model=model,
+        ):
             spoken.append(token)
             yield _sse("token", {"t": token})
 
@@ -426,6 +472,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             elapsed_s=round(time.time() - started, 2),
             citations=[c["candidate"] for c in citations.values()],
             missing_terms=missing,
+            follow_up=plan.follow_up,
         )
         yield _sse("done", {})
 
@@ -439,6 +486,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             model=model,
             intent=plan.intent if plan else "",
             elapsed_s=round(time.time() - started, 2),
+            follow_up=plan.follow_up if plan else False,
             error=str(exc),
         )
         yield _sse("error", {"message": str(exc)})
@@ -450,6 +498,7 @@ def _chat_events(req: ChatRequest) -> Iterator[str]:
             model=model,
             intent=plan.intent if plan else "",
             elapsed_s=round(time.time() - started, 2),
+            follow_up=plan.follow_up if plan else False,
             error=f"{type(exc).__name__}: {exc}",
         )
         yield _sse("error", {"message": f"{type(exc).__name__}: {exc}"})
