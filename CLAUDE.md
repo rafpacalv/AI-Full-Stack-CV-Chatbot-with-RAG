@@ -187,6 +187,26 @@ tests verify it stops wrong charts without blocking the eight legitimate dimensi
     - `skill_match` cannot ride the ordinary `carry_over` loop: its default is truthy,
       so "the follow-up left it empty" is never true. It travels with `skills`
       explicitly, or a follow-up re-intersects an inherited union
+12. **The facts a question earned depended on its verb** — "dame el nombre de las
+    universidades" answered *"se han identificado las universidades de todos ellos"*,
+    naming none. The same question ending "en un gráfico" listed all 27 with counts
+    - `dimension` was resolved on every intent but `_chart_payload` ran only on the
+      chart branch, so an aggregate question reached the narrator with "there are 50
+      candidates" and a table whose columns did not include `university` at all
+    - Fix: the breakdown is computed for every intent (`AggregateResult.breakdown`;
+      `chart` stays chart-only), `university` joins the table context, and
+      `dimension_supported_by` now gates every intent — a field the user never named
+      is as wrong in a sentence as in a figure, just quieter
+    - Three narration bugs travelled with it, all "the prompt never said what was on
+      screen": it claimed to have built a table that did not exist, told the user to
+      create a chart already rendered above the sentence, and — once told to describe
+      that chart — invented that the bars were alphabetical (they are by frequency).
+      `_artifact_rule` states what accompanies the answer and points the model at the
+      numbers rather than the picture it cannot see
+    - Counting is still never the model's job: it read 27 university counts and
+      reported 21, so the number of distinct values is stated outright
+    - `asks_for_a_table` lays the breakdown out in rows when the user said "tabla" /
+      "table". Noun forms only — a miss costs layout, not correctness
 
 ## Logging Strategy
 

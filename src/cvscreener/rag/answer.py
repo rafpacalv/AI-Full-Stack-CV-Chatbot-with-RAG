@@ -20,7 +20,7 @@ import pandas as pd
 
 from ..config import settings
 from ..llm import client
-from ..textutils import fold_accents
+from ..textutils import WORD_RE, fold_accents
 from .aggregate import AggregateResult
 from .keywords import warning_sentence
 from .retrieve import RetrievedChunk
@@ -183,9 +183,17 @@ def tidy_answer(text: str) -> str:
 
 
 def _table_context(frame: pd.DataFrame, limit: int = 40) -> str:
+    # `university` is here because it was asked for and could not be answered:
+    # "dame el nombre de las universidades de los candidatos" reached the model
+    # with a table holding names, roles and cities and no university anywhere in
+    # it, so the only honest reply available was a non-answer. A field the router
+    # can filter on has to be a field the narrator can see.
     columns = [
         c
-        for c in ("full_name", "current_role", "seniority", "years_experience", "age", "city")
+        for c in (
+            "full_name", "current_role", "seniority",
+            "years_experience", "age", "city", "university",
+        )
         if c in frame.columns
     ]
     if frame.empty:
@@ -294,6 +302,63 @@ def chart_unavailable_sentence(lang: str) -> str:
     )
 
 
+# Words that ask for the breakdown laid out as a table rather than a sentence.
+#
+# The same deliberately dumb lexical check used everywhere else here: it only
+# confirms what the user literally wrote. Kept to the noun, because that is the
+# only form that reliably means "lay it out in rows" - and the cost of a miss is
+# a comma-separated list holding the same numbers, not a wrong answer.
+_TABLE_WORDS = frozenset("tabla tablas table tables tabular tabulate".split())
+
+
+def asks_for_a_table(question: str) -> bool:
+    words = set(WORD_RE.findall(fold_accents(question).casefold()))
+    return bool(words & _TABLE_WORDS)
+
+
+def _artifact_rule(chart_included: bool, lang: str) -> str:
+    """Tell the model what is on screen beside its words.
+
+    Two observed failures, one cause - the prompt never said what accompanied
+    the answer, so the model guessed:
+
+      "se ha creado una tabla con las universidades"  (no table exists)
+      "te recomiendo crear un gráfico de barras..."   (the bar chart was
+                                                       already rendered above it)
+
+    The second is the worse one: the figure the user asked for was sitting right
+    there, and the prose told them to go and make it.
+
+    Note what the chart wording does *not* invite. Told merely to describe the
+    figure, gemma2 wrote "las barras están ordenadas alfabéticamente" - they are
+    ordered by frequency. It cannot see the plot, so it furnishes the parts it
+    was not given. It is pointed at the numbers instead, which it has.
+    """
+    if lang == "es":
+        if chart_included:
+            return (
+                " Junto a tu respuesta se muestra ya el gráfico pedido: NO le "
+                "sugieras al usuario que lo cree. Coméntalo a partir de las cifras "
+                "exactas que se te dan, no de su aspecto: no puedes verlo, así que "
+                "no describas colores, ejes ni en qué orden salen las barras."
+            )
+        return (
+            " Tu respuesta es solo texto. No digas que has creado o adjuntado "
+            "tablas, gráficos o ficheros."
+        )
+    if chart_included:
+        return (
+            " The chart that was asked for is already displayed alongside your "
+            "answer: do NOT suggest the user create it. Comment on it from the "
+            "exact figures you are given, not from its appearance: you cannot see "
+            "it, so do not describe colours, axes or the order of the bars."
+        )
+    return (
+        " Your answer is text only. Do not claim to have created or attached "
+        "tables, charts or files."
+    )
+
+
 def stream_aggregate_answer(
     question: str,
     result: AggregateResult,
@@ -321,17 +386,46 @@ def stream_aggregate_answer(
     # to duplicate what is on screen. Keep the prose to the headline figure.
     many = len(frame) > 6
 
+    # A breakdown is the answer, not a supporting detail: asked to name the
+    # universities, "there are 50 candidates from 27 universities" is still a
+    # refusal. So when one is present the no-enumerating rule is lifted for it -
+    # it still applies to the candidate list, which is on screen either way.
+    #
+    # Not when a chart carries it, though. The figure already lists every value,
+    # so asking for them in prose as well sets "list all of it" against "comment
+    # on the chart" and the model has to pick one.
+    breakdown = result.breakdown if result.chart is None else None
+
+    # Asked for a table, lay it out as one. Only meaningful alongside a
+    # breakdown: there is nothing to tabulate in a bare count.
+    wants_table = bool(breakdown) and asks_for_a_table(question)
+
     if lang == "es":
         system = (
             "Eres el asistente de selección de LeadTech. Te doy un resultado ya "
-            "calculado sobre la base de datos completa de CVs. Redáctalo en "
-            "español en 1-2 frases. La cifra es correcta: NO la recalcules ni la "
-            "pongas en duda. No inventes datos."
+            "calculado sobre la base de datos completa de CVs. Responde SIEMPRE "
+            "en español: los datos que te paso están en inglés, pero tu respuesta "
+            "no. La cifra es correcta: NO la recalcules ni la pongas en duda. No "
+            "inventes datos."
             + (
-                " NO enumeres los candidatos: la interfaz ya muestra la lista completa."
+                " Presenta el desglose exacto que se te da: es la respuesta a la "
+                "pregunta, así que enuméralo entero y no lo resumas."
+                + (
+                    " Formatéalo como tabla markdown de dos columnas, con una fila "
+                    "por valor."
+                    if wants_table
+                    else ""
+                )
+                if breakdown
+                else " Redáctalo en 1-2 frases."
+            )
+            + (
+                " NO enumeres los candidatos uno a uno: la interfaz ya muestra la "
+                "lista completa."
                 if many
                 else " Menciona a los candidatos por su nombre."
             )
+            + _artifact_rule(result.chart is not None, "es")
         )
         prompt = (
             f"{_previous_turn_line(previous_question, 'es')}"
@@ -343,14 +437,26 @@ def stream_aggregate_answer(
     else:
         system = (
             "You are LeadTech's recruitment assistant. You are given a result "
-            "already computed over the complete CV database. Phrase it in 1-2 "
-            "sentences. The figure is correct: do NOT recompute or question it. "
-            "Invent nothing."
+            "already computed over the complete CV database. The figure is "
+            "correct: do NOT recompute or question it. Invent nothing."
             + (
-                " Do NOT list the candidates: the interface already shows the full list."
+                " Present the exact breakdown you are given: it is the answer to "
+                "the question, so list all of it and do not summarise it."
+                + (
+                    " Format it as a two-column markdown table, one row per value."
+                    if wants_table
+                    else ""
+                )
+                if breakdown
+                else " Phrase it in 1-2 sentences."
+            )
+            + (
+                " Do NOT list the candidates one by one: the interface already "
+                "shows the full list."
                 if many
                 else " Name the candidates."
             )
+            + _artifact_rule(result.chart is not None, "en")
         )
         prompt = (
             f"{_previous_turn_line(previous_question, 'en')}"
@@ -364,5 +470,5 @@ def stream_aggregate_answer(
         [{"role": "system", "content": system}, {"role": "user", "content": prompt}],
         model=model or settings.chat_model,
         temperature=0.15,
-        num_predict=200 if many else 500,
+        num_predict=500 if (breakdown or not many) else 200,
     )

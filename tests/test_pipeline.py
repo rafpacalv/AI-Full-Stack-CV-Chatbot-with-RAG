@@ -608,6 +608,130 @@ def test_chart_answers_carry_the_exact_breakdown():
         assert f"{level} {count}" in result.text
 
 
+@index_built
+def test_a_listing_question_is_handed_the_values_not_just_the_count():
+    """The bug: "dame el nombre de las universidades" named none of them.
+
+    The breakdown was computed only on the chart branch, so the same question
+    ending in "en un gráfico" got all 27 universities with exact counts while
+    the plain one got "there are 50 candidates in the database" and answered
+    "se han identificado las universidades de todos ellos".
+    """
+    from cvscreener.rag.aggregate import load_candidates, run_aggregate
+    from cvscreener.rag.router import QueryPlan
+
+    frame = load_candidates()
+    result = run_aggregate(QueryPlan(intent="aggregate", dimension="university"))
+
+    assert result.chart is None, "an aggregate question asked for no figure"
+    assert result.breakdown is not None, "but it still earns the counts"
+    # The values themselves, not a summary of them.
+    for university in frame["university"].value_counts().index[:3]:
+        assert university in result.text, f"{university} missing from {result.text!r}"
+
+
+@index_built
+def test_the_number_of_distinct_values_is_stated_never_derived():
+    """Handed 27 university counts and asked how many, gemma2 answered 21.
+
+    Same rule as the seniority split: the model phrases arithmetic, it never
+    performs it - and counting the entries of a list it was given is arithmetic.
+    """
+    from cvscreener.rag.aggregate import load_candidates, run_aggregate
+    from cvscreener.rag.router import QueryPlan
+
+    frame = load_candidates()
+    result = run_aggregate(QueryPlan(intent="aggregate", dimension="university"))
+
+    assert f"{frame['university'].nunique()} distinct" in result.text, result.text
+
+
+@index_built
+def test_the_narrator_can_see_every_field_it_can_be_asked_about():
+    """A field the router filters on has to be a field the table context holds.
+
+    "Dame el nombre de las universidades" reached the model with names, roles,
+    seniority, years, age and city - and no university anywhere - so the only
+    honest answer available was a non-answer.
+    """
+    from cvscreener.rag.aggregate import load_candidates
+    from cvscreener.rag.answer import _table_context
+
+    frame = load_candidates()
+    context = _table_context(frame)
+    assert "university" in context, "the university column never reaches the prompt"
+    assert frame["university"].iloc[0] in context
+
+
+@index_built
+def test_a_spanish_question_is_answered_in_spanish_from_the_table():
+    """The computed facts are English; the answer must not be.
+
+    Caught as a regression while widening those facts: the more of them there
+    were, and the more quotable, the likelier gemma2 was to echo them verbatim
+    and answer a Spanish question in English. The instruction has to say so.
+    """
+    from cvscreener.llm import client
+    from cvscreener.rag.aggregate import run_aggregate
+    from cvscreener.rag.answer import detect_question_language, stream_aggregate_answer
+    from cvscreener.rag.router import QueryPlan
+
+    if not client.is_up():
+        pytest.skip("Ollama not reachable")
+
+    # A chart question, because its answer is prose. The plain listing question
+    # replies with 27 proper nouns and nothing else, and a function-word detector
+    # cannot call the language of "UPC, UPF, UB, ..." - nor should it.
+    question = "crea un gráfico de barras con las universidades de los candidatos"
+    result = run_aggregate(
+        QueryPlan(intent="chart", chart_type="bar", dimension="university")
+    )
+    answer = "".join(stream_aggregate_answer(question, result))
+
+    assert answer.strip(), "no answer was produced"
+    assert detect_question_language(answer) == "es", answer
+
+
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("haz una tabla con el nombre de las universidades", True),
+        ("Make a table of candidates by city", True),
+        ("tabula los candidatos por seniority", False),  # verb form, deliberately missed
+        ("Dame el nombre de las universidades de los candidatos", False),
+        ("¿Cuántos candidatos hay en Barcelona?", False),
+    ],
+)
+def test_a_table_is_laid_out_only_when_one_was_asked_for(question, expected):
+    """A miss costs layout, not correctness - the same numbers, comma-separated.
+
+    Which is why the check stays on the noun: "tabla" and "table" reliably mean
+    "lay this out in rows", and nothing else in a recruiter's vocabulary does.
+    """
+    from cvscreener.rag.answer import asks_for_a_table
+
+    assert asks_for_a_table(question) is expected
+
+
+def test_an_aggregate_question_is_told_it_has_no_figure():
+    """Two observed inventions, one cause: the prompt never said what was on screen.
+
+    Without this the model wrote "se ha creado una tabla con las universidades"
+    when no table existed, and told the user to go and create a bar chart that
+    was already rendered above the sentence.
+    """
+    from cvscreener.rag.answer import _artifact_rule
+
+    for lang in ("es", "en"):
+        with_figure = _artifact_rule(True, lang)
+        text_only = _artifact_rule(False, lang)
+        assert with_figure != text_only
+        # Told a figure is present, it must not invite the user to build one;
+        # told there is none, it must not claim to have attached one.
+        assert "NO" in with_figure or "not" in with_figure
+        assert "no" in text_only.casefold()
+
+
 def test_truncated_tables_announce_themselves():
     """An unannounced truncation invites the model to count the rows shown."""
     from cvscreener.rag.aggregate import load_candidates

@@ -477,7 +477,12 @@ def route(
     # is worse than plotting nothing: the figure looks authoritative, sits next
     # to a correct text answer, and nothing about it says "this is not what you
     # asked for".
-    if plan.intent == "chart" and plan.dimension not in ("none", "unsupported"):
+    #
+    # Checked on every intent, not just `chart`. The dimension now decides which
+    # exact counts the narrator is handed on an aggregate question too, and a
+    # field the user never named is as wrong in a sentence as it is in a figure -
+    # it just arrives without a picture drawing attention to it.
+    if plan.dimension not in ("none", "unsupported"):
         if not dimension_supported_by(question, plan.dimension):
             plan.dimension = "unsupported"
 

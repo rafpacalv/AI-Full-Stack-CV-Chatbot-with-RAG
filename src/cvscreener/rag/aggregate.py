@@ -41,6 +41,12 @@ class AggregateResult:
     matched: pd.DataFrame
     filters: dict[str, str] = field(default_factory=dict)
     chart: dict | None = None
+    # The same counts, present whether or not a figure was asked for. `chart` is
+    # what the UI plots; `breakdown` is what the narrator was told. They are the
+    # identical payload on a chart question and differ only in that an aggregate
+    # question has no figure - which is the point: the facts a question earns
+    # should not depend on whether the user said "gráfico".
+    breakdown: dict | None = None
 
     @property
     def cv_ids(self) -> list[str]:
@@ -299,7 +305,13 @@ def _chart_payload(frame: pd.DataFrame, plan: QueryPlan) -> dict | None:
 
     # A histogram needs the raw values, not counts: binning is a presentation
     # decision, so the UI does it. Everything else gets pre-counted below.
-    if plan.chart_type == "histogram" and pd.api.types.is_numeric_dtype(series):
+    #
+    # An aggregate question takes this path too, for a different reason: with no
+    # figure to carry the shape, a numeric field reads far better as a range than
+    # as a tally of every distinct value. "ages 24-58, mean 34.2" is an answer;
+    # "29 4, 31 3, 27 3, ..." is a data dump.
+    wants_spread = plan.chart_type == "histogram" or plan.intent != "chart"
+    if wants_spread and pd.api.types.is_numeric_dtype(series):
         return {
             "type": "histogram",
             "dimension": dim,
@@ -349,22 +361,39 @@ def _chart_summary(chart: dict | None) -> str:
         f"{category} {value}" for category, value in zip(chart["categories"], chart["values"])
     )
     total = sum(chart["values"])
-    return f" Exact breakdown by {label.lower()} (total {total}): {pairs}."
+    # The number of distinct values is stated, not left to be derived. Handed the
+    # 27 university counts and asked how many universities there were, gemma2
+    # answered 21 - the same failure as the seniority split above, one level up:
+    # it will count a list it was given just as wrongly as it counts a table.
+    distinct = len(chart["categories"])
+    return (
+        f" Exact breakdown by {label.lower()} - {distinct} distinct"
+        f" {'value' if distinct == 1 else 'values'} across {total} candidates:"
+        f" {pairs}."
+    )
 
 
 def run_aggregate(plan: QueryPlan) -> AggregateResult:
     frame = load_candidates()
     matched, used = apply_filters(frame, plan)
-    chart = _chart_payload(matched, plan) if plan.intent == "chart" else None
+
+    # Computed for every intent, not just `chart`. It used to be gated on the
+    # chart branch, so "dame el nombre de las universidades" reached the narrator
+    # with nothing but "there are 50 candidates" and answered "se han
+    # identificado las universidades de todos ellos" - naming none of them, while
+    # the same question ending in "en un gráfico" got all 27 with exact counts.
+    # The dimension was resolved either way and then thrown away on one branch.
+    breakdown = _chart_payload(matched, plan)
     return AggregateResult(
         text=(
             _describe(len(matched), len(frame), used)
             + _skill_shortfall(frame, plan, matched)
-            + _chart_summary(chart)
+            + _chart_summary(breakdown)
         ),
         matched=matched,
         filters=used,
-        chart=chart,
+        chart=breakdown if plan.intent == "chart" else None,
+        breakdown=breakdown,
     )
 
 
