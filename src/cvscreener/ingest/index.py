@@ -2,7 +2,7 @@
 
     python -m cvscreener.ingest.index [--force]
 
-Deliberately *not* a vector database. The corpus is ~28 CVs, a few hundred
+Deliberately *not* a vector database. The corpus is 50 CVs, a few hundred
 chunks; exact cosine similarity is a single ``numpy`` matmul over a
 (300, 1024) array, which is sub-millisecond and returns the true nearest
 neighbours rather than an approximation. Adding Chroma or FAISS here would mean

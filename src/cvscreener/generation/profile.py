@@ -60,8 +60,10 @@ def _contact(persona: Persona) -> tuple[str, str, str]:
 def _birth_date(persona: Persona) -> str:
     """A date of birth consistent with the persona's birth year.
 
-    Capped at day 28 so no persona is ever born on 30 February. The year comes
-    from the matrix, so the age the RAG later extracts matches by construction.
+    Day and month are drawn independently, so the day is capped at 28: that is
+    the only bound valid in every month, and it also avoids 29 February in a
+    non-leap year. The year comes from the matrix, so the age the RAG later
+    extracts matches by construction.
     """
     rng = random.Random(persona.cv_id + "dob")
     day, month = rng.randint(1, 28), rng.randint(1, 12)

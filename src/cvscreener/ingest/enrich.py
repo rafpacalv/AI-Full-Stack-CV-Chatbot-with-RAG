@@ -2,7 +2,7 @@
 
 This is what lets the assistant answer questions a top-k vector search
 structurally cannot: "how many candidates know Python?", "what is the age
-distribution?". Those need a table over *all* 28 candidates, not the 5 chunks
+distribution?". Those need a table over *all* 50 candidates, not the 5 chunks
 that happened to rank highest.
 
 Extraction is deliberately hybrid:

@@ -47,7 +47,7 @@ To rebuild everything from scratch:
 ```bash
 python -m cvscreener.generation.pipeline   # 50 CVs   (~40 min)
 python -m cvscreener.ingest.index          # search index (~20 min)
-pytest                                     # 33 tests
+pytest                                     # 166 tests
 ```
 
 Both pipelines are **resumable** — each stage caches its artefact and is skipped
@@ -425,7 +425,7 @@ did not generate.
 
 ## The corpus
 
-50 CVs, 3 layouts, 25 Spanish / 25 English, ages 23–40, 1–14 years of
+50 CVs, 3 layouts, 25 Spanish / 25 English, ages 23–41, 1–13 years of
 experience, roles mirroring Leadtech's own departments.
 
 | Sidebar (ES) | Banner (ES) | Classic (EN) |

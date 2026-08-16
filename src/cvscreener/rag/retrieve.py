@@ -260,7 +260,7 @@ def search(
 
     # STEP 2 - dense retrieval (semantic).
     # Both the stored vectors and the query are L2-normalised, so this single
-    # matmul IS the cosine similarity of the query against all ~370 chunks.
+    # matmul IS the cosine similarity of the query against all 375 chunks.
     # One multiplication, no loop, sub-millisecond.
     query_vec = embed_query(query) if query_vector is None else query_vector
     dense_scores = index.embeddings @ query_vec

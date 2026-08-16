@@ -1,11 +1,11 @@
 """CLI orchestrator for the CV generation pipeline.
 
-Resumability is the point. A full 28-CV batch is ~30 minutes of local
+Resumability is the point. A full 50-CV batch is ~55 minutes of local
 inference, so every stage caches its artefact on disk and is skipped when that
 artefact already exists. Fixing a bug in the renderer therefore costs a few
-seconds, not another half hour of re-generating text that was already fine.
+seconds, not another hour of re-generating text that was already fine.
 
-    python -m cvscreener.generation.pipeline               # all 28, resume
+    python -m cvscreener.generation.pipeline               # all 50, resume
     python -m cvscreener.generation.pipeline --count 2     # smoke test
     python -m cvscreener.generation.pipeline --only cv_07  # one candidate
     python -m cvscreener.generation.pipeline --stage render --force
@@ -66,7 +66,7 @@ def run(
             generate_photo(persona, force=force)
             marks.append("photo:cache" if cached and not force else "photo:new")
 
-        # -- text: the expensive stage, ~60 s of local inference per CV
+        # -- text: the expensive stage, ~65 s of local inference per CV
         profile = None
         if do_text:
             cached = (settings.profiles_dir / f"{persona.cv_id}.json").exists()

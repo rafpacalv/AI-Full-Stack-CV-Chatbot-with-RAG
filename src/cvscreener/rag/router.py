@@ -2,7 +2,7 @@
 
 The failure this fixes is structural, not cosmetic. Ask a plain RAG pipeline
 "how many candidates know Python?" and it retrieves five chunks and counts
-those five - the honest answer requires scanning all 28 CVs, which top-k
+those five - the honest answer requires scanning all 50 CVs, which top-k
 retrieval cannot do by construction. So questions are routed:
 
 ``retrieve``   semantic question -> hybrid search -> grounded answer

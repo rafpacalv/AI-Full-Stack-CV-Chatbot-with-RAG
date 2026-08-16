@@ -1,7 +1,7 @@
 """Render a :class:`CVProfile` to a realistic PDF with ReportLab.
 
-Three distinct layouts exist so that 28 CVs do not read as one template filled
-in 28 times - which is exactly what a screening tool would never see in real
+Three distinct layouts exist so that 50 CVs do not read as one template filled
+in 50 times - which is exactly what a screening tool would never see in real
 life, and which would make the retrieval demo suspiciously easy.
 
 ReportLab (rather than an HTML-to-PDF route) because it is pure Python with

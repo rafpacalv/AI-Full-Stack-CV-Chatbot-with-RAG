@@ -135,7 +135,7 @@ def stream_chat(question: str, model: str, context: dict | None = None):
     exists for as long as this client keeps sending it: "New query" simply
     stops.
     """
-    payload = {"question": question, "model": model}
+    payload: dict = {"question": question, "model": model}
     if context:
         payload["previous_question"] = context["question"]
         payload["previous_plan"] = context["plan"]
@@ -285,6 +285,14 @@ with st.sidebar:
             settings.chat_model
         ]
 
+    # A real control, not a label. `settings.chat_model` is only the default;
+    # the choice made here travels with each request as `ChatRequest.model` and
+    # is threaded down to the router and both answer functions. It is also the
+    # cheapest demonstration that nothing in the pipeline is tied to one model.
+    #
+    # It must stay a per-request argument. This used to assign
+    # `settings.chat_model`, which made one user's pick the whole process's
+    # default - see test_a_model_override_does_not_leak_between_requests.
     st.markdown("###### Chat model")
     default = settings.chat_model
     model = st.selectbox(
